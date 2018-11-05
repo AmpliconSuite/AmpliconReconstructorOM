@@ -1,0 +1,28 @@
+# CMAP = /home/jluebeck/bionano/development/cmap_files/hg19_DLE_BNG.cmap, hacked together
+# filter: Minimum Labels = 5
+# filter: Minimum Size (Kb) = 20
+CompntId	CompntName	CompntLength
+1	chr1	249250621
+2	chr2	243199373
+3	chr3	198022430
+4	chr4	191154276
+5	chr5	180915260
+6	chr6	171115067
+7	chr7	159138663
+8	chr8	146364022
+9	chr9	141213431
+10	chr10	135534747
+11	chr11	135006516
+12	chr12	133851895
+13	chr13	115169878
+14	chr14	107349540
+15	chr15	102531392
+16	chr16	90354753
+17	chr17	81195210
+18	chr18	78077248
+19	chr19	59128983
+20	chr20	63025520
+21	chr21	48129895
+22	chr22	51304566
+23	chrX	155270560
+24	chrY	59373566
