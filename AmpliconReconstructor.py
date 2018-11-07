@@ -360,8 +360,8 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--ref", help="reference genome cmap file")
     parser.add_argument("-p", "--p_value", help="p-value threshold for alignments", type=float, default=0.05)
     parser.add_argument("-o", "--output_prefix", help="output filename prefix (assumes working directory & ref name unless otherwise specified")
-    parser.add_argument("-t", help="number of threads to use (default 4)", type=int, default=4)
-    parser.add_argument("-e", help="labeling enzyme", required=True)
+    parser.add_argument("-t", "--threads", help="number of threads to use (default 4)", type=int, default=4)
+    parser.add_argument("-e", "--enzyme", help="labeling enzyme", required=True)
     parser.add_argument("--no_cleanup", help="[Debugging option] Do not remove old scoring files prior to running.",action='store_true')
     parser.add_argument("--score_plotting", help="Save plots of the distributions of segment scores",action='store_true')
 
@@ -370,7 +370,7 @@ if __name__ == "__main__":
 
     if not args.output_prefix:
         args.output_prefix = os.path.splitext(args.segs)[0]
-        print "results in " + args.output_prefix
+        print "results will be stored in " + args.output_prefix
 
     if not args.output_prefix.endswith("/"): args.output_prefix+="/"
 

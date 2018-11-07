@@ -13,4 +13,7 @@ make clean; make
 
 #add SegAligner to path
 echo "export SA_SRC=$PWD" >> ~/.bashrc
-echo "alias SegAligner='$SA_SRC/SegAligner'"
+echo "alias SegAligner='$SA_SRC/SegAligner'" >> ~/.bashrc
+
+#make changes effective for current session
+source ~/.bashrc
