@@ -1,21 +1,38 @@
-import sys
 import os
+import sys
 import time
 import bisect
 import argparse
 import threading
 import subprocess
 import numpy as np
+from bionanoUtil import *
+import matplotlib.pyplot as plt
 from scipy.stats import linregress
 from collections import defaultdict
-from bionanoUtil import *
 
-#development version
 
 #coordinates the pipeline
+#2 calls PCEE
+#3 Calls CycleViz
 
 unaligned_label_cutoff = 8
 unaligned_size_cutoff = 75000
+
+class SegAlignerThread(threading.Thread):
+    def __init__(self, threadID, contigs_file, ref_file, arg_list):
+        threading.Thread.__init__(self)
+        self.threadID = str(threadID)
+        self.contigs_file = contigs_file
+        self.ref_file = ref_file
+        self.arg_list = arg_list
+
+    def run(self):
+        print "Starting " + self.name
+        argstring = " ".join(self.arg_list)
+        subprocess.call(" ".join(["SegAligner/SegAligner",self.ref_file,self.contigs_file,argstring]), shell=True)
+        print "Finished thread " + self.threadID
+        return 1
 
 #break the cmap into smaller files
 def chunk_cmap(cmap_file,nthreads,min_lab=0):
@@ -55,22 +72,6 @@ def chunk_cmap(cmap_file,nthreads,min_lab=0):
 
     return cmap_chunked_fnames
 
-#Call SegAligner
-class SegAlignerThread(threading.Thread):
-    def __init__(self, threadID, contigs_file, ref_file, arg_list):
-        threading.Thread.__init__(self)
-        self.threadID = str(threadID)
-        self.contigs_file = contigs_file
-        self.ref_file = ref_file
-        self.arg_list = arg_list
-
-    def run(self):
-        print "Starting " + self.name
-        argstring = " ".join(self.arg_list)
-        subprocess.call(" ".join(["SegAligner/SegAligner",self.ref_file,self.contigs_file,argstring]), shell=True)
-        print "Finished thread " + self.threadID
-        return 1
-
 def read_scoring_file(scoring_file,scoring_dict):
     with open(scoring_file) as infile:
         for line in infile:
@@ -81,6 +82,7 @@ def read_scoring_file(scoring_file,scoring_dict):
             fields[2] = float(fields[2])           
             scoring_dict[fields[0]].append((fields[1],fields[2]))
 
+#identify contigs with significant alignments
 def get_relevant_contigs(seg_cutoffs,scoring_dict):
     rel_contigs = set()
     for seg_id,vals in scoring_dict.iteritems():
@@ -92,8 +94,9 @@ def get_relevant_contigs(seg_cutoffs,scoring_dict):
 
     return rel_contigs
 
+#estimates an E-value (Althchul and Karlin)
+#https://www.ncbi.nlm.nih.gov/BLAST/tutorial/Altschul-1.html
 def compute_e_value(scoring_dict,ref_file,p_val):
-    #estimates an E-value (see Altschul and Karlin)
     ref_cmaps = parse_cmap(ref_file)
     for i in scoring_dict:
         scoring_dict[i] = sorted(scoring_dict[i],key=lambda x: x[1])
@@ -137,6 +140,7 @@ def compute_e_value(scoring_dict,ref_file,p_val):
 
     return seg_cutoffs
 
+#identify unaligned regions in contigs
 def get_unaligned_segs(aln_path,aln_flist):
     contig_aln_dict = defaultdict(list)
     contig_unaligned_regions = defaultdict(list)
@@ -212,9 +216,8 @@ def write_unaligned_cmaps(contig_unaligned_regions,output_prefix,enzyme):
 
     return unaligned_region_contig_dict,unaligned_region_filename,unaligned_contig_id_dict
 
-#deprecated an unused function
+#deprecated and unused function
 def detections_to_graph(outfile,bpg_list):
-    print "INSIDE", bpg_list
     for i in bpg_list:
         print i
         seg_size = int(i[2]) - int(i[1])
@@ -227,6 +230,7 @@ def detections_to_key(outfile,keyfile_info):
     for i in keyfile_info:
         outfile.write(i[0] + "\t" + i[1] + ":" + i[2] + "-|" + i[1] + ":" + i[3] + "+\t0\n")
 
+#write a new AA graph file and a new CMAP reflecting the added segments
 def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme):
     #read graph
     graphfile_lines = []
@@ -245,7 +249,6 @@ def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme):
 
     print "Creating new CMAP"
     subprocess.call("python graph_to_cmap.py -i " + new_graphfile + " -r ref_genomes/hg19.fa -e " + enzyme,shell=True)
-
 
 def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unaligned_label_trans,id_start):
     #must indicate that the reference genome used (field in the head)
@@ -337,6 +340,18 @@ def run_SegAligner(contig_flist,segs,arg_list,nthreads):
     for t in threadL:
         t.join()
 
+def make_score_plots(fpath,scoring_dict):
+    for i in scoring_dict:
+        fig = plt.figure()
+        x_vals = [x[1] for x in scoring_dict[i]]
+        y_vals = np.log(range(1,len(x_vals)+1))
+        plt.scatter(x_vals,y_vals)
+        plt.ylabel("$ln$(E)")
+        plt.xlabel("S")
+        plt.title(str(i))
+        fig.savefig(fpath + "s_dist_"+ str(i) + ".png",dpi=300)
+        plt.close()
+
 #main
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Banded DP alignment with scoring optimizations for BioNano data")
@@ -348,6 +363,9 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_prefix", help="output filename prefix (assumes working directory & ref name unless otherwise specified")
     parser.add_argument("-t", help="number of threads to use (default 4)", type=int, default=4)
     parser.add_argument("-e", help="labeling enzyme", default="BspQI")
+    parser.add_argument("--no_cleanup", help="[Debugging option] Do not remove old scoring files prior to running.",action='store_true')
+    parser.add_argument("--score_plotting", help="Save plots of the distributions of segment scores",action='store_true')
+
     args = parser.parse_args()
 
 
@@ -357,9 +375,12 @@ if __name__ == "__main__":
 
     if not args.output_prefix.endswith("/"): args.output_prefix+="/"
 
+    #pre-cleanup to remove old score files in a directory
+    if not args.no_cleanup:
+        subprocess.call("rm " + args.output_prefix + "*_contig_scores*",shell=True)
+
     a_dir = args.output_prefix + "alignments/"
-    if not os.path.exists(a_dir):
-        os.makedirs(a_dir)
+    if not os.path.exists(a_dir): os.makedirs(a_dir)
 
 
     min_map_len = 4
@@ -369,7 +390,7 @@ if __name__ == "__main__":
     seg_cmaps = parse_cmap(args.segs)
     contig_lens = get_cmap_lens(args.contigs)
     
-    #get chunked cmap
+    #break the cmap into multiple pieces
     chunked_cmap_files = chunk_cmap(args.contigs,nthreads)
 
     print "\nGetting distribution of best alignment scores for reference with contigs"
@@ -384,6 +405,10 @@ if __name__ == "__main__":
     for f in flist:
         if f.startswith("scores"):
             read_scoring_file(args.output_prefix + f,scoring_dict)
+            #make plots of the scores
+            if args.score_plotting:
+                make_score_plots(args.output_prefix,scoring_dict)
+
 
     seg_cutoffs = compute_e_value(scoring_dict,args.segs,args.p_value)
     rel_contigs = get_relevant_contigs(seg_cutoffs,scoring_dict)
@@ -459,7 +484,7 @@ if __name__ == "__main__":
 
     #remove the chunked cmaps
     print "removing temporary files"
-    # subprocess.call("rm " + a_dir + "*flipped_aln.txt", shell=True)
+    subprocess.call("rm " + a_dir + "*flipped_aln.txt", shell=True)
     for i in chunked_cmap_files + chunked_ref_files:
         subprocess.call("rm " + i, shell=True)
 
