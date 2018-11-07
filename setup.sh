@@ -8,8 +8,8 @@ echo "export SA_SRC=$PWD" >> ~/.bashrc
 source ~/.bashrc
 
 #alias AmpliconReconstructor
-echo "alias AmpliconReconstructor='python2 $AR_SRC/AmpliconReconstructor'" >> ~/.bashrc
-echo "alias AR='python2 $AR_SRC/AmpliconReconstructor'" >> ~/.bashrc
+echo "alias AmpliconReconstructor='python2 $AR_SRC/AmpliconReconstructor.py'" >> ~/.bashrc
+echo "alias AR='python2 $AR_SRC/AmpliconReconstructor.py'" >> ~/.bashrc
 
 #make SegAligner
 cd SegAligner
