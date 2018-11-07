@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import sys
 import time
@@ -12,9 +13,7 @@ from scipy.stats import linregress
 from collections import defaultdict
 
 
-#coordinates the pipeline
-#2 calls PCEE
-#3 Calls CycleViz
+#development version
 
 unaligned_label_cutoff = 8
 unaligned_size_cutoff = 75000
@@ -362,7 +361,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--p_value", help="p-value threshold for alignments", type=float, default=0.05)
     parser.add_argument("-o", "--output_prefix", help="output filename prefix (assumes working directory & ref name unless otherwise specified")
     parser.add_argument("-t", help="number of threads to use (default 4)", type=int, default=4)
-    parser.add_argument("-e", help="labeling enzyme", default="BspQI")
+    parser.add_argument("-e", help="labeling enzyme", required=True)
     parser.add_argument("--no_cleanup", help="[Debugging option] Do not remove old scoring files prior to running.",action='store_true')
     parser.add_argument("--score_plotting", help="Save plots of the distributions of segment scores",action='store_true')
 
