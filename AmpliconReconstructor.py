@@ -8,6 +8,8 @@ import threading
 import subprocess
 import numpy as np
 from bionanoUtil import *
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
 from collections import defaultdict
@@ -29,7 +31,7 @@ class SegAlignerThread(threading.Thread):
     def run(self):
         print "Starting " + self.name
         argstring = " ".join(self.arg_list)
-        subprocess.call(" ".join(["SegAligner/SegAligner",self.ref_file,self.contigs_file,argstring]), shell=True)
+        subprocess.call(" ".join([os.environ["SA_SRC"] + "/SegAligner",self.ref_file,self.contigs_file,argstring]), shell=True)
         print "Finished thread " + self.threadID
         return 1
 
@@ -119,7 +121,7 @@ def compute_e_value(scoring_dict,ref_file,p_val):
         # right_ind = bisect.bisect_left(all_score_vals,right_side)
 
         #top50
-        right_ind = -50
+        right_ind = -10
 
         #outlier-removed data
         score_vals = all_score_vals[left_ind:right_ind]        
@@ -342,12 +344,14 @@ def run_SegAligner(contig_flist,segs,arg_list,nthreads):
 def make_score_plots(fpath,scoring_dict):
     for i in scoring_dict:
         fig = plt.figure()
-        x_vals = [x[1] for x in scoring_dict[i]]
+        left_ind = len(scoring_dict[i])/2 + 1
+        x_vals = [x[1] for x in scoring_dict[i][::-1]][:left_ind]
         y_vals = np.log(range(1,len(x_vals)+1))
-        plt.scatter(x_vals,y_vals)
-        plt.ylabel("$ln$(E)")
-        plt.xlabel("S")
-        plt.title(str(i))
+        cols = ["grey"]*10 + ["b"]*left_ind
+        plt.scatter(x_vals,y_vals,color=cols)
+        plt.ylabel("ln(E)",fontsize=14)
+        plt.xlabel("S",fontsize=14)
+        plt.title(str(i),fontsize=14)
         fig.savefig(fpath + "s_dist_"+ str(i) + ".png",dpi=300)
         plt.close()
 
@@ -361,7 +365,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--p_value", help="p-value threshold for alignments", type=float, default=0.05)
     parser.add_argument("-o", "--output_prefix", help="output filename prefix (assumes working directory & ref name unless otherwise specified")
     parser.add_argument("-t", "--threads", help="number of threads to use (default 4)", type=int, default=4)
-    parser.add_argument("-e", "--enzyme", help="labeling enzyme", required=True)
+    parser.add_argument("-e", "--enzyme", help="labeling enzyme", choices=["BspQI","DLE1"],required=True)
     parser.add_argument("--no_cleanup", help="[Debugging option] Do not remove old scoring files prior to running.",action='store_true')
     parser.add_argument("--score_plotting", help="Save plots of the distributions of segment scores",action='store_true')
 
@@ -383,7 +387,7 @@ if __name__ == "__main__":
 
 
     min_map_len = 4
-    nthreads = args.t
+    nthreads = args.threads
 
     contig_cmaps = parse_cmap(args.contigs)
     seg_cmaps = parse_cmap(args.segs)
@@ -395,7 +399,7 @@ if __name__ == "__main__":
     print "\nGetting distribution of best alignment scores for reference with contigs"
     print "Starting scoring at " + time.ctime(time.time())
     #CONTIG SCORING
-    run_SegAligner(chunked_cmap_files,args.segs,[str(min_map_len),"-scoring","-prefix=" + args.output_prefix],nthreads)
+    # run_SegAligner(chunked_cmap_files,args.segs,[str(min_map_len),"-scoring","-prefix=" + args.output_prefix],nthreads)
     print "Scoring finished at " + time.ctime(time.time()) + "\n"
 
     #get the scoring thresholds.
@@ -404,12 +408,13 @@ if __name__ == "__main__":
     for f in flist:
         if f.startswith("scores"):
             read_scoring_file(args.output_prefix + f,scoring_dict)
-            #make plots of the scores
-            if args.score_plotting:
-                make_score_plots(args.output_prefix,scoring_dict)
-
+            
 
     seg_cutoffs = compute_e_value(scoring_dict,args.segs,args.p_value)
+    #make plots of the scores
+    if args.score_plotting:
+        make_score_plots(args.output_prefix,scoring_dict)
+
     rel_contigs = get_relevant_contigs(seg_cutoffs,scoring_dict)
     #write the cutoffs and the contig list to files
     with open(args.output_prefix + "scoring_thresholds.txt",'w') as outfile:
@@ -432,13 +437,13 @@ if __name__ == "__main__":
     aln_flist = [x for x in os.listdir(a_dir) if x.startswith("segalign") and "flipped" not in x and "rg" not in x]
     #extract the unaligned regions.
     contig_unaligned_regions = get_unaligned_segs(a_dir,aln_flist)
-    unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_prefix,args.e)
+    unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_prefix,args.enzyme)
 
     #SCORING OF UNALIGNED REGIONS
     chunked_ref_files = []
     if contig_unaligned_regions:
         print "doing unaligned region detection"
-        chunked_ref_files = chunk_cmap("ref_genomes/hg19_" + args.e + ".cmap",nthreads,500)
+        chunked_ref_files = chunk_cmap(os.environ['AR_SRC'] + "/ref_genomes/hg19_" + args.enzyme + ".cmap",nthreads,500)
         run_SegAligner(chunked_ref_files,unaligned_region_filename,["-detection","-prefix=" + args.output_prefix],nthreads)
         
         #read the detected scores files
@@ -473,9 +478,9 @@ if __name__ == "__main__":
         with open(args.g) as infile:
             index_start = sum(1 for _ in infile if _.startswith("sequence"))
 
-        bpg_list = detections_to_seg_alignments(a_dir,aln_flist,"ref_genomes/hg19_" + args.e + ".cmap",unaligned_cid_d,unaligned_label_trans,index_start)
+        bpg_list = detections_to_seg_alignments(a_dir,aln_flist,"ref_genomes/hg19_" + args.enzyme + ".cmap",unaligned_cid_d,unaligned_label_trans,index_start)
         print "Found new segments, re-writing graph and CMAP"
-        rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.e)
+        rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
 
     else:
         print "No large unaligned regions found on segment-aligned contigs"
