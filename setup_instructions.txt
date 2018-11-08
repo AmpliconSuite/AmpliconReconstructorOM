@@ -20,5 +20,6 @@ echo "alias SegAligner='$SA_SRC/SegAligner'" >> ~/.bashrc
 
 #make changes effective for current session
 source ~/.bashrc
+cd ..
 
 echo -e "\nSetup complete\n"
