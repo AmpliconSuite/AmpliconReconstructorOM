@@ -1,18 +1,18 @@
-#!/usr/bin/env bash
-
 #This sets up AmpliconReconstuctor and SegAligner as a local command line utility, callable from any directory
+#Copy and paste the following commands into your terminal to set up the utility. This adds the AR directories to your bashrc. It is preferred that the user invoke these commands instead of allowing a script to modify a user's bashrc.
 
 #add AmpliconReconstructor and SegAligner to path
 echo "export AR_SRC=$PWD" >> ~/.bashrc
-echo "export SA_SRC=$PWD" >> ~/.bashrc
+echo "export SA_SRC=$PWD/SegAligner" >> ~/.bashrc
 source ~/.bashrc
-
+echo $AR_SRC
+echo $SA_SRC
 #alias AmpliconReconstructor
 echo "alias AmpliconReconstructor='python2 $AR_SRC/AmpliconReconstructor.py'" >> ~/.bashrc
 echo "alias AR='python2 $AR_SRC/AmpliconReconstructor.py'" >> ~/.bashrc
 
 #make SegAligner
-cd SegAligner
+cd $SA_SRC
 make clean; make
 
 #alias SegAligner
