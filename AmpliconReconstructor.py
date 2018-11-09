@@ -31,7 +31,7 @@ class SegAlignerThread(threading.Thread):
     def run(self):
         print "Starting " + self.name
         argstring = " ".join(self.arg_list)
-        subprocess.call(" ".join([os.environ["SA_SRC"] + "/SegAligner",self.ref_file,self.contigs_file,argstring]), shell=True)
+        subprocess.call(" ".join([os.environ['SA_SRC'] + "/SegAligner",self.ref_file,self.contigs_file,argstring]), shell=True)
         print "Finished thread " + self.threadID
         return 1
 
@@ -120,7 +120,7 @@ def compute_e_value(scoring_dict,ref_file,p_val):
         #TUKEY
         # right_ind = bisect.bisect_left(all_score_vals,right_side)
 
-        #top50
+        #top10
         right_ind = -10
 
         #outlier-removed data
@@ -243,13 +243,13 @@ def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme):
     with open(new_graphfile, 'w') as outfile:
         for line in graphfile_lines:
             if line.startswith("BreakpointEdge:"):
-                print "HERE"
                 detections_to_graph(outfile,bpg_list)
 
             outfile.write(line)
 
     print "Creating new CMAP"
-    subprocess.call("python graph_to_cmap.py -i " + new_graphfile + " -r ref_genomes/hg19.fa -e " + enzyme,shell=True)
+    subprocess.call("python2 " + os.environ['AR_SRC'] + "/graph_to_cmap.py -i " + new_graphfile + " -r " + 
+        os.environ['HG19_DIR'] + "/hg19.fa -e " + enzyme,shell=True)
 
 def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unaligned_label_trans,id_start):
     #must indicate that the reference genome used (field in the head)
@@ -260,7 +260,6 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
     seg_dir_count = defaultdict(int)
     bpg_list = []
     aln_num = 0
-    print unaligned_cid_d.keys()
     print "aln_files len",len(aln_files)
     for f in aln_files:
         f_fields = os.path.splitext(f)
@@ -367,7 +366,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--threads", help="number of threads to use (default 4)", type=int, default=4)
     parser.add_argument("-e", "--enzyme", help="labeling enzyme", choices=["BspQI","DLE1"],required=True)
     parser.add_argument("--no_cleanup", help="[Debugging option] Do not remove old scoring files prior to running.",action='store_true')
-    parser.add_argument("--score_plotting", help="Save plots of the distributions of segment scores",action='store_true')
+    parser.add_argument("--plot_scores", help="Save plots of the distributions of segment scores",action='store_true')
 
     args = parser.parse_args()
 
@@ -399,7 +398,7 @@ if __name__ == "__main__":
     print "\nGetting distribution of best alignment scores for reference with contigs"
     print "Starting scoring at " + time.ctime(time.time())
     #CONTIG SCORING
-    # run_SegAligner(chunked_cmap_files,args.segs,[str(min_map_len),"-scoring","-prefix=" + args.output_prefix],nthreads)
+    run_SegAligner(chunked_cmap_files,args.segs,[str(min_map_len),"-scoring","-prefix=" + args.output_prefix],nthreads)
     print "Scoring finished at " + time.ctime(time.time()) + "\n"
 
     #get the scoring thresholds.
@@ -412,7 +411,7 @@ if __name__ == "__main__":
 
     seg_cutoffs = compute_e_value(scoring_dict,args.segs,args.p_value)
     #make plots of the scores
-    if args.score_plotting:
+    if args.plot_scores:
         make_score_plots(args.output_prefix,scoring_dict)
 
     rel_contigs = get_relevant_contigs(seg_cutoffs,scoring_dict)
@@ -478,7 +477,7 @@ if __name__ == "__main__":
         with open(args.g) as infile:
             index_start = sum(1 for _ in infile if _.startswith("sequence"))
 
-        bpg_list = detections_to_seg_alignments(a_dir,aln_flist,"ref_genomes/hg19_" + args.enzyme + ".cmap",unaligned_cid_d,unaligned_label_trans,index_start)
+        bpg_list = detections_to_seg_alignments(a_dir,aln_flist,os.environ['AR_SRC'] + "/ref_genomes/hg19_" + args.enzyme + ".cmap",unaligned_cid_d,unaligned_label_trans,index_start)
         print "Found new segments, re-writing graph and CMAP"
         rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
 

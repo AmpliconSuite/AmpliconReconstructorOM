@@ -56,6 +56,7 @@ def read_graph(graphF):
 def segsToSeq(segSeqL,seqD):
 	segSeqD = {}
 	for i in segSeqL:
+		print i
 		segSeqD[i[0]] = seqD[i[1]][i[2]:i[3]]
 
 	return segSeqD

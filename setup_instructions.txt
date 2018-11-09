@@ -4,6 +4,8 @@
 #add AmpliconReconstructor and SegAligner to path
 echo "export AR_SRC=$PWD" >> ~/.bashrc
 echo "export SA_SRC=$PWD/SegAligner" >> ~/.bashrc
+##USER MUST REPLACE INFORMATION ON THE FOLLOWING LINE
+echo "export HG19_DIR=[your hg19.fa directory name]" >> ~/.bashrc
 source ~/.bashrc
 echo $AR_SRC
 echo $SA_SRC
