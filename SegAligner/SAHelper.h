@@ -23,7 +23,7 @@ vector<tuple<int,int,float>> get_aln_list(vector<vector<float>> &S, vector<vecto
 //Open an output file and print alignment path there, mark the output alignments as used
 void print_alignment(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous,
         vector<tuple<int,int,float>> &aln_list, int contig_id, int seg_id, map<int,vector<float>> cmaps_ref,
-        string &outname, set<array<int,3>> &used_pairings, float curr_best_score);
+        string &outname, map<int,set<int>> &contig_used_label_map, float curr_best_score);
 
 ////Parse the score thresholds
 //map<int,float> parse_score_thresholds(string &score_thresh_file);
@@ -36,6 +36,6 @@ void parse_used_labels(string &used_labels_file, map<int,set<int>> &contig_used_
 
 void write_score_thresholds(map<int,float> score_thresholds, string full_prefix);
 
-bool null_intersection(vector<tuple<int,int,float>> &aln_list, set<int> &s);
+//bool null_intersection(vector<tuple<int,int,float>> &aln_list, set<int> &s);
 
 void write_all_scores(vector<tuple<int,int,float>> &full_scores, string &full_prefix);

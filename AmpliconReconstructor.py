@@ -243,7 +243,8 @@ def make_score_plots(scores_file,fpath):
         left_ind = len(scoring_dict[i])/2 + 1
         x_vals = sorted(scoring_dict[i],reverse=True)
         y_vals = np.log(range(1,len(x_vals)+1))
-        plt.scatter(x_vals,y_vals)
+        cols = ["grey"]*25 + ["b"]*725 + ["grey"]*(len(x_vals) - 750)
+        plt.scatter(x_vals,y_vals,c=cols)
         plt.ylabel("ln(E)",fontsize=14)
         plt.xlabel("S",fontsize=14)
         plt.title(str(i),fontsize=14)
@@ -289,10 +290,9 @@ if __name__ == "__main__":
     run_SegAligner(args.contigs,args.segs,arg_list)
 
     #extract aligned regions
-    aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "flipped" not in x and "rg" not in x]
+    aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "flipped" not in x and "_ref_" not in x]
     #extract the unaligned regions given the alignments
     contig_unaligned_regions = get_unaligned_segs(a_dir,aln_flist)
-    print contig_unaligned_regions
 
     #get the scoring thresholds.
     print "Plotting score distributions"
@@ -310,6 +310,7 @@ if __name__ == "__main__":
         with open(args.g) as infile:
             index_start = sum(1 for _ in infile if _.startswith("sequence"))
 
+        aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "AR_ref" in x]
         bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start)
         print "Found new segments, re-writing graph and CMAP"
         rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
@@ -317,8 +318,8 @@ if __name__ == "__main__":
     else:
         print "No large unaligned regions found on segment-aligned contigs"
 
-    #remove the chunked cmaps
-    print "removing temporary files"
-    subprocess.call("rm " + a_dir + "*flipped_aln.txt 2>/dev/null", shell=True)
+    # #remove the chunked cmaps
+    # print "removing temporary files"
+    # subprocess.call("rm " + a_dir + "*_aln.txt 2>/dev/null", shell=True)
 
     print "Completed " + time.ctime(time.time()) + "\n"

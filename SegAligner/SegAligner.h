@@ -6,7 +6,7 @@ float score_f(vector<float> &b_posns, vector<float> &x_posns, int i_ind, int j_i
               vector<float> &x_collapse_probs);
 
 void dp_align(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous, vector<float> &b_posns,
-              vector<float> &x_posns, int x, int lookback, set<array<int,3>> &used_pairings,
+              vector<float> &x_posns, int x, int lookback, set<int> &used_labels,
               vector<float> &x_collapse_probs, vector<float> &b_collapse_probs, bool swap_b_x);
 
 array<int,2> get_backtrack_start(vector<vector<float>> &S,int b_len,int x_len);

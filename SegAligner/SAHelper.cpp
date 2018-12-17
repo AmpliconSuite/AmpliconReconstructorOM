@@ -95,7 +95,7 @@ vector<tuple<int,int,float>> get_aln_list(vector<vector<float>> &S, vector<vecto
 
 void print_alignment(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous,
         vector<tuple<int,int,float>> &aln_list, int contig_id, int seg_id, map<int,vector<float>> cmaps_ref,
-        string &outname, set<array<int,3>> &used_pairings, float curr_best_score) {
+        string &outname, map<int,set<int>> &contig_used_label_map, float curr_best_score) {
 
     ofstream outfile;
     char direction;
@@ -111,7 +111,7 @@ void print_alignment(vector<vector<float>> &S, vector<vector<array<int,2>>> &pre
 
     float prev_score = 0.0;
     for (int i = aln_list.size()-1; i > -1; --i) {
-        used_pairings.insert({seg_id,get<0>(aln_list[i]),get<1>(aln_list[i])});
+        contig_used_label_map[contig_id].insert(get<0>(aln_list[i]));
         float curr_score = get<2>(aln_list[i]);
         float score_delta = curr_score - prev_score;
         int curr_lab = get<1>(aln_list[i]);
@@ -196,14 +196,14 @@ void write_score_thresholds(map<int,float> score_thresholds, string full_prefix)
     outfile.close();
 }
 
-bool null_intersection(vector<tuple<int,int,float>> &aln_list, set<int> &s) {
-    for (auto &e: aln_list) {
-        if (s.find(get<0>(e)) != s.end()){
-            return false;
-        }
-    }
-    return true;
-}
+//bool null_intersection(vector<tuple<int,int,float>> &aln_list, set<int> &s) {
+//    for (auto &e: aln_list) {
+//        if (s.find(get<0>(e)) != s.end()){
+//            return false;
+//        }
+//    }
+//    return true;
+//}
 
 void write_all_scores(vector<tuple<int,int,float>> &full_scores, string &prefix) {
     ofstream outfile;

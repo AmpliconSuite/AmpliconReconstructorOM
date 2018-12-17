@@ -71,7 +71,7 @@ float score_f(vector<float> &b_posns, vector<float> &x_posns, int i_ind, int j_i
 
 
 void dp_align(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous, vector<float> &b_posns,
-              vector<float> &x_posns, int x, int lookback, set<array<int,3>> &used_pairings,
+              vector<float> &x_posns, int x, int lookback, set<int> &used_labels,
               vector<float> &x_collapse_probs, vector<float> &b_collapse_probs, bool swap_b_x) {
 
     for (int j_ind = 0; j_ind < b_posns.size() - 1; j_ind++) {
@@ -79,7 +79,7 @@ void dp_align(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous, 
         for (int q_ind = 0; q_ind < x_posns.size() - 1; ++q_ind) {
             previous[j_ind][q_ind] = {-1, -1};
 
-            if (used_pairings.find({x,j_ind,q_ind}) != used_pairings.end()) {
+            if (used_labels.find(j_ind) != used_labels.end()) {
                 continue;
             }
 
