@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <fstream>
 #include <algorithm>
-//#include <string.h>
 #include <vector>
 #include <map>
 #include <ctime>
@@ -10,379 +9,393 @@
 #include <set>
 #include <limits>
 #include <numeric>
+#include <future>
 
-using namespace std;
+#include "SAHelper.h"
+#include "SegAligner.h"
 
-//const float fp_p = 5000.0;
-int lookback = 5;
-int min_map_len = 4;
-bool limit_lookback = true;
+//non-positional arg instantiation:
+//bool scoring_mode = false;
+bool local_aln = false;
+bool detection = false;
+bool tip_aln = false;
 bool swap_b_x = false;
+int n_detect_scores = 500;
+int n_threads = 1;
+int min_map_len = 6;
+int lookback = 5;
+int max_seg_contig_alns = 10;
+float p_val = 0.05;
+string sample_prefix = "SA_output";
 
-/**
- * Opens and parses a CMAP text file, stores cmap as pair which is given as input
- * @param fname
- * @param cmap_pair
+//bookkeeping variable instantiation
+string detection_label;
+string flipped;
+
+
+/*
+ * method to compute the e-values
+ * assumes scores are sorted
  */
-void parse_cmap(const string &fname, map<int,vector<float>> &cmap_pair) {
-    vector<float> *new_map = new vector<float>;
-    string line;
-    vector<string> tokens;
-    ifstream infile (fname);
-    size_t pos = 0;
-    string token;
-    int curr_id = 0;
-    float curr_pos = 0;
-    if (infile.is_open()) {
-        while (getline (infile,line)) {
-            int counter = 0;
-            if (line[0] == '#') {
-                continue;
-            }
-            while ((pos = line.find('\t')) != string::npos) {
-                token = line.substr(0,pos);
-                if (counter == 0) {
-                    if (curr_id != stoi(token)) {
-                        curr_id = stoi(token);
-                        cmap_pair[curr_id] = *new_map;
-                    }
-                } else if (counter == 5) {
-                    curr_pos = stof(token);
-                    break;
-                }
-                line.erase(0,pos+1);
-                counter++;
-            }
-            cmap_pair[curr_id].push_back(curr_pos);
-        }
-        infile.close();
-    }
-}
+map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scoring_vector, map<int,vector<float>> &cmaps_segs,
+                                        map<int,vector<float>> &cmaps_contigs, double pvalue) {
 
-///**
-// * Prints a cmap map by map-id to cout
-// * @param cmap_map
-// */
-//void cmap_map_to_string(map<string,vector<float>> cmap_map) {
-//    for (map<string,vector<float>>::const_iterator iter = cmap_map.begin(); iter != cmap_map.end(); ++iter) {
-//        cout << "CMAP ID " << iter->first << endl;
-//        vector<float> curr_posns = iter->second;
-//        for (vector<float>::const_iterator iter2 = curr_posns.begin(); iter2 != curr_posns.end(); ++iter2) {
-//            cout << "POSN " << *iter2 << endl;
-//        }
-//    }
-//}
 
-/**
- * Makes reverse cmap_map entries and adds them into the map
- * @param cmap_map
- */
-map<int,vector<float>> make_reverse_cmap(map<int,vector<float>> &cmap_map, int min_map_len) {
-    map<int,vector<float>> full_cmap_map;
-    vector<float> *new_map;
-    int map_id;
-    int rev_map_id;
-    float map_length;
-    vector<float> curr_posns;
-    for (auto i = cmap_map.begin(); i != cmap_map.end(); ++i) {
-        curr_posns = i->second;
-        map_id = i->first;
-        //full_cmap_map[map_id] = i->second;
-        map_length = curr_posns.size();
-        //to do: check if length of curr_posns > 1
-        if (map_length <= min_map_len + 1) {
-            continue;
-        }
-        rev_map_id = -1*map_id;
-        new_map = new vector<float>;
-        full_cmap_map[map_id] = curr_posns;
-        full_cmap_map[rev_map_id] = *new_map;
-        for (int j = curr_posns.size() - 2; j > -1; --j) {
-            full_cmap_map[rev_map_id].push_back(map_length - curr_posns[j]);
-        }
-        full_cmap_map[rev_map_id].push_back(map_length);
-    }
-    return full_cmap_map;
-}
-
-//iterate over in-silico reference and estimate a probability that a given label will appear as collapsed with a left
-// or right neighbor
-map<int,vector<float>> non_collapse_probs(map<int,vector<float>> &segs_cmaps) {
-    map<int,vector<tuple<float,float>>> non_collapse_pairs;
-    map<int,vector<float>> non_collapse_prob_map;
-    int id;
-    int y_len;
-    float dist;
-    float non_collapse = 1.0;
-    vector<float> y_posns;
-
-    for (auto y = segs_cmaps.begin(); y != segs_cmaps.end(); ++y) {
-        id = y->first;
-        y_posns = y->second;
-        y_len = int(y->second.size()) - 1;
-        non_collapse_pairs[id].emplace_back(1.0,1.0);
-        for (int i = 1; i < y_len; ++i) {
-            non_collapse_pairs[id].emplace_back(1.0,1.0);
-            dist = y_posns[i] - y_posns[i-1];
-            non_collapse = fmin(1.0f,powf(dist,4)/powf(2000,4));
-            non_collapse_pairs[id][i] = make_pair(non_collapse,1.0);
-            non_collapse_pairs[id][i-1] = make_pair(get<0>(non_collapse_pairs[id][i-1]),non_collapse);
-            non_collapse_prob_map[id].push_back(get<0>(non_collapse_pairs[id][i-1])*non_collapse);
-        }
-        non_collapse_prob_map[id].push_back(get<0>(non_collapse_pairs[id][y_len-1])*non_collapse);
+    //Organize the segment scores
+    map<int,vector<float>> seg_scores;
+    for (auto e: cmaps_segs) {
+        seg_scores[e.first] = vector<float>();
     }
 
-    return non_collapse_prob_map;
-}
-
-
-/**
- * scores a matching region
- * @param b_posns
- * @param x_posns
- * @param x
- * @param i_ind
- * @param j_ind
- * @param p_ind
- * @param q_ind
- * @param non_collapse_prob_map
- * @return
- */
-float score_f(vector<float> &b_posns, vector<float> &x_posns, int i_ind, int j_ind, int p_ind, int q_ind,
-        vector<float> &x_collapse_probs) {
-
-    float exp_x_labels = accumulate(x_collapse_probs.begin() + p_ind + 1, x_collapse_probs.begin() + q_ind, 0.0f);
-    float delta = powf(fabs((b_posns[j_ind] - b_posns[i_ind]) - (x_posns[q_ind] - x_posns[p_ind])),1.2f);
-    float fn_t = 5000.0f*(j_ind - (i_ind+1));
-    float fp_t = 5000.0f*exp_x_labels;
-    return 10000.0f - (fn_t + fp_t + delta);
-}
-
-
-void dp_align(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous, vector<float> &b_posns,
-              vector<float> &x_posns, int x, int lookback, set<array<int,3>> &used_pairings,
-              vector<float> &x_collapse_probs, vector<float> &b_collapse_probs) {
-
-//    array<int, 3> prev;
-//    array<int, 2> empty = {-1, -1};
-    float newScore;
-    int i_start;
-    int p_start;
-
-    for (int j_ind = 0; j_ind < b_posns.size() - 1; j_ind++) {
-        i_start = max(0, j_ind - lookback);
-        for (int q_ind = 0; q_ind < x_posns.size() - 1; ++q_ind) {
-            previous[j_ind][q_ind] = {-1, -1};
-
-            if (used_pairings.find({x,j_ind,q_ind}) != used_pairings.end()) {
-                continue;
-            }
-
-            p_start = max(0, q_ind - lookback);
-            for (int i_ind = i_start; i_ind < j_ind; i_ind++) {
-                for (int p_ind = p_start; p_ind < q_ind; p_ind++) {
-//                    if (used_pairings.find({x, i_ind, p_ind}) == used_pairings.end()) {
-                    if (!swap_b_x) {
-                        newScore = S[i_ind][p_ind] +
-                                   score_f(b_posns, x_posns, i_ind, j_ind, p_ind, q_ind, x_collapse_probs);
-                    } else {
-                        newScore = S[i_ind][p_ind] +
-                                   score_f(x_posns, b_posns, p_ind, q_ind, i_ind, j_ind, b_collapse_probs);
-                    }
-
-                    if (newScore > S[j_ind][q_ind]) {
-                        S[j_ind][q_ind] = newScore;
-                        previous[j_ind][q_ind] = {i_ind, p_ind};
-                    }
-
-                }
-            }
-        }
-    }
-}
-
-/**
- * Find location to begin backtracking
- * @param cmap_map_ref
- * @param S
- * @param b_last
- * @return map key for backtracking map which has best score
- */
-array<int,2> get_backtrack_start(vector<vector<float>> &S,int b_len,int x_len) {
-    float best_score = -numeric_limits<float>::infinity();
-    array<int,2> best_pair = {-1,-1};
-    for (int j_ind = 0; j_ind < b_len-1; j_ind++) {
-        for (int x_ind = 0; x_ind < x_len-1; x_ind++) {
-            if (S[j_ind][x_ind] > best_score) {
-                best_score = S[j_ind][x_ind];
-                best_pair = {j_ind,x_ind};
-            }
-        }
-    }
-//    cout << best_pair[0] << " " << best_pair[1] << " " << best_pair[2] <<  " " << best_score << "\n";
-    return best_pair;
-}
-
-void zero_out_aln(vector<vector<float>> &S,  vector<vector<array<int,2>>> &previous, int best_j, int best_x) {
-    array<int,2> new_inds = previous[best_j][best_x];
-    S[best_j][best_x] = -numeric_limits<float>::infinity();
-    while (new_inds[0] != -1) {
-        S[new_inds[0]][new_inds[1]] = -numeric_limits<float>::infinity();
-        new_inds = previous[new_inds[0]][new_inds[1]];
-    }
-}
-
-void multi_backtrack_scores(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous,
-        int x, int contig_id, int b_len, int x_len, int n, vector<tuple<int,int,float>> &scoring_vector) {
-
-    vector<tuple<float,int,int>> all_scores;
-    for (int j_ind = 0; j_ind < b_len-1; j_ind++) {
-        for (int x_ind = 0; x_ind < x_len-1; x_ind++) {
-            if (S[j_ind][x_ind] > 0) {
-                all_scores.emplace_back(S[j_ind][x_ind], j_ind, x_ind);
-            }
-        }
-    }
-    sort(all_scores.begin(),all_scores.end());
-    int last_high_ind = all_scores.size()-1;
-    bool hit;
-    float curr_score;
-    for (int i = 0; i < n; i++) {
-        hit = false;
-        while (!hit && (last_high_ind > -1)) {
-            last_high_ind-=1;
-            curr_score = S[get<1>(all_scores[last_high_ind])][get<2>(all_scores[last_high_ind])];
-            if (curr_score > 0) {
-                hit = true;
-                zero_out_aln(S,previous,get<1>(all_scores[last_high_ind]),get<2>(all_scores[last_high_ind]));
-                scoring_vector.emplace_back(x, contig_id, curr_score);
-            }
-        }
-    }
-}
-
-/**
- * Open an output file and print alignment path there
- * @param S
- * @param previous
- * @param start
- * @param b_cid
- */
-void print_alignment(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous, array<int,2> &start,
-                     int contig_id, int x, map<int,vector<float>> cmaps_ref, float &evalue,
-                     string &outname, set<array<int,3>> &used_pairings) {
-
-    ofstream outfile;
-    int seg_id = x;
-    char direction;
-    if (seg_id < 0) {
-        direction = '-';
-    } else {
-        direction = '+';
-    }
-    outfile.open(outname);
-    outfile << "#seg_seq\ttotal_score\tcircular\n";
-    outfile << "#"  << abs(x) << direction << "\t" << S[start[0]][start[1]] << "\tFalse\n";
-    outfile << "#contig_id\tseg_id\tcontig_label\tseg_label\tcontig_dir\tseg_dir\tseg_aln_number\tscore\tscore_delta\n";
-    //b_label, seg label, score
-    vector<tuple<int,int,float>> aln_list;
-
-    //backtrack and build up list
-    array<int,2> curr = start;
-    while (curr[0] != -1) {
-//        aln_list.emplace_back(make_tuple(curr[0],curr[1],S[curr[0]][curr[1]]));
-        aln_list.emplace_back(curr[0],curr[1],S[curr[0]][curr[1]]);
-        used_pairings.insert({x,curr[0],curr[1]});
-        curr = previous[curr[0]][curr[1]];
+    for (auto &e: full_scoring_vector) {
+        seg_scores[get<0>(e)].push_back(get<2>(e));
     }
 
-    int n_labs;
-    float prev_score = 0.0;
-    float curr_score;
-    float score_delta;
-    int curr_lab;
-    for (int i = aln_list.size()-1; i > -1; --i) {
-        curr_score = get<2>(aln_list[i]);
-        score_delta = curr_score - prev_score;
-        curr_lab = get<1>(aln_list[i]);
-        if (seg_id < 0) {
-//            direction = '-';
-            //translate the reverse label number
-//            seg_id = -1*seg_id;
-            n_labs = cmaps_ref[seg_id].size();
-            curr_lab = n_labs - curr_lab - 1;
+    //sort the scores
+    for (auto &e: seg_scores) {
+        vector<float> curr_scores = e.second;
+        sort(e.second.begin(),e.second.end());
+    }
 
+    cout << "Finished sorting scores.\n";
+    cout << "Computing scoring threshold\n";
+    map<int,float> score_thresholds;
+    int right_cutoff = 10;
+    double E_cutoff = -log(1 - pvalue);
+
+    int m = 0;
+    for (auto i: cmaps_contigs) {
+        m+=(i.second.size()-1);
+    }
+
+    for (auto i: seg_scores) {
+        int seg_id = i.first;
+        int n = cmaps_segs[seg_id].size()-1;
+        vector<float>::const_iterator first;
+        if (n > 50) {
+            first = i.second.begin() + (i.second.size() / 2);
+        } else if (n > 30) {
+            first = i.second.begin() + (3*i.second.size() / 4);
+        } else if (n > 20) {
+            first = i.second.begin() + (5*i.second.size() / 6);
+            right_cutoff = 5;
         } else {
-            curr_lab+=1;
+            first = i.second.begin() + (7*i.second.size() / 8);
+            right_cutoff = 5;
         }
-//        fprintf(outfile,"%d\t%d\t%d\t%d\t+\t%c\t0\t%f\t%f\n",contig_id,seg_id,curr_lab,get<0>(aln_list[i]),direction,curr_score,score_delta);
-        outfile << contig_id << "\t" << abs(seg_id) << "\t" << get<0>(aln_list[i])+1 << "\t" << curr_lab << "\t+\t"
-                << direction << "\t0\t" << curr_score << "\t" << score_delta << "\n";
+        vector<float>::const_iterator last = i.second.begin() + (i.second.size() - 1 - right_cutoff);
+        vector<float> relevant_scores(first,last);
+        vector<int> e_vals(relevant_scores.size());
+        iota(e_vals.begin(),e_vals.end(), 1);
+        reverse(e_vals.begin(),e_vals.end());
 
-        prev_score = curr_score;
-    }
+        //log the e values
+        transform(e_vals.begin(),e_vals.end(),e_vals.begin(),log<int>);
 
-    outfile << flush;
-    outfile.close();
-}
+        //linear regression
+        double slope, intercept;
+        tie(slope,intercept) = linreg(relevant_scores,e_vals);
 
-void init_semiglobal(vector<vector<float>> &S, int x_size, int b_size, int x) {
-    for (int q_ind = 0; q_ind < x_size - 1; q_ind++) {
-        S[0][q_ind] = 0.0;
-    }
+        //compute K
+        double K = exp(intercept - log(m*n));
 
-    for (int j_ind = 0; j_ind < b_size - 1; j_ind++) {
-        S[j_ind][0] = 0.0;
-    }
+        //compute cutoff
+        double S_cutoff = -log(E_cutoff/(K*m*n))/(-slope);
+        score_thresholds[seg_id] = float(S_cutoff);
 
-    for (int j_ind = 1; j_ind < b_size - 1; j_ind++) {
-        for (int q_ind = 1; q_ind < x_size - 1; ++q_ind) {
-            S[j_ind][q_ind] = -numeric_limits<float>::infinity();
-        }
-    }
-}
-
-void init_local_aln(vector<vector<float>> &S, int x_size, int b_size, int x) {
-    for (int j_ind = 0; j_ind < b_size - 1; j_ind++) {
-        for (int q_ind = 0; q_ind < x_size - 1; ++q_ind) {
-            S[j_ind][q_ind] = 0;
-        }
-    }
-}
-
-
-//Parse the score thresholds
-map<int,float>parse_score_thresholds(string &score_thresh_file) {
-    map<int,float>score_thresholds;
-    ifstream infile(score_thresh_file);
-    int seg_id;
-    float score;
-    while (infile >> seg_id >> score) {
-        if (score > 0) {
-//            cout << seg_id << "\n";
-            score_thresholds[seg_id] = score;
-            score_thresholds[-1 * seg_id] = score;
-        }
     }
     return score_thresholds;
 }
 
-//Parse list of contigs to aln with
-set<int>parse_contig_list(string &contig_list_file) {
-    set<int>contig_set;
-    ifstream infile(contig_list_file);
-    int contig_id;
-    while (infile >> contig_id) {
-        contig_set.insert(contig_id);
-    }
-    return contig_set;
+/*
+ * For overlapping alignments, we compute the expected score threshold based on the amount overlap
+ */
+pair<float,float> compute_partial_score_threshold(float full_threshold, const vector<tuple<int,int,float>> &aln_list,
+        vector<float> &contig_cmap) {
+
+    int first_lab = get<0>(aln_list.back());
+    int last_lab = get<0>(aln_list[0]);
+    int aln_span_labs = last_lab - first_lab + 1;
+    float tot_labs = contig_cmap.size()-1;
+    float prop_score_by_label = full_threshold*(aln_span_labs/tot_labs);
+    //adjusted to include genomic material up to next label outside
+    float aln_span_bases = contig_cmap[last_lab] - contig_cmap[first_lab];
+    float prop_score_by_length = full_threshold*(aln_span_bases/contig_cmap[contig_cmap.size()-1]);
+
+    return make_pair(prop_score_by_label,prop_score_by_length);
 }
+
+/*
+ * Method to get the scores
+ * takes a subvector
+ * returns a vector
+ */
+vector<tuple<int,int,float>> run_SA_score(map<int,vector<float>> cmaps_segs, map<int,vector<float>> cmaps_contigs,
+        map<int,vector<float>> non_collapse_prob_map, map<int,vector<float>> non_collapse_prob_map_contig,
+        set<int> contig_set) {
+
+    //variables for scoring, etc.
+    vector<tuple<int,int,float>>scoring_vector;
+    int total_labels = 0;
+    for (auto b: cmaps_contigs) {
+        total_labels+=b.second.size();
+    }
+
+    //create variables for the segment and contig iterations
+    for (auto x_map: cmaps_segs) {
+        int x = x_map.first;
+        vector<float> x_posns = x_map.second;
+        vector<float> seg_ncp_vector = non_collapse_prob_map[x];
+        for (auto &contig_map: cmaps_contigs) {
+            int contig_id = contig_map.first;
+            vector<float> contig_posns = contig_map.second;
+            if (contig_set.find(contig_id) == contig_set.end()) {
+                continue;
+            }
+
+            //initialize alignment data structures
+            vector<float> contig_ncp_vector = non_collapse_prob_map_contig[contig_id];
+            vector<vector<float>> S(contig_posns.size(),vector<float>(x_posns.size()-1));
+            vector<vector<array<int,2>>> previous(contig_posns.size(),vector<array<int,2>>(x_posns.size()-1));
+
+            if (!local_aln) {
+                init_semiglobal(S,x_posns.size(),contig_posns.size(),x);
+
+            } else {
+                init_local_aln(S,x_posns.size(),contig_posns.size(),x);
+            }
+
+            set<array<int,3>>used_pairings;
+            dp_align(S, previous, contig_posns, x_posns, x, lookback, used_pairings, seg_ncp_vector, contig_ncp_vector, swap_b_x);
+            array<int, 2> best_start;
+            if (!local_aln)
+                best_start = tip_aln_backtrack_start(S,contig_posns.size(),x_posns.size());
+            else {
+                best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
+            }
+
+//            if (tip_aln) {
+//                best_start = tip_aln_backtrack_start(S, contig_posns.size(), x_posns.size());
+//            } else {
+//                best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
+//            }
+            float curr_best_score = S[best_start[0]][best_start[1]];
+            if (detection) {
+                //determines how many alns to get for this reference sequence
+                int alns_to_get = int(roundf(n_detect_scores * float(contig_posns.size()) / float(total_labels))) + 1;
+                multi_backtrack_scores(S, previous, x, contig_id, contig_posns.size(), x_posns.size(), alns_to_get,
+                                       scoring_vector);
+            } else {
+                scoring_vector.emplace_back(x, contig_id, curr_best_score);
+            }
+        }
+
+    }
+    return scoring_vector;
+}
+
+/*Method to do the alignments
+* Takes a list of the contigs and segments to align, writes the stuff to files on its own
+*/
+map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<float>> cmaps_contigs,
+                map<int,vector<float>> non_collapse_prob_map, map<int,vector<float>> non_collapse_prob_map_contig,
+                set<pair<int,int>> seg_contig_pairs, map<int,set<int>> contig_used_label_map, map<int,float> score_thresholds) {
+
+
+    map<int,set<int>> discovered_contig_used_labels;
+    for (auto e: cmaps_contigs) {
+        discovered_contig_used_labels[e.first] = set<int>();
+    }
+
+    //create variables for the segment and contig iterations
+    for (auto p: seg_contig_pairs) {
+        int x = p.first;
+        int contig_id = p.second;
+
+        vector<float> x_posns = cmaps_segs[x];
+        vector<float> contig_posns = cmaps_contigs[contig_id];
+        vector<float> seg_ncp_vector = non_collapse_prob_map[x];
+        vector<float> contig_ncp_vector = non_collapse_prob_map_contig[contig_id];
+
+        //initialize alignment data structures
+        float curr_best_score = score_thresholds[x];
+        float exp_thresh = score_thresholds[x];
+        int contig_aligned_count = 0;
+        set<array<int,3>>used_pairings;
+        //Run the alignment while the score exceeds the threshold
+        
+        while (curr_best_score >= exp_thresh && contig_aligned_count < max_seg_contig_alns) {
+            vector<vector<float>> S(contig_posns.size(), vector<float>(x_posns.size() - 1));
+            vector<vector<array<int, 2>>> previous(contig_posns.size(), vector<array<int, 2>>(x_posns.size() - 1));
+            if (!local_aln) {
+                init_semiglobal(S,x_posns.size(),contig_posns.size(),x);
+
+            } else {
+                init_local_aln(S,x_posns.size(),contig_posns.size(),x);
+            }
+
+            dp_align(S, previous, contig_posns, x_posns, x, lookback, used_pairings, seg_ncp_vector,
+                     contig_ncp_vector, swap_b_x);
+
+            array<int, 2> best_start;
+            vector<tuple<int, int, float>> aln_list;
+            string tip_aln_status;
+            if (tip_aln) {
+                tip_aln_status = "_tip";
+                best_start = tip_aln_backtrack_start(S, contig_posns.size(), x_posns.size());
+                aln_list = get_aln_list(S, previous, best_start);
+                float exp_thresh_lab, exp_thresh_len;
+                tie(exp_thresh_lab,exp_thresh_len) = compute_partial_score_threshold(score_thresholds[x], aln_list,
+                        cmaps_contigs[contig_id]);
+
+                exp_thresh = fmax(exp_thresh_lab,exp_thresh_len);
+                if (contig_id == 139) {
+                    cout << x << " " << get<0>(aln_list[0]) << " " << get<0>(aln_list.back()) << " " << get<1>(aln_list[0]) << " " << get<1>(aln_list.back()) << " " << exp_thresh << " " << S[best_start[0]][best_start[1]] << "\n";
+                    cout << exp_thresh_lab << " " << exp_thresh_len << "\n";
+                }
+
+            } else {
+                best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
+                aln_list = get_aln_list(S, previous, best_start);
+            }
+
+            curr_best_score = S[best_start[0]][best_start[1]];
+
+            //if it passes the e-value write it, and do not update the contig
+            if (curr_best_score > exp_thresh) {
+                contig_aligned_count += 1;
+                if (tip_aln) {
+//                    cout << x << " " << contig_id << " " << curr_best_score << " " << contig_aligned_count << "\n";
+
+                    //check if violates the used contig labels
+                    for (auto &e: aln_list) {
+                        used_pairings.insert({x,get<0>(e),get<1>(e)});
+                    }
+                    if (!null_intersection(aln_list,contig_used_label_map[contig_id]) || aln_list.size() < 3) {
+//                        cout << "hit" << "\n";
+                        continue;
+                    }
+                    if (aln_list.size() == 3) {
+                        if (get<2>(aln_list[0]) - get<2>(aln_list[1]) < 5000. || get<2>(aln_list[1]) - get<2>(aln_list[2]) < 5000.) {
+//                            cout << "hit sub" << "\n";
+                            continue;
+                        }
+                        //TODO:SCORE ALL
+                    }
+                    //TEMPORARY: NO NEGATIVE TIPS
+                    bool bads = false;
+                    for (int i = 0; i < aln_list.size()-1; i++) {
+                        if (get<2>(aln_list[i]) - get<2>(aln_list[i+1]) < 0) {
+                            bads = true;
+                            break;
+                        }
+                    }
+                    if (bads) {
+                        continue;
+                    }
+
+                } else {
+                    for (auto &e: aln_list) {
+                        discovered_contig_used_labels[contig_id].insert(get<0>(e));
+                    }
+                }
+
+                string seg_id = to_string(abs(x));
+                if (x < 0) {
+                    seg_id += "_r";
+                }
+                string outname = sample_prefix + "_" + to_string(contig_id) + "_" + seg_id + "_" +
+                                 to_string(contig_aligned_count) + flipped + tip_aln_status + "_aln.txt";
+                print_alignment(S, previous, aln_list, contig_id, x, cmaps_segs, outname, used_pairings, curr_best_score);
+
+            }
+        }
+    }
+    return discovered_contig_used_labels;
+}
+
+ /*
+  * method to parse the args
+  */
+ tuple<string,bool,bool> parse_args(int argc, char *argv[]) {
+     //Parse command line arguments
+     string contig_list_file;
+     string used_labels_file;
+     bool limit_lookback = true;
+     bool do_tip = true;
+     //-------------------------------------------------------
+     for (int i = 3; i < argc; ++i) {
+         if (string(argv[i]) == "-nl") {
+             limit_lookback = false; //from SegAligner.h
+
+         } else if (string(argv[i]) == "-no_tip_aln") {
+            do_tip = false;
+
+            //TODO: REDUNDANT ARGS BELOW
+         } else if (string(argv[i]) == "-detection") {
+             local_aln = true;
+             detection = true;
+             swap_b_x = true; //from SegAligner.h
+             do_tip = false;
+             detection_label = "_detection";
+             cout << "detection mode ON, local ON, swap_b_x ON" << endl;
+
+         } else if (string(argv[i]) == "-alnref") {
+             local_aln = true;
+             swap_b_x = true; //from SegAligner.h
+             flipped = "_flipped";
+             do_tip = false;
+             cout << "detection mode ON (local ON)" << endl;
+
+         } else if (string(argv[i]).rfind("-prefix=", 0) == 0) {
+             sample_prefix = string(argv[i]).substr(string(argv[i]).find('=') + 1);
+
+         } else if (string(argv[i]).rfind("-contig_list=", 0) == 0) {
+             contig_list_file = string(argv[i]).substr(string(argv[i]).find('=') + 1);
+
+         } else if (string(argv[i]) == "-local") {
+             local_aln = true;
+             cout << "local alignment mode" << endl;
+
+         } else if (string(argv[i]).rfind("-nthreads=", 0) == 0) {
+             n_threads = stoi(string(argv[i]).substr(string(argv[i]).find('=') + 1));
+
+         } else if (string(argv[i]).rfind("-min_labs=", 0) == 0) {
+             min_map_len = stoi(string(argv[i]).substr(string(argv[i]).find('=') + 1));
+
+         } else if (string(argv[i]).rfind("-n_detect_scores=", 0) == 0) {
+             //need num scores if detection is true
+             n_detect_scores = stoi(string(argv[i]).substr(string(argv[i]).find('=') + 1));
+
+         }
+
+         if (!flipped.empty()) {
+             do_tip = false;
+         }
+     }
+     //TODO: Print a summary of the positional arguments given
+    return make_tuple(contig_list_file,limit_lookback,do_tip);
+
+ }
+
+ set<int> get_contig_set(string contig_list_file,map<int,vector<float>> cmaps_contigs) {
+     set<int> contig_set;
+     if (!contig_list_file.empty()) {
+         contig_set = parse_contig_list(contig_list_file);
+     } else {
+         for (auto &key: cmaps_contigs) {
+             contig_set.insert(key.first);
+         }
+     }
+     return contig_set;
+ }
+
 
 /*
  *MAIN
  */
 int main (int argc, char *argv[]) {
-    if (argc < 3) {
+    if (argc < 2) {
         cout << "wrong number of arguments" << endl;
         exit(1);
     }
@@ -392,203 +405,166 @@ int main (int argc, char *argv[]) {
     double elapsed_secs;
     clock_t end;
 
-    //positional args
+    //positional arguments
     string ref_cmap_file = argv[1];
     string contig_cmap_file = argv[2];
-    min_map_len = atoi(argv[3]);
 
-    //non-positional arg inits:
-    bool scoring_mode = false;
-    bool local_aln = false;
-    bool detection = false;
-    string sample_prefix;
-    string score_thresh_file;
+    //Parse command line args
     string contig_list_file;
+    bool limit_lookback, do_tip;
+    tie(contig_list_file, limit_lookback, do_tip) = parse_args(argc,argv);
 
-    map<int,float>score_thresholds;
-    vector<tuple<int,int,float>>scoring_vector;
-    set<array<int,3>>used_pairings;
-    int total_labels = 0;
-    string detection_label = "";
-    string flipped = "";
-
-    //make segs cmap
-    map<int,vector<float>> cmaps_ref_raw;
-    ;
-    parse_cmap(ref_cmap_file,cmaps_ref_raw);
-    //    cmap_map_to_string(cmap_map) //DEBUG
-    //add reverse segs
-    map<int,vector<float>> cmaps_ref = make_reverse_cmap(cmaps_ref_raw, min_map_len);
-
-    //make contigs cmaps
-    map<int,vector<float>> cmaps_contig;
-    parse_cmap(contig_cmap_file, cmaps_contig);
-
-    //find collapse probs
-    map<int,vector<float>> non_collapse_prob_map = non_collapse_probs(cmaps_ref);
-    map<int,vector<float>> non_collapse_prob_map_contig = non_collapse_probs(cmaps_contig);
-
-    for (int i = 3; i < argc; ++i) {
-        if (string(argv[i]) == "-nl") {
-            limit_lookback = false;
-        } else if (string(argv[i]) == "-scoring") {
-            scoring_mode = true;
-            cout << "Scoring mode ON" << endl;
-        } else if (string(argv[i]) == "-detection") {
-                local_aln = true;
-                detection = true;
-                swap_b_x = true;
-                detection_label = "detection_";
-                cout << "detection mode ON (local ON)" << endl;
-        } else if (string(argv[i]) == "-alnref") {
-            local_aln = true;
-            swap_b_x = true;
-            flipped = "_flipped";
-            cout << "detection mode ON (local ON)" << endl;
-        } else if (string(argv[i]).rfind("-score_thresh=",0) == 0) {
-            score_thresh_file = string(argv[i]).substr(string(argv[i]).find('=')+1);
-        } else if(string(argv[i]).rfind("-prefix=",0) == 0) {
-            sample_prefix = string(argv[i]).substr(string(argv[i]).find('=')+1);
-        } else if(string(argv[i]).rfind("-contig_list=",0) == 0) {
-            contig_list_file = string(argv[i]).substr(string(argv[i]).find('=')+1);
-        } else if (string(argv[i]) == "-local") {
-            local_aln = true;
-            cout << "local alignment mode" << endl;
-        }
-    }
     if (!limit_lookback) {
         lookback = 9999999;
-        cout << "lookback limit OFF" << endl;
+        cout << "lookback limit OFF. This mode can be very slow\n";
     }
 
-    //Get Score thresholds
-    if (!score_thresh_file.empty()) {
-        score_thresholds = parse_score_thresholds(score_thresh_file);
-    } else {
-        for (auto x = cmaps_ref.begin(); x != cmaps_ref.end(); ++x) {
-            for (int ncp = 0; ncp < non_collapse_prob_map[x->first].size(); ncp++) {
-                score_thresholds[x->first]+=(8000.0f * non_collapse_prob_map[x->first][ncp]);
-            }
-        //cout << x->first << " " << score_thresholds[x->first] << "\n";
+    //make segs cmap
+    map<int,vector<float>> cmaps_segs_raw;
+    ;
+    parse_cmap(ref_cmap_file,cmaps_segs_raw);
+    //cmap_map_to_string(cmap_map) //DEBUG
+    //add reverse segs
+    map<int,vector<float>> cmaps_segs = make_reverse_cmap(cmaps_segs_raw, min_map_len);
+
+    //make contigs cmaps
+    map<int,vector<float>> cmaps_contigs;
+    parse_cmap(contig_cmap_file, cmaps_contigs);
+
+    //find collapse probs
+    map<int,vector<float>> non_collapse_prob_map = non_collapse_probs(cmaps_segs);
+    map<int,vector<float>> non_collapse_prob_map_contig = non_collapse_probs(cmaps_contigs);
+
+    //-------------------------------------------------------
+
+    //[Alignment] Get contigs to align with
+    set<int> contig_set = get_contig_set(contig_list_file, cmaps_contigs);
+
+    cout << "Running SegAligner on " << cmaps_segs.size() << " segments and " << cmaps_contigs.size() << " contigs.\n";
+    cout << "Computing scoring thresholds.\n";
+
+    //Get scoring distribution
+    vector<future<vector<tuple<int,int,float>>>> future_scores;
+    vector<set<int>> chunked_contig_sets(n_threads,set<int>());
+    //chunk the relevant contigs per thread
+    int count = 0;
+    for (auto e: contig_set) {
+        chunked_contig_sets[(count % n_threads)].insert(e);
+        count++;
+    }
+
+    //[RUN SCORING]
+    for (int i = 0; i < n_threads; i++) {
+        future_scores.push_back(async(launch::async, run_SA_score, cmaps_segs, cmaps_contigs, non_collapse_prob_map,
+                non_collapse_prob_map_contig, chunked_contig_sets[i]));
+    }
+
+
+    //Gather results
+    vector<tuple<int,int,float>>full_scoring_vector;
+    for (auto &e: future_scores) {
+        vector<tuple<int,int,float>> temp = e.get();
+        full_scoring_vector.insert(full_scoring_vector.end(),temp.begin(),temp.end());
+    }
+
+    write_all_scores(full_scoring_vector, sample_prefix);
+
+    map<int,float>score_thresholds = compute_score_thresholds(full_scoring_vector,cmaps_segs,cmaps_contigs,p_val);
+    map<int,float>tip_thresholds = compute_score_thresholds(full_scoring_vector,cmaps_segs,cmaps_contigs,1e-6);
+    write_score_thresholds(score_thresholds, sample_prefix + detection_label);
+    cout << "Completed generating scores.\n";
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    printf("elapsed seconds for scoring %f\n",elapsed_secs);
+
+    //[PREP ALIGNMENTS]
+    vector<pair<int,int>> pairs_list;
+    //which pairs exceeded scoring dist
+    for (auto e: full_scoring_vector) {
+        int x = get<0>(e);
+        float curr_score = get<2>(e);
+        if (curr_score >= score_thresholds[x]) {
+            pairs_list.emplace_back(get<0>(e),get<1>(e));
         }
     }
 
-    //Get contigs to align with
-    set<int> contig_set;
-    if (!contig_list_file.empty()) {
-        contig_set = parse_contig_list(contig_list_file);
-    } else {
-        for (auto key = cmaps_contig.begin(); key != cmaps_contig.end(); ++key) {
-            contig_set.insert(key->first);
+    //chunk the pairings passing threshold
+    vector<set<pair<int,int>>> chunked_align_sets(n_threads,set<pair<int,int>>());
+    //chunk the relevant contigs per thread
+    for (int i = 0; i < pairs_list.size(); i++) {
+        chunked_align_sets[(i % n_threads)].insert(pairs_list[i]);
+    }
+
+    //[For Tip alignment] Get the set of labels for each contig which have already been aligned
+    map<int,set<int>> contig_used_label_map;
+    for (auto &e: cmaps_contigs) {
+        contig_used_label_map[e.first] = set<int>();
+    }
+
+    //[RUN ALIGNMENTS]
+    cout << "Performing alignments\n";
+    vector<future<map<int,set<int>>>> futs;
+    map<int,set<int>> temp;
+    for (int i = 0; i < n_threads; i++) {
+        futs.push_back(async(launch::async, run_SA_aln, cmaps_segs, cmaps_contigs, non_collapse_prob_map,
+                non_collapse_prob_map_contig, chunked_align_sets[i], temp, score_thresholds));
+    }
+
+    //TODO: Switch to get and merge map
+    for (auto &f: futs) {
+        temp = f.get();
+        for (auto &x: temp) {
+            contig_used_label_map[x.first].insert(x.second.begin(),x.second.end());
         }
     }
 
-    //create alignment data structures
-//    map<array<int,3>,float> S;
-    vector<vector<float>> S;
-//    map<array<int,2>,array<int,2>> previous;
-    vector<vector<array<int,2>>> previous;
-    vector<float> curr_ncp_vector;
-    vector<float> contig_ncp_vector;
-    array<int, 2> best_start = {-1,-1};
-    for (auto b = cmaps_contig.begin(); b != cmaps_contig.end(); ++b) {
-        total_labels+=b->second.size();
-    }
-    cout << "total labels in contig set: " << total_labels << endl;
+    cout << "Finished standard alignment. \n";
 
-    //create variables for the segment and contig iterations
-    int contig_id;
-    vector<float> contig_posns;
-    int x;
-    vector<float> x_posns;
-    float curr_best_score;
-    int contig_aligned_count;
-    string outname = sample_prefix;
-    string seg_id;
-    int alns_to_get;
-    cout << "Running SegAligner on " << cmaps_ref.size() << " segments and " << cmaps_contig.size() << " contigs\n";
-    for (auto x_map = cmaps_ref.begin(); x_map != cmaps_ref.end(); ++x_map) {
-        x = x_map->first;
-        x_posns = x_map->second;
-//        cout << x << endl;
-        contig_aligned_count = 0;
-        curr_ncp_vector = non_collapse_prob_map[x];
-        for (auto contig_map = cmaps_contig.begin(); contig_map != cmaps_contig.end();) {
-            contig_id = contig_map->first;
-            contig_posns = contig_map->second;
-            if (contig_set.find(contig_id) == contig_set.end()) {
-                ++contig_map;
-                continue;
+    //[TIP ALIGNMENT]
+    //Score then align tips
+    if (do_tip) {
+        cout << "Doing tip alignment.\n";
+
+        set<pair<int,int>> tip_pairs_set;
+        tip_aln = true;
+//        local_aln = true;
+        //Get contigs with alns and pair with all segs
+        for (auto e: pairs_list) {
+            for (auto x: pairs_list) {
+                //adds the seg_id and contig_id so all relevant segs are paired with all relevant contigs
+                tip_pairs_set.insert(make_pair(x.first,e.second));
+                tip_pairs_set.insert(make_pair(-x.first,e.second));
+
             }
-
-            //initialize alignment data structures
-            for (int i = 0; i < contig_posns.size()-1; i++) {
-//                S.push_back(vector<float>(x_posns.size()-1));
-//                previous.push_back(vector<array<int,2>>(x_posns.size()-1));
-                S.emplace_back(x_posns.size()-1);
-                previous.emplace_back(x_posns.size()-1);
-            }
-
-            if (local_aln) {
-                init_local_aln(S,x_posns.size(),contig_posns.size(),x);
-            } else {
-                init_semiglobal(S,x_posns.size(),contig_posns.size(),x);
-            }
-            contig_ncp_vector = non_collapse_prob_map_contig[contig_id];
-
-            dp_align(S, previous, contig_posns, x_posns, x, lookback, used_pairings, curr_ncp_vector, contig_ncp_vector);
-            best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
-            curr_best_score = S[best_start[0]][best_start[1]];
-
-            //if mode "scoring", write this score into a list somewhere
-            if (scoring_mode) {
-                scoring_vector.emplace_back(x, contig_id, curr_best_score);
-                ++contig_map;
-
-            } else if (detection) {
-                //figure out how many alns to get for this thing
-                alns_to_get =  int(roundf(1000.0f * float(contig_posns.size())/float(total_labels))) + 1;
-//                cout << contig_id << " " << x << " contig has len: " << contig_posns.size() << " getting " << alns_to_get << endl;
-                multi_backtrack_scores(S,previous,x,contig_id,contig_posns.size(),x_posns.size(),alns_to_get,scoring_vector);
-                ++contig_map;
-
-            } else {
-                //if it passes the e-value write it, and do not update the contig
-                if (curr_best_score >= score_thresholds[x]) {
-                    contig_aligned_count+=1;
-                    seg_id = to_string(abs(x));
-                    if (x < 0){
-                        seg_id+="_r";
-                    }
-                    outname = sample_prefix + "segalign_" + to_string(contig_id) + "_" + seg_id + "_" + to_string(contig_aligned_count) + flipped + "_aln.txt";
-                    print_alignment(S,previous,best_start,contig_id,x,cmaps_ref,score_thresholds[x],outname,used_pairings);
-//                    --contig_map;
-                    if ((contig_aligned_count > 4) && local_aln) {
-                        ++contig_map;
-                    }
-
-                } else {
-                    used_pairings.clear();
-                    ++contig_map;
-                }
-            }
-            S.clear();
-            previous.clear();
         }
-    }
-    if (scoring_mode || detection) {
-        ofstream outfile;
-        outfile.open(outname + detection_label + "scores_" + to_string(contig_id) + "_contig_scores.txt");
-        outfile << "#seg\tcontig\tscore\n";
-        for (int i = 0; i < scoring_vector.size(); i++) {
-            outfile << get<0>(scoring_vector[i]) << "\t" << get<1>(scoring_vector[i]) << "\t"
-                    << get<2>(scoring_vector[i]) << "\n";
+
+        //chunk the tip pairs
+        vector<set<pair<int,int>>> chunked_tip_pairs(n_threads,set<pair<int,int>>());
+        count = 0;
+        for (auto e: tip_pairs_set) {
+            chunked_tip_pairs[(count % n_threads)].insert(e);
+            count++;
         }
-        outfile << flush;
-        outfile.close();
+
+
+        //Run SA align
+        cout << "Performing alignments\n";
+        vector<future<map<int,set<int>>>> tip_futs;
+        for (int i = 0; i < n_threads; i++) {
+            tip_futs.push_back(async(launch::async, run_SA_aln, cmaps_segs, cmaps_contigs, non_collapse_prob_map,
+                                 non_collapse_prob_map_contig, chunked_tip_pairs[i], contig_used_label_map, tip_thresholds));
+
+        }
+        for (auto &f: tip_futs) {
+            f.wait();
+        }
+        cout << "Finished tip alignments.\n" << endl;
+
     }
 
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     printf("elapsed seconds for run %f\n",elapsed_secs);
+
+    return 0;
 }
