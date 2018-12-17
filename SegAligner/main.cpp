@@ -165,8 +165,8 @@ vector<tuple<int,int,float>> run_SA_score(map<int,vector<float>> cmaps_segs, map
                 init_local_aln(S,x_posns.size(),contig_posns.size(),x);
             }
 
-            set<array<int,3>>used_pairings;
-            dp_align(S, previous, contig_posns, x_posns, x, lookback, used_pairings, seg_ncp_vector, contig_ncp_vector, swap_b_x);
+            set<int> temp;
+            dp_align(S, previous, contig_posns, x_posns, x, lookback, temp, seg_ncp_vector, contig_ncp_vector, swap_b_x);
             array<int, 2> best_start;
             if (!local_aln)
                 best_start = tip_aln_backtrack_start(S,contig_posns.size(),x_posns.size());
@@ -203,6 +203,8 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
 
 
     map<int,set<int>> discovered_contig_used_labels;
+    map<pair<int,int>,set<int>> curr_aligned_labs;
+
     for (auto e: cmaps_contigs) {
         discovered_contig_used_labels[e.first] = set<int>();
     }
@@ -211,6 +213,10 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
     for (auto p: seg_contig_pairs) {
         int x = p.first;
         int contig_id = p.second;
+        curr_aligned_labs[make_pair(x,contig_id)] = set<int>();
+        if (tip_aln) {
+            curr_aligned_labs[make_pair(x,contig_id)] = contig_used_label_map[contig_id];
+        }
 
         vector<float> x_posns = cmaps_segs[x];
         vector<float> contig_posns = cmaps_contigs[contig_id];
@@ -221,9 +227,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
         float curr_best_score = score_thresholds[x];
         float exp_thresh = score_thresholds[x];
         int contig_aligned_count = 0;
-        set<array<int,3>>used_pairings;
         //Run the alignment while the score exceeds the threshold
-        
         while (curr_best_score >= exp_thresh && contig_aligned_count < max_seg_contig_alns) {
             vector<vector<float>> S(contig_posns.size(), vector<float>(x_posns.size() - 1));
             vector<vector<array<int, 2>>> previous(contig_posns.size(), vector<array<int, 2>>(x_posns.size() - 1));
@@ -234,7 +238,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 init_local_aln(S,x_posns.size(),contig_posns.size(),x);
             }
 
-            dp_align(S, previous, contig_posns, x_posns, x, lookback, used_pairings, seg_ncp_vector,
+            dp_align(S, previous, contig_posns, x_posns, x, lookback, curr_aligned_labs[(make_pair(x,contig_id))], seg_ncp_vector,
                      contig_ncp_vector, swap_b_x);
 
             array<int, 2> best_start;
@@ -249,10 +253,10 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                         cmaps_contigs[contig_id]);
 
                 exp_thresh = fmax(exp_thresh_lab,exp_thresh_len);
-                if (contig_id == 139) {
-                    cout << x << " " << get<0>(aln_list[0]) << " " << get<0>(aln_list.back()) << " " << get<1>(aln_list[0]) << " " << get<1>(aln_list.back()) << " " << exp_thresh << " " << S[best_start[0]][best_start[1]] << "\n";
-                    cout << exp_thresh_lab << " " << exp_thresh_len << "\n";
-                }
+//                if (contig_id == 139) {
+//                    cout << x << " " << get<0>(aln_list[0]) << " " << get<0>(aln_list.back()) << " " << get<1>(aln_list[0]) << " " << get<1>(aln_list.back()) << " " << exp_thresh << " " << S[best_start[0]][best_start[1]] << "\n";
+//                    cout << exp_thresh_lab << " " << exp_thresh_len << "\n";
+//                }
 
             } else {
                 best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
@@ -265,17 +269,9 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
             if (curr_best_score > exp_thresh) {
                 contig_aligned_count += 1;
                 if (tip_aln) {
-//                    cout << x << " " << contig_id << " " << curr_best_score << " " << contig_aligned_count << "\n";
-
-                    //check if violates the used contig labels
-                    for (auto &e: aln_list) {
-                        used_pairings.insert({x,get<0>(e),get<1>(e)});
-                    }
-                    if (!null_intersection(aln_list,contig_used_label_map[contig_id]) || aln_list.size() < 3) {
-//                        cout << "hit" << "\n";
+                    if (aln_list.size() < 3) {
                         continue;
-                    }
-                    if (aln_list.size() == 3) {
+                    } else if (aln_list.size() == 3) {
                         if (get<2>(aln_list[0]) - get<2>(aln_list[1]) < 5000. || get<2>(aln_list[1]) - get<2>(aln_list[2]) < 5000.) {
 //                            cout << "hit sub" << "\n";
                             continue;
@@ -293,20 +289,18 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                     if (bads) {
                         continue;
                     }
-
-                } else {
-                    for (auto &e: aln_list) {
-                        discovered_contig_used_labels[contig_id].insert(get<0>(e));
-                    }
                 }
-
+                for (auto &e: aln_list) {
+                    //add it to this make pair
+                    curr_aligned_labs[(make_pair(x,contig_id))].insert(get<0>(e));
+                }
                 string seg_id = to_string(abs(x));
                 if (x < 0) {
                     seg_id += "_r";
                 }
                 string outname = sample_prefix + "_" + to_string(contig_id) + "_" + seg_id + "_" +
                                  to_string(contig_aligned_count) + flipped + tip_aln_status + "_aln.txt";
-                print_alignment(S, previous, aln_list, contig_id, x, cmaps_segs, outname, used_pairings, curr_best_score);
+                print_alignment(S, previous, aln_list, contig_id, x, cmaps_segs, outname, discovered_contig_used_labels, curr_best_score);
 
             }
         }
