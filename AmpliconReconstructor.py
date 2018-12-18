@@ -238,12 +238,13 @@ def make_score_plots(scores_file,fpath):
             fields = line.rstrip().rsplit("\t")
             scoring_dict[int(fields[0])].append(float(fields[2]))
 
+    num_blue = int(round(0.15*len(contig_cmaps)))
     for i in scoring_dict:
         fig = plt.figure()
         left_ind = len(scoring_dict[i])/2 + 1
         x_vals = sorted(scoring_dict[i],reverse=True)
         y_vals = np.log(range(1,len(x_vals)+1))
-        cols = ["grey"]*25 + ["b"]*725 + ["grey"]*(len(x_vals) - 750)
+        cols = ["grey"]*25 + ["b"]*num_blue + ["grey"]*(len(x_vals) - (25+ num_blue))
         plt.scatter(x_vals,y_vals,c=cols)
         plt.ylabel("ln(E)",fontsize=14)
         plt.xlabel("S",fontsize=14)
@@ -276,7 +277,7 @@ if __name__ == "__main__":
     a_dir = args.output_prefix + "alignments/"
     if not os.path.exists(a_dir): os.makedirs(a_dir)
 
-    min_map_len = 6 #the default
+    min_map_len = 10 #the default
     nthreads = args.threads
 
     contig_cmaps = parse_cmap(args.contigs)
@@ -290,7 +291,7 @@ if __name__ == "__main__":
     run_SegAligner(args.contigs,args.segs,arg_list)
 
     #extract aligned regions
-    aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "flipped" not in x and "_ref_" not in x]
+    aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "flipped" not in x and "_ref_" not in x and "rg" not in x]
     #extract the unaligned regions given the alignments
     contig_unaligned_regions = get_unaligned_segs(a_dir,aln_flist)
 

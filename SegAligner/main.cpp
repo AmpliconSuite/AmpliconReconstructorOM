@@ -60,7 +60,9 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
     cout << "Finished sorting scores.\n";
     cout << "Computing scoring threshold\n";
     map<int,float> score_thresholds;
-    int right_cutoff = 10;
+    int right_cutoff = 25;
+    int left_cuttoff_from_right = int(round(0.15*cmaps_contigs.size()));
+    cout << left_cuttoff_from_right << " CUTOFF" << "\n";
     double E_cutoff = -log(1 - pvalue);
 
     int m = 0;
@@ -72,17 +74,19 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
         int seg_id = i.first;
         int n = cmaps_segs[seg_id].size()-1;
         vector<float>::const_iterator first;
-        if (n > 50) {
-            first = i.second.begin() + (i.second.size() / 2);
-        } else if (n > 30) {
-            first = i.second.begin() + (3*i.second.size() / 4);
-        } else if (n > 20) {
-            first = i.second.begin() + (5*i.second.size() / 6);
-            right_cutoff = 5;
-        } else {
-            first = i.second.begin() + (7*i.second.size() / 8);
-            right_cutoff = 5;
-        }
+//        if (n > 50) {
+//            first = i.second.begin() + (i.second.size() / 2);
+//        } else if (n > 30) {
+//            first = i.second.begin() + (3*i.second.size() / 4);
+//        } else if (n > 20) {
+//            first = i.second.begin() + (5*i.second.size() / 6);
+//            right_cutoff = 5;
+//        } else {
+//            first = i.second.begin() + (7*i.second.size() / 8);
+//            right_cutoff = 5;
+//        }
+
+        first = i.second.begin() + (i.second.size() - (right_cutoff + left_cuttoff_from_right));
         vector<float>::const_iterator last = i.second.begin() + (i.second.size() - 1 - right_cutoff);
         vector<float> relevant_scores(first,last);
         vector<int> e_vals(relevant_scores.size());
