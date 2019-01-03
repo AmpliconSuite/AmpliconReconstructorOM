@@ -267,3 +267,27 @@ pair<double,double> linreg(vector<float> &x, vector<int> &y) {
     return make_pair(beta,intercept);
 
 }
+
+float compute_aln_median(vector<tuple<int, int, float>> aln_list) {
+    //get score median
+    vector<float> score_deltas;
+    float prev = 0.0;
+    for (int i = aln_list.size()-2; i > -1; i--) {
+        float diff = get<2>(aln_list[i]) - prev;
+        score_deltas.push_back(diff);
+        prev = get<2>(aln_list[i]);
+    }
+    sort(score_deltas.begin(),score_deltas.end());
+    float score_median;
+    int mid;
+    if (score_deltas.size() % 2) {
+        mid = int(score_deltas.size())/2;
+        score_median = score_deltas[mid];
+
+    } else {
+        mid = int(score_deltas.size())/2;
+        score_median = (score_deltas[mid] + score_deltas[mid-1])/2;
+    }
+
+    return score_median;
+}

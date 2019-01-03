@@ -25,7 +25,7 @@ int n_threads = 1;
 int min_map_len = 6;
 int lookback = 5;
 int max_seg_contig_alns = 10;
-float p_val = 0.05;
+float p_val = 0.0005;
 string sample_prefix = "SA_output";
 
 //bookkeeping variable instantiation
@@ -74,18 +74,6 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
         int seg_id = i.first;
         int n = cmaps_segs[seg_id].size()-1;
         vector<float>::const_iterator first;
-//        if (n > 50) {
-//            first = i.second.begin() + (i.second.size() / 2);
-//        } else if (n > 30) {
-//            first = i.second.begin() + (3*i.second.size() / 4);
-//        } else if (n > 20) {
-//            first = i.second.begin() + (5*i.second.size() / 6);
-//            right_cutoff = 5;
-//        } else {
-//            first = i.second.begin() + (7*i.second.size() / 8);
-//            right_cutoff = 5;
-//        }
-
         first = i.second.begin() + (i.second.size() - (right_cutoff + left_cuttoff_from_right));
         vector<float>::const_iterator last = i.second.begin() + (i.second.size() - 1 - right_cutoff);
         vector<float> relevant_scores(first,last);
@@ -230,9 +218,9 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
         //initialize alignment data structures
         float curr_best_score = score_thresholds[x];
         float exp_thresh = score_thresholds[x];
-        int contig_aligned_count = 0;
+        int x_aligned_count = 0;
         //Run the alignment while the score exceeds the threshold
-        while (curr_best_score >= exp_thresh && contig_aligned_count < max_seg_contig_alns) {
+        while (curr_best_score >= exp_thresh && x_aligned_count < max_seg_contig_alns) {
             vector<vector<float>> S(contig_posns.size(), vector<float>(x_posns.size() - 1));
             vector<vector<array<int, 2>>> previous(contig_posns.size(), vector<array<int, 2>>(x_posns.size() - 1));
             if (!local_aln) {
@@ -257,10 +245,6 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                         cmaps_contigs[contig_id]);
 
                 exp_thresh = fmax(exp_thresh_lab,exp_thresh_len);
-//                if (contig_id == 139) {
-//                    cout << x << " " << get<0>(aln_list[0]) << " " << get<0>(aln_list.back()) << " " << get<1>(aln_list[0]) << " " << get<1>(aln_list.back()) << " " << exp_thresh << " " << S[best_start[0]][best_start[1]] << "\n";
-//                    cout << exp_thresh_lab << " " << exp_thresh_len << "\n";
-//                }
 
             } else {
                 best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
@@ -271,26 +255,16 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
 
             //if it passes the e-value write it, and do not update the contig
             if (curr_best_score > exp_thresh) {
-                contig_aligned_count += 1;
+                x_aligned_count += 1;
                 if (tip_aln) {
                     if (aln_list.size() < 3) {
                         continue;
-                    } else if (aln_list.size() == 3) {
-                        if (get<2>(aln_list[0]) - get<2>(aln_list[1]) < 5000. || get<2>(aln_list[1]) - get<2>(aln_list[2]) < 5000.) {
-//                            cout << "hit sub" << "\n";
-                            continue;
-                        }
-                        //TODO:SCORE ALL
                     }
-                    //TEMPORARY: NO NEGATIVE TIPS
-                    bool bads = false;
-                    for (int i = 0; i < aln_list.size()-1; i++) {
-                        if (get<2>(aln_list[i]) - get<2>(aln_list[i+1]) < 0) {
-                            bads = true;
-                            break;
-                        }
-                    }
-                    if (bads) {
+                    //mean and median checks
+                    float mean = get<2>(aln_list[0])/aln_list.size();
+                    float median = compute_aln_median(aln_list);
+                    cout << mean << " " << median << " " << x << "\n";
+                    if (mean < 7000 || median < 8000) {
                         continue;
                     }
                 }
@@ -303,7 +277,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                     seg_id += "_r";
                 }
                 string outname = sample_prefix + "_" + to_string(contig_id) + "_" + seg_id + "_" +
-                                 to_string(contig_aligned_count) + flipped + tip_aln_status + "_aln.txt";
+                                 to_string(x_aligned_count) + flipped + tip_aln_status + "_aln.txt";
                 print_alignment(S, previous, aln_list, contig_id, x, cmaps_segs, outname, discovered_contig_used_labels, curr_best_score);
 
             }
