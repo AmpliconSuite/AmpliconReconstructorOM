@@ -25,8 +25,8 @@ int n_threads = 1;
 int min_map_len = 10;
 int lookback = 5;
 int max_seg_contig_alns = 10;
-float p_val = 0.001;
-float p_val_tip = 0.000001;
+float p_val = 0.0001;
+float p_val_tip = 0.0005;
 string sample_prefix = "SA_output";
 
 //bookkeeping variable instantiation
@@ -221,11 +221,16 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
         float exp_thresh = score_thresholds[x];
         int x_aligned_count = 0;
         float med_thresh = 8000;
-        float mean_thresh = 8000;
+        float mean_thresh = 7000;
         if (tip_aln) {
             med_thresh = 8500;
             mean_thresh = 8500;
         }
+
+        if ((abs(x) == 2 && contig_id == 80) || (x == -48 && contig_id == 80)) {
+            cout << x << " " << contig_id << " " << curr_best_score << " " << "\n";
+        }
+
         //Run the alignment while the score exceeds the threshold
         while (curr_best_score >= exp_thresh && x_aligned_count < max_seg_contig_alns) {
             vector<vector<float>> S(contig_posns.size(), vector<float>(x_posns.size() - 1));
@@ -262,6 +267,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                     curr_aligned_labs[(make_pair(x,contig_id))].insert(get<0>(e));
                 }
 
+
                 if (aln_list.size() < 3 || (!tip_aln && aln_list.size() < 6)) {
                     continue;
                 }
@@ -269,9 +275,11 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 //mean and median checks
                 float mean = get<2>(aln_list[0])/(aln_list.size()-1);
                 float median = compute_aln_median(aln_list);
-                if (tip_aln) {
 
+                if ((abs(x) == 2 && contig_id == 80) || (x == -48 && contig_id == 80)) {
+                    cout << x << " " << contig_id << " " << curr_best_score << " " << aln_list.size() << " " << mean << " " << median << "\n";
                 }
+
                 if (mean < mean_thresh || median < med_thresh) {
                     continue;
                 }
@@ -507,7 +515,8 @@ int main (int argc, char *argv[]) {
         for (auto e: pairs_list) {
             //don't make the pair if there weren't any alignments to the contigs. check the used label set
             if (!contig_used_label_map[e.second].empty()) {
-                for (auto x: pairs_list) {
+//                for (auto x: pairs_list) {
+                for (auto x: cmaps_segs) {
                 //adds the seg_id and contig_id so all relevant segs are paired with all relevant contigs
                     tip_pairs_set.insert(make_pair(x.first, e.second));
                     tip_pairs_set.insert(make_pair(-x.first, e.second));
