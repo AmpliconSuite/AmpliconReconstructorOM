@@ -24,14 +24,15 @@ def get_unaligned_segs(aln_path,aln_flist):
     contig_unaligned_regions = defaultdict(list)
     for f in aln_flist:
         #parse the alnfile
-        contig_id,aln_struct = parse_seg_alignment_file(aln_path + f)
-        contig_aln_dict[contig_id].append(aln_struct)
+        aln_obj = parse_seg_alignment_file(aln_path + f)
+        contig_id = aln_obj.contig_id
+        contig_aln_dict[contig_id].append(aln_obj)
 
     #extract aligned regions
     for c_id,a_struct_list in contig_aln_dict.iteritems():
         contig_free_lab_set = set(range(len(contig_cmaps[c_id])))
         for a_struct in a_struct_list:
-            curr_c_range_tup = a_struct[2]
+            curr_c_range_tup = a_struct.contig_endpoints
             curr_lab_range_set = set(range(curr_c_range_tup[0],curr_c_range_tup[1]+1))
             contig_free_lab_set-=curr_lab_range_set
 
@@ -111,8 +112,9 @@ def detections_to_key(outfile,keyfile_info):
 def write_aligned_labels(a_dir, aln_flist, w_dir):
     contig_to_aligned_label_list = defaultdict(set)
     for f in aln_flist:
-        contig_id,aln_struct = parse_seg_alignment_file(a_dir + f)
-        contig_ends = aln_struct[2]
+        aln_obj = parse_seg_alignment_file(a_dir + f)
+        contig_id = aln_obj.contig_id
+        contig_ends = aln_obj.contig_endpoints
         contig_label_set = set(range(min(contig_ends),max(contig_ends)+1))
         contig_to_aligned_label_list[contig_id]|=contig_label_set
 
@@ -238,14 +240,14 @@ def make_score_plots(scores_file,fpath):
             fields = line.rstrip().rsplit("\t")
             scoring_dict[int(fields[0])].append(float(fields[2]))
 
-    num_blue = int(round(0.15*len(contig_cmaps)))
+    num_blue = int(round(0.15*min(500,len(contig_cmaps))))
     for i in scoring_dict:
         fig = plt.figure()
         left_ind = len(scoring_dict[i])/2 + 1
         x_vals = sorted(scoring_dict[i],reverse=True)
         y_vals = np.log(range(1,len(x_vals)+1))
         cols = ["grey"]*25 + ["b"]*num_blue + ["grey"]*(len(x_vals) - (25+ num_blue))
-        plt.scatter(x_vals,y_vals,c=cols)
+        plt.scatter(x_vals,y_vals,c=cols,edgecolors='none')
         plt.ylabel("ln(E)",fontsize=14)
         plt.xlabel("S",fontsize=14)
         plt.title(str(i),fontsize=14)
@@ -264,6 +266,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--enzyme", help="labeling enzyme", choices=["BspQI","DLE1"],required=True)
     parser.add_argument("--plot_scores", help="Save plots of the distributions of segment scores",action='store_true')
     parser.add_argument("--no_tip_aln",help="Disable tip alignment step",action='store_true')
+    parser.add_argument("--min_map_len",help="minimum number of labels on map contig when aligning (default 10). Larger values (~15) better for Saphyr data.",type=int, default=10)
 
     args = parser.parse_args()
 
@@ -277,7 +280,7 @@ if __name__ == "__main__":
     a_dir = args.output_prefix + "alignments/"
     if not os.path.exists(a_dir): os.makedirs(a_dir)
 
-    min_map_len = 10 #the default
+    min_map_len = args.min_map_len #the default
     nthreads = args.threads
 
     contig_cmaps = parse_cmap(args.contigs)

@@ -22,10 +22,11 @@ bool tip_aln = false;
 bool swap_b_x = false;
 int n_detect_scores = 500;
 int n_threads = 1;
-int min_map_len = 6;
+int min_map_len = 10;
 int lookback = 5;
 int max_seg_contig_alns = 10;
-float p_val = 0.0005;
+float p_val = 0.001;
+float p_val_tip = 0.000001;
 string sample_prefix = "SA_output";
 
 //bookkeeping variable instantiation
@@ -61,7 +62,7 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
     cout << "Computing scoring threshold\n";
     map<int,float> score_thresholds;
     int right_cutoff = 25;
-    int left_cuttoff_from_right = int(round(0.15*cmaps_contigs.size()));
+    int left_cuttoff_from_right = int(round(0.15*fmin(cmaps_contigs.size(),n_detect_scores)));
     cout << left_cuttoff_from_right << " CUTOFF" << "\n";
     double E_cutoff = -log(1 - pvalue);
 
@@ -219,6 +220,12 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
         float curr_best_score = score_thresholds[x];
         float exp_thresh = score_thresholds[x];
         int x_aligned_count = 0;
+        float med_thresh = 8000;
+        float mean_thresh = 8000;
+        if (tip_aln) {
+            med_thresh = 8500;
+            mean_thresh = 8500;
+        }
         //Run the alignment while the score exceeds the threshold
         while (curr_best_score >= exp_thresh && x_aligned_count < max_seg_contig_alns) {
             vector<vector<float>> S(contig_posns.size(), vector<float>(x_posns.size() - 1));
@@ -234,44 +241,41 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                      contig_ncp_vector, swap_b_x);
 
             array<int, 2> best_start;
-            vector<tuple<int, int, float>> aln_list;
             string tip_aln_status;
             if (tip_aln) {
                 tip_aln_status = "_tip";
                 best_start = tip_aln_backtrack_start(S, contig_posns.size(), x_posns.size());
-                aln_list = get_aln_list(S, previous, best_start);
-                float exp_thresh_lab, exp_thresh_len;
-                tie(exp_thresh_lab,exp_thresh_len) = compute_partial_score_threshold(score_thresholds[x], aln_list,
-                        cmaps_contigs[contig_id]);
-
-                exp_thresh = fmax(exp_thresh_lab,exp_thresh_len);
-
             } else {
                 best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
-                aln_list = get_aln_list(S, previous, best_start);
             }
-
+            vector<tuple<int, int, float>> aln_list = get_aln_list(S, previous, best_start);
+            float exp_score_thresh_lab, exp_score_thresh_len;
+            tie(exp_score_thresh_lab,exp_score_thresh_len) = compute_partial_score_threshold(score_thresholds[x], aln_list, cmaps_contigs[contig_id]);
+            exp_thresh = fmax(exp_score_thresh_lab,exp_score_thresh_len);
             curr_best_score = S[best_start[0]][best_start[1]];
 
             //if it passes the e-value write it, and do not update the contig
             if (curr_best_score > exp_thresh) {
                 x_aligned_count += 1;
-                if (tip_aln) {
-                    if (aln_list.size() < 3) {
-                        continue;
-                    }
-                    //mean and median checks
-                    float mean = get<2>(aln_list[0])/aln_list.size();
-                    float median = compute_aln_median(aln_list);
-                    cout << mean << " " << median << " " << x << "\n";
-                    if (mean < 7000 || median < 8000) {
-                        continue;
-                    }
-                }
+
                 for (auto &e: aln_list) {
-                    //add it to this make pair
                     curr_aligned_labs[(make_pair(x,contig_id))].insert(get<0>(e));
                 }
+
+                if (aln_list.size() < 3 || (!tip_aln && aln_list.size() < 6)) {
+                    continue;
+                }
+
+                //mean and median checks
+                float mean = get<2>(aln_list[0])/(aln_list.size()-1);
+                float median = compute_aln_median(aln_list);
+                if (tip_aln) {
+
+                }
+                if (mean < mean_thresh || median < med_thresh) {
+                    continue;
+                }
+
                 string seg_id = to_string(abs(x));
                 if (x < 0) {
                     seg_id += "_r";
@@ -279,7 +283,6 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 string outname = sample_prefix + "_" + to_string(contig_id) + "_" + seg_id + "_" +
                                  to_string(x_aligned_count) + flipped + tip_aln_status + "_aln.txt";
                 print_alignment(S, previous, aln_list, contig_id, x, cmaps_segs, outname, discovered_contig_used_labels, curr_best_score);
-
             }
         }
     }
@@ -442,7 +445,7 @@ int main (int argc, char *argv[]) {
     write_all_scores(full_scoring_vector, sample_prefix);
 
     map<int,float>score_thresholds = compute_score_thresholds(full_scoring_vector,cmaps_segs,cmaps_contigs,p_val);
-    map<int,float>tip_thresholds = compute_score_thresholds(full_scoring_vector,cmaps_segs,cmaps_contigs,1e-6);
+    map<int,float>tip_thresholds = compute_score_thresholds(full_scoring_vector,cmaps_segs,cmaps_contigs,p_val_tip);
     write_score_thresholds(score_thresholds, sample_prefix + detection_label);
     cout << "Completed generating scores.\n";
     end = clock();
@@ -502,11 +505,13 @@ int main (int argc, char *argv[]) {
 //        local_aln = true;
         //Get contigs with alns and pair with all segs
         for (auto e: pairs_list) {
-            for (auto x: pairs_list) {
+            //don't make the pair if there weren't any alignments to the contigs. check the used label set
+            if (!contig_used_label_map[e.second].empty()) {
+                for (auto x: pairs_list) {
                 //adds the seg_id and contig_id so all relevant segs are paired with all relevant contigs
-                tip_pairs_set.insert(make_pair(x.first,e.second));
-                tip_pairs_set.insert(make_pair(-x.first,e.second));
-
+                    tip_pairs_set.insert(make_pair(x.first, e.second));
+                    tip_pairs_set.insert(make_pair(-x.first, e.second));
+                }
             }
         }
 

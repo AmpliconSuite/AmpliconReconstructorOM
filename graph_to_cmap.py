@@ -102,12 +102,12 @@ def makeCMAP(outprefix, segSeqL, segSeqD, enzyme, regExpEnzTup, minLabel, minSiz
 	print("Finished")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input", help="breakpoint text file",required=True)
-parser.add_argument("-r", "--ref", help="reference genome",required=True)
+parser.add_argument("-i", "--input", help="breakpoint graph .txt file",required=True)
+parser.add_argument("-r", "--ref", help="reference genome fasta",required=True)
 parser.add_argument("-o", "--output", help="output prefix")
 parser.add_argument("-e", "--enzyme", help="restriction enzyme: BspQI, BbvCI, BsmI, BsrDI",default="BspQI")
-parser.add_argument("-l", "--labels", type=int, help="minimum number of labels in reported CMAP",default=0)
-parser.add_argument("-s", "--size", type=float, help="minimum map size in reported CMAP",default=0)
+parser.add_argument("-l", "--labels", type=int, help="minimum number of labels in reported CMAP, default 0",default=0)
+parser.add_argument("-s", "--size", type=float, help="minimum map size in reported CMAP, default 0",default=0)
 
 args = parser.parse_args()
 
