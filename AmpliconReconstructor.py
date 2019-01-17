@@ -15,8 +15,8 @@ from collections import defaultdict
 
 #development version
 
-unaligned_label_cutoff = 8
-unaligned_size_cutoff = 75000
+unaligned_label_cutoff = 15
+unaligned_size_cutoff = 150000
 
 #identify unaligned regions in contigs
 def get_unaligned_segs(aln_path,aln_flist):
@@ -324,11 +324,10 @@ if __name__ == "__main__":
         print "Found new segments, re-writing graph and CMAP"
         rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
 
+        #remove "AR_ref_" files (temporary alignments)
+        subprocess.call("rm " + a_dir + "AR_ref_* 2>/dev/null", shell=True)
+
     else:
         print "No large unaligned regions found on segment-aligned contigs"
-
-    # #remove the chunked cmaps
-    # print "removing temporary files"
-    # subprocess.call("rm " + a_dir + "*_aln.txt 2>/dev/null", shell=True)
 
     print "Completed " + time.ctime(time.time()) + "\n"
