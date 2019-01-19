@@ -18,15 +18,17 @@
 //bool scoring_mode = false;
 bool local_aln = false;
 bool detection = false;
+bool fitting_aln = false;
 bool tip_aln = false;
 bool swap_b_x = false;
 int n_detect_scores = 500;
 int n_threads = 1;
 int min_map_len = 10;
 int lookback = 5;
-int max_seg_contig_alns = 10;
+int max_seg_contig_alns = 5;
 float p_val = 0.0001;
-float p_val_tip = 0.0005;
+float p_val_tip = 0.000001;
+float p_val_RG =  0.0000001;
 string sample_prefix = "SA_output";
 
 //bookkeeping variable instantiation
@@ -187,6 +189,42 @@ vector<tuple<int,int,float>> run_SA_score(map<int,vector<float>> cmaps_segs, map
     return scoring_vector;
 }
 
+void run_SA_fitting(map<int,vector<float>> cmaps_segs, map<int,vector<float>> cmaps_contigs,
+        map<int,vector<float>> non_collapse_prob_map, map<int,vector<float>> non_collapse_prob_map_contig,
+        vector<pair<int,int>> pairs) {
+
+    map<pair<int,int>,set<int>> curr_aligned_labs;
+    map<int,set<int>> discovered_contig_used_labels;
+    for (auto p: pairs) {
+        int x = p.first;
+        int contig_id = p.second;
+        curr_aligned_labs[make_pair(x,contig_id)] = set<int>();
+
+        vector<float> x_posns = cmaps_segs[x];
+        vector<float> contig_posns = cmaps_contigs[contig_id];
+        vector<float> seg_ncp_vector = non_collapse_prob_map[x];
+        vector<float> contig_ncp_vector = non_collapse_prob_map_contig[contig_id];
+
+        vector<vector<float>> S(contig_posns.size(), vector<float>(x_posns.size() - 1));
+        vector<vector<array<int, 2>>> previous(contig_posns.size(), vector<array<int, 2>>(x_posns.size() - 1));
+
+        init_fitting_aln(S, x_posns.size(),contig_posns.size(),x);
+        dp_align(S, previous, contig_posns, x_posns, x, lookback, curr_aligned_labs[(make_pair(x,contig_id))], seg_ncp_vector,
+                contig_ncp_vector, swap_b_x);
+
+        int contig_end = contig_posns.size()- 2;
+        int seg_end = x_posns.size()-2;
+        array<int, 2> best_start = {contig_end,seg_end};
+        vector<tuple<int, int, float>> aln_list = get_aln_list(S, previous, best_start);
+
+        float curr_best_score = S[best_start[0]][best_start[1]];
+        string seg_id = to_string(abs(x));
+        string outname = sample_prefix + "_" + to_string(contig_id) + "_" + seg_id + "_fitting_aln.txt";
+        print_alignment(S, previous, aln_list, contig_id, x, cmaps_segs, outname, discovered_contig_used_labels, curr_best_score);
+
+    }
+}
+
 /*Method to do the alignments
 * Takes a list of the contigs and segments to align, writes the stuff to files on its own
 */
@@ -220,16 +258,18 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
         float curr_best_score = score_thresholds[x];
         float exp_thresh = score_thresholds[x];
         int x_aligned_count = 0;
-        float med_thresh = 8000;
-        float mean_thresh = 7000;
+        float mean_thresh,med_thresh;
         if (tip_aln) {
             med_thresh = 8500;
-            mean_thresh = 8500;
+            mean_thresh = 8750;
+        } else {
+            med_thresh = 8000;
+            mean_thresh = 7000;
         }
 
-        if ((abs(x) == 2 && contig_id == 80) || (x == -48 && contig_id == 80)) {
-            cout << x << " " << contig_id << " " << curr_best_score << " " << "\n";
-        }
+//        if ((abs(x) == 2 && contig_id == 80) || (x == -48 && contig_id == 80)) {
+//            cout << x << " " << contig_id << " " << curr_best_score << " " << "\n";
+//        }
 
         //Run the alignment while the score exceeds the threshold
         while (curr_best_score >= exp_thresh && x_aligned_count < max_seg_contig_alns) {
@@ -267,6 +307,12 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                     curr_aligned_labs[(make_pair(x,contig_id))].insert(get<0>(e));
                 }
 
+                //make sure it's actually a tip, not a middle.
+                if (tip_aln) {
+                    if (((contig_posns.size()-2) - get<0>(aln_list[0]) > 3) && get<0>(aln_list.back()) > 2) {
+                        continue;
+                    }
+                }
 
                 if (aln_list.size() < 3 || (!tip_aln && aln_list.size() < 6)) {
                     continue;
@@ -276,9 +322,9 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 float mean = get<2>(aln_list[0])/(aln_list.size()-1);
                 float median = compute_aln_median(aln_list);
 
-                if ((abs(x) == 2 && contig_id == 80) || (x == -48 && contig_id == 80)) {
-                    cout << x << " " << contig_id << " " << curr_best_score << " " << aln_list.size() << " " << mean << " " << median << "\n";
-                }
+//                if ((abs(x) == 2 && contig_id == 80) || (x == -48 && contig_id == 80)) {
+//                    cout << x << " " << contig_id << " " << curr_best_score << " " << aln_list.size() << " " << mean << " " << median << "\n";
+//                }
 
                 if (mean < mean_thresh || median < med_thresh) {
                     continue;
@@ -321,6 +367,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
              swap_b_x = true; //from SegAligner.h
              do_tip = false;
              detection_label = "_detection";
+             p_val = p_val_RG;
              cout << "detection mode ON, local ON, swap_b_x ON" << endl;
 
          } else if (string(argv[i]) == "-alnref") {
@@ -338,7 +385,11 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
 
          } else if (string(argv[i]) == "-local") {
              local_aln = true;
-             cout << "local alignment mode" << endl;
+             cout << "Local alignment mode" << endl;
+
+         } else if (string(argv[i]) == "-fitting") {
+             cout << "Fitting alignment mode. Multithreading will be off." << endl;
+             cout << "" << endl;
 
          } else if (string(argv[i]).rfind("-nthreads=", 0) == 0) {
              n_threads = stoi(string(argv[i]).substr(string(argv[i]).find('=') + 1));
@@ -397,14 +448,14 @@ int main (int argc, char *argv[]) {
     bool limit_lookback, do_tip;
     tie(contig_list_file, limit_lookback, do_tip) = parse_args(argc,argv);
 
-    if (!limit_lookback) {
+    if (!limit_lookback || fitting_aln) {
         lookback = 9999999;
-        cout << "lookback limit OFF. This mode can be very slow\n";
+        cout << "Alignment banding OFF. \n";
     }
 
     //make segs cmap
     map<int,vector<float>> cmaps_segs_raw;
-    ;
+
     parse_cmap(ref_cmap_file,cmaps_segs_raw);
     //cmap_map_to_string(cmap_map) //DEBUG
     //add reverse segs
@@ -424,9 +475,26 @@ int main (int argc, char *argv[]) {
     set<int> contig_set = get_contig_set(contig_list_file, cmaps_contigs);
 
     cout << "Running SegAligner on " << cmaps_segs.size() << " segments and " << cmaps_contigs.size() << " contigs.\n";
-    cout << "Computing scoring thresholds.\n";
+
+    //if fitting alignment mode, just align, report and quit.
+    if (fitting_aln) {
+        n_threads = 1;
+        vector<pair<int,int>> pairs;
+        for (auto e: contig_set) {
+            for (auto x: cmaps_segs) {
+                pairs.emplace_back(x.first,e);
+            }
+        }
+
+        run_SA_fitting(cmaps_segs, cmaps_contigs, non_collapse_prob_map, non_collapse_prob_map_contig,pairs);
+        end = clock();
+        elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+        printf("elapsed seconds for run %f\n",elapsed_secs);
+        return 0;
+    }
 
     //Get scoring distribution
+    cout << "Computing scoring thresholds.\n";
     vector<future<vector<tuple<int,int,float>>>> future_scores;
     vector<set<int>> chunked_contig_sets(n_threads,set<int>());
     //chunk the relevant contigs per thread

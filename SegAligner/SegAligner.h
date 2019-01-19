@@ -28,6 +28,8 @@ void init_semiglobal(vector<vector<float>> &S, int x_size, int b_size, int x);
 
 void init_local_aln(vector<vector<float>> &S, int x_size, int b_size, int x);
 
+void init_fitting_aln(vector<vector<float>> &S, int x_size, int b_size, int x);
+
 pair<double,double> linreg(vector<float> &x, vector<int> &y);
 
 float compute_aln_median(vector<tuple<int, int, float>> aln_list);

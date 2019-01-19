@@ -146,13 +146,20 @@ class seg_aln_obj(object):
         self.aln_score = raw_aln_list[4]
         self.alignment_dict = raw_aln_list[5]
         self.is_tip_aln = raw_aln_list[6]
+        self.aln_id = "_".join([str(self.contig_id),str(self.seg_id),str(self.contig_endpoints[0]),str(self.contig_endpoints[1])])
+        self.imputed_alignment = []
 
+    def aln_summary_to_string(self):
+        return "seg_id: " + self.seg_id + " seg_labs: " + str(self.seg_endpoints) + " contig_labs: " + str(self.contig_endpoints) + " dir: " + self.alignment_dir + " aln_score: " + str(self.aln_score)
+
+    def aln_to_string_list(self):
+        return [str(x) for x in [self.seg_id,self.seg_endpoints,self.contig_endpoints,self.direction]]
 
 #parses the output from SegAligner
 #REFACTOR 
 def parse_seg_alignment_file(alignfile):
     alignment = []
-    tip_aln = True if "tip_seg_aln" in alignfile else False
+    tip_aln = True if "_tip_" in alignfile else False
     with open(alignfile) as infile:
         meta_head = infile.next().rstrip()[1:].rsplit()
         meta_vals = infile.next().rstrip()[1:].rsplit()
@@ -174,3 +181,18 @@ def parse_seg_alignment_file(alignfile):
 
     aln_obj = seg_aln_obj(alignment[0]["contig_id"],[seg_id,seg_ends,contig_ends,strand,tot_score,alignment,tip_aln])
     return aln_obj
+
+#takes vector of cmap vector of positions, including the length of the map
+def write_cmap_from_vector(cmap_vector,fname):
+    header_lines = "# hostname=BioNanoUtil\n"
+    header_lines += "# $ BioNanoUtil.py\n# CMAP File Version:\t0.1\n# Label Channels:\t1\n# Nickase Recognition Site 1:\tunknown\n"
+    header_lines += "# Number of Consensus Maps:\t"
+    header_lines += str(len(cmap_vector))
+    header_lines += "\n# Values corresponding to intervals (StdDev, HapDelta) refer to the interval between current site and next site\n#h\tCMapId\tContigLength\tNumSites\tSiteID\tLabelChannel\tPosition\tStdDev\tCoverage\tOccurrence\tChimQuality\n#f\tint\tfloat\tint\tint\tint\tfloat\tfloat\tfloat\tfloat\tfloat\n"
+    with open(fname,'w') as outfile:
+        outfile.write(header_lines)
+        for ind,cmap_posns in enumerate(cmap_vector):
+            map_b_len = str(cmap_posns[-1])
+            map_l_len = str(len(cmap_posns)-1)
+            for p_i,pos in enumerate(cmap_posns):
+                outfile.write("\t".join([str(ind+1),map_b_len,map_l_len,str(p_i+1),"1",str(pos),"1.0","1.0","1.0","0.0"]) + "\n")

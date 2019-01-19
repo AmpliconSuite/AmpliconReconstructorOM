@@ -146,7 +146,6 @@ array<int,2> tip_aln_backtrack_start(vector<vector<float>> &S,int b_len,int x_le
     float best_score = -numeric_limits<float>::infinity();
     array<int,2> best_pair = {-1,-1};
 
-    //check all pairings with ends of contig
     int j_end_ind = b_len - 2;
     for (int x_ind = 0; x_ind < x_len-1; x_ind++) {
         if (S[j_end_ind][x_ind] > best_score) {
@@ -154,6 +153,7 @@ array<int,2> tip_aln_backtrack_start(vector<vector<float>> &S,int b_len,int x_le
             best_pair = {j_end_ind, x_ind};
         }
     }
+    //check all pairings with ends of contig
     int x_end_ind = x_len - 2;
     for (int j_ind = 0; j_ind < b_len-1; j_ind++) {
         if (S[j_ind][x_end_ind] > best_score) {
@@ -243,9 +243,18 @@ void init_semiglobal(vector<vector<float>> &S, int x_size, int b_size, int x) {
 void init_local_aln(vector<vector<float>> &S, int x_size, int b_size, int x) {
     for (int j_ind = 0; j_ind < b_size - 1; j_ind++) {
         for (int q_ind = 0; q_ind < x_size - 1; ++q_ind) {
-            S[j_ind][q_ind] = 0;
+            S[j_ind][q_ind] = 0.0;
         }
     }
+}
+
+void init_fitting_aln(vector<vector<float>> &S, int x_size, int b_size, int x) {
+    for (int j_ind = 1; j_ind<b_size - 1; j_ind++) {
+        for (int q_ind = 1; q_ind<x_size - 1; ++q_ind) {
+            S[j_ind][q_ind] = -numeric_limits<float>::infinity();
+        }
+    }
+    S[0][0] = 0.0;
 }
 
 /*
