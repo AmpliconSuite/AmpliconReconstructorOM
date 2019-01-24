@@ -47,14 +47,15 @@ void parse_cmap(const string &fname, map<int,vector<float>> &cmap_pair) {
     }
 }
 
-void cmap_map_to_string(map<string,vector<float>> cmap_map) {
-    for (map<string,vector<float>>::const_iterator iter = cmap_map.begin(); iter != cmap_map.end(); ++iter) {
-        cout << "CMAP ID " << iter->first << endl;
-        vector<float> curr_posns = iter->second;
-        for (vector<float>::const_iterator iter2 = curr_posns.begin(); iter2 != curr_posns.end(); ++iter2) {
-            cout << "POSN " << *iter2 << endl;
+void cmap_map_to_string(map<int,vector<float>> cmap_map) {
+    for (auto iter: cmap_map) {
+        cout << "CMAP ID " << iter.first << "\n";
+        vector<float> curr_posns = iter.second;
+        for (auto elem: curr_posns) {
+            cout << "POSN " << elem << "\n";
         }
     }
+    cout << endl;
 }
 
 map<int,vector<float>> make_reverse_cmap(map<int,vector<float>> &cmap_map, int min_map_len) {

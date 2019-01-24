@@ -10,7 +10,7 @@ void parse_cmap(const string &fname, map<int,vector<float>> &cmap_pair);
 ///**
 // * Prints a cmap map by map-id to cout
 // */
-void cmap_map_to_string(map<string,vector<float>> cmap_map);
+void cmap_map_to_string(map<int,vector<float>> cmap_map);
 
 
 //Makes reverse cmap_map entries and adds them into the map

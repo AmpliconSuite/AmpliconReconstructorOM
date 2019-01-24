@@ -136,7 +136,7 @@ def add_full_reverse_cmaps(cmaps,key_dict):
         cmaps[new_ID][tot_labs+1] = cmap_len
 
 #TODO RETURN AN OBJECT OF THE ALIGNMENT
-class seg_aln_obj(object):
+class SA_Obj(object):
     def __init__(self, contig_id, raw_aln_list):
         self.contig_id = contig_id
         self.seg_id = raw_aln_list[0]
@@ -144,7 +144,7 @@ class seg_aln_obj(object):
         self.contig_endpoints = raw_aln_list[2]
         self.direction = raw_aln_list[3]
         self.aln_score = raw_aln_list[4]
-        self.alignment_dict = raw_aln_list[5]
+        self.alignment = raw_aln_list[5]
         self.is_tip_aln = raw_aln_list[6]
         self.aln_id = "_".join([str(self.contig_id),str(self.seg_id),str(self.contig_endpoints[0]),str(self.contig_endpoints[1])])
         self.imputed_alignment = []
@@ -179,7 +179,7 @@ def parse_seg_alignment_file(alignfile):
         contig_end = int(alignment[-1]["contig_label"])
         contig_ends = (contig_start,contig_end)
 
-    aln_obj = seg_aln_obj(alignment[0]["contig_id"],[seg_id,seg_ends,contig_ends,strand,tot_score,alignment,tip_aln])
+    aln_obj = SA_Obj(alignment[0]["contig_id"],[seg_id,seg_ends,contig_ends,strand,tot_score,alignment,tip_aln])
     return aln_obj
 
 #takes vector of cmap vector of positions, including the length of the map

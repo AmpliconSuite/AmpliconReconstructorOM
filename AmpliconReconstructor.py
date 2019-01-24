@@ -320,12 +320,12 @@ if __name__ == "__main__":
             index_start = sum(1 for _ in infile if _.startswith("sequence"))
 
         aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "AR_ref" in x]
-        bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start)
-        print "Found new segments, re-writing graph and CMAP"
-        rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
-
-        #remove "AR_ref_" files (temporary alignments)
-        subprocess.call("rm " + a_dir + "AR_ref_* 2>/dev/null", shell=True)
+        if aln_flist:
+            print "Found new segments, re-writing graph and CMAP"
+            bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start)
+            rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
+            #remove "AR_ref_" files (temporary alignments)
+            subprocess.call("rm " + a_dir + "AR_ref_*_aln.txt 2>/dev/null", shell=True)
 
     else:
         print "No large unaligned regions found on segment-aligned contigs"

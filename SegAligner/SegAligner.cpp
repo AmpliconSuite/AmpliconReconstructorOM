@@ -15,7 +15,25 @@
 
 using namespace std;
 
-//const float fp_p = 5000.0;
+
+
+/*
+ * For overlapping alignments, we compute the expected score threshold based on the amount overlap
+ */
+pair<float,float> compute_partial_score_threshold(float full_threshold, const vector<tuple<int,int,float>> &aln_list,
+                                                  vector<float> &contig_cmap) {
+
+    int first_lab = get<0>(aln_list.back());
+    int last_lab = get<0>(aln_list[0]);
+    int aln_span_labs = last_lab - first_lab + 1;
+    float tot_labs = contig_cmap.size()-1;
+    float prop_score_by_label = full_threshold*(aln_span_labs/tot_labs);
+    //adjusted to include genomic material up to next label outside
+    float aln_span_bases = contig_cmap[last_lab] - contig_cmap[first_lab];
+    float prop_score_by_length = full_threshold*(aln_span_bases/contig_cmap[contig_cmap.size()-1]);
+
+    return make_pair(prop_score_by_label,prop_score_by_length);
+}
 
 //iterate over in-silico reference and estimate a probability that a given label will appear as collapsed with a left
 // or right neighbor
@@ -71,7 +89,7 @@ float score_f(vector<float> &b_posns, vector<float> &x_posns, int i_ind, int j_i
 
 
 void dp_align(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous, vector<float> &b_posns,
-              vector<float> &x_posns, int x, int lookback, set<int> &used_labels,
+              vector<float> &x_posns, bool fitting_aln, int lookback, set<int> &used_labels,
               vector<float> &x_collapse_probs, vector<float> &b_collapse_probs, bool swap_b_x) {
 
     for (int j_ind = 0; j_ind < b_posns.size() - 1; j_ind++) {
@@ -86,6 +104,9 @@ void dp_align(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous, 
             int p_start = max(0, q_ind - lookback);
             for (int i_ind = i_start; i_ind < j_ind; i_ind++) {
                 for (int p_ind = p_start; p_ind < q_ind; p_ind++) {
+                    if (fitting_aln && i_ind == 0 && p_ind > 0) {
+                        break;
+                    }
                     float newScore;
                     if (!swap_b_x) {
                         newScore = S[i_ind][p_ind] +
@@ -96,6 +117,7 @@ void dp_align(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous, 
                     }
 
                     if (newScore > S[j_ind][q_ind]) {
+//                        cout << i_ind << " " << j_ind << " " << p_ind << " " << q_ind << " " << newScore << " " << S[j_ind][q_ind] << "\n";
                         S[j_ind][q_ind] = newScore;
                         previous[j_ind][q_ind] = {i_ind, p_ind};
                     }
@@ -113,7 +135,7 @@ void dp_align(vector<vector<float>> &S, vector<vector<array<int,2>>> &previous, 
  * @param b_last
  * @return map key for backtracking map which has best score
  */
-array<int,2> get_backtrack_start(vector<vector<float>> &S,int b_len,int x_len) {
+array<int,2> local_backtrack_start(vector<vector<float>> &S,int b_len,int x_len) {
     float best_score = -numeric_limits<float>::infinity();
     array<int,2> best_pair = {-1,-1};
     for (int j_ind = 0; j_ind < b_len-1; j_ind++) {
@@ -132,20 +154,22 @@ array<int,2> score_backtrack_start(vector<vector<float>> &S,int b_len,int x_len)
     array<int,2> best_pair = {0,0};
 
     for (int j_ind = 0; j_ind < b_len-1; j_ind++) {
-        for (int x_end_ind = x_len-3; x_end_ind < x_len-2; x_end_ind++)
-        if (S[j_ind][x_end_ind] > best_score) {
-            best_score = S[j_ind][x_end_ind];
-            best_pair = {j_ind, x_end_ind};
+        for (int x_end_ind = x_len-3; x_end_ind < x_len-1; x_end_ind++) {
+            if (S[j_ind][x_end_ind] > best_score) {
+                best_score = S[j_ind][x_end_ind];
+                best_pair = {j_ind, x_end_ind};
+            }
         }
     }
     return best_pair;
 }
 
 //get backtrack start for tip alignment case
-array<int,2> tip_aln_backtrack_start(vector<vector<float>> &S,int b_len,int x_len) {
+array<int,2> sg_aln_backtrack_start(vector<vector<float>> &S,int b_len,int x_len) {
     float best_score = -numeric_limits<float>::infinity();
     array<int,2> best_pair = {-1,-1};
 
+    //check all pairings with ends of contig
     int j_end_ind = b_len - 2;
     for (int x_ind = 0; x_ind < x_len-1; x_ind++) {
         if (S[j_end_ind][x_ind] > best_score) {
@@ -153,12 +177,13 @@ array<int,2> tip_aln_backtrack_start(vector<vector<float>> &S,int b_len,int x_le
             best_pair = {j_end_ind, x_ind};
         }
     }
-    //check all pairings with ends of contig
-    int x_end_ind = x_len - 2;
+    //check all pairings with end of of segment
     for (int j_ind = 0; j_ind < b_len-1; j_ind++) {
-        if (S[j_ind][x_end_ind] > best_score) {
-            best_score = S[j_ind][x_end_ind];
-            best_pair = {j_ind, x_end_ind};
+        for (int x_end_ind = x_len-3; x_end_ind < x_len-1; x_end_ind++) {
+            if (S[j_ind][x_end_ind] > best_score) {
+                best_score = S[j_ind][x_end_ind];
+                best_pair = {j_ind, x_end_ind};
+            }
         }
     }
 
@@ -222,7 +247,7 @@ void add_used_labels(vector<tuple<int,int,float>> &aln_list, int c_id, map<int,s
 }
 
 //initialize the scoring matrix for a semiglobal alignment
-void init_semiglobal(vector<vector<float>> &S, int x_size, int b_size, int x) {
+void init_semiglobal_aln(vector<vector<float>> &S, int x_size, int b_size, int x) {
     for (int q_ind = 0; q_ind < x_size - 1; q_ind++) {
         S[0][q_ind] = 0.0;
     }
@@ -256,6 +281,18 @@ void init_fitting_aln(vector<vector<float>> &S, int x_size, int b_size, int x) {
     }
     S[0][0] = 0.0;
 }
+
+//void init_semiglobal_scoring(vector<vector<float>> &S, int x_size, int b_size, int x) {
+//    for (int j_ind = 0; j_ind < b_size - 1; j_ind++) {
+//        S[j_ind][0] = 0.0;
+//        S[j_ind][1] = 0.0;
+//    }
+//    for (int j_ind = 0; j_ind < b_size - 1; j_ind++) {
+//        for (int q_ind = 2; q_ind < x_size - 1; ++q_ind) {
+//            S[j_ind][q_ind] = -numeric_limits<float>::infinity();
+//        }
+//    }
+//}
 
 /*
  * Get the slope and intercept for linear regression

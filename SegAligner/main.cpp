@@ -35,14 +35,12 @@ string sample_prefix = "SA_output";
 string detection_label;
 string flipped;
 
-
 /*
  * method to compute the e-values
  * assumes scores are sorted
  */
 map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scoring_vector, map<int,vector<float>> &cmaps_segs,
-                                        map<int,vector<float>> &cmaps_contigs, double pvalue) {
-
+        map<int,vector<float>> &cmaps_contigs, double pvalue) {
 
     //Organize the segment scores
     map<int,vector<float>> seg_scores;
@@ -60,12 +58,11 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
         sort(e.second.begin(),e.second.end());
     }
 
-    cout << "Finished sorting scores.\n";
-    cout << "Computing scoring threshold\n";
+//    cout << "Finished sorting scores.\n";
+//    cout << "Computing scoring threshold\n";
     map<int,float> score_thresholds;
     int right_cutoff = 25;
     int left_cuttoff_from_right = int(round(0.15*fmin(cmaps_contigs.size(),n_detect_scores)));
-    cout << left_cuttoff_from_right << " CUTOFF" << "\n";
     double E_cutoff = -log(1 - pvalue);
 
     int m = 0;
@@ -103,24 +100,6 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
 }
 
 /*
- * For overlapping alignments, we compute the expected score threshold based on the amount overlap
- */
-pair<float,float> compute_partial_score_threshold(float full_threshold, const vector<tuple<int,int,float>> &aln_list,
-        vector<float> &contig_cmap) {
-
-    int first_lab = get<0>(aln_list.back());
-    int last_lab = get<0>(aln_list[0]);
-    int aln_span_labs = last_lab - first_lab + 1;
-    float tot_labs = contig_cmap.size()-1;
-    float prop_score_by_label = full_threshold*(aln_span_labs/tot_labs);
-    //adjusted to include genomic material up to next label outside
-    float aln_span_bases = contig_cmap[last_lab] - contig_cmap[first_lab];
-    float prop_score_by_length = full_threshold*(aln_span_bases/contig_cmap[contig_cmap.size()-1]);
-
-    return make_pair(prop_score_by_label,prop_score_by_length);
-}
-
-/*
  * Method to get the scores
  * takes a subvector
  * returns a vector
@@ -153,27 +132,24 @@ vector<tuple<int,int,float>> run_SA_score(map<int,vector<float>> cmaps_segs, map
             vector<vector<float>> S(contig_posns.size(),vector<float>(x_posns.size()-1));
             vector<vector<array<int,2>>> previous(contig_posns.size(),vector<array<int,2>>(x_posns.size()-1));
 
-            if (!local_aln) {
-                init_semiglobal(S,x_posns.size(),contig_posns.size(),x);
+            if (!local_aln) { //handles standard and tip
+                init_semiglobal_aln(S,x_posns.size(),contig_posns.size(),x);
 
             } else {
-                init_local_aln(S,x_posns.size(),contig_posns.size(),x);
+                init_semiglobal_aln(S,x_posns.size(),contig_posns.size(),x);
             }
 
             set<int> temp;
-            dp_align(S, previous, contig_posns, x_posns, x, lookback, temp, seg_ncp_vector, contig_ncp_vector, swap_b_x);
+            dp_align(S, previous, contig_posns, x_posns, false, lookback, temp, seg_ncp_vector, contig_ncp_vector, swap_b_x);
             array<int, 2> best_start;
             if (!local_aln)
-                best_start = tip_aln_backtrack_start(S,contig_posns.size(),x_posns.size());
-            else {
-                best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
+                best_start = sg_aln_backtrack_start(S,contig_posns.size(),x_posns.size());
+            else if (tip_aln) {
+                best_start = sg_aln_backtrack_start(S,contig_posns.size(),x_posns.size());
+            } else {
+                best_start = local_backtrack_start(S, contig_posns.size(), x_posns.size());
             }
 
-//            if (tip_aln) {
-//                best_start = tip_aln_backtrack_start(S, contig_posns.size(), x_posns.size());
-//            } else {
-//                best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
-//            }
             float curr_best_score = S[best_start[0]][best_start[1]];
             if (detection) {
                 //determines how many alns to get for this reference sequence
@@ -193,6 +169,10 @@ void run_SA_fitting(map<int,vector<float>> cmaps_segs, map<int,vector<float>> cm
         map<int,vector<float>> non_collapse_prob_map, map<int,vector<float>> non_collapse_prob_map_contig,
         vector<pair<int,int>> pairs) {
 
+//    cmap_map_to_string(cmaps_segs);
+//    cout << "\n";
+//    cmap_map_to_string(cmaps_contigs);
+
     map<pair<int,int>,set<int>> curr_aligned_labs;
     map<int,set<int>> discovered_contig_used_labels;
     for (auto p: pairs) {
@@ -202,6 +182,7 @@ void run_SA_fitting(map<int,vector<float>> cmaps_segs, map<int,vector<float>> cm
 
         vector<float> x_posns = cmaps_segs[x];
         vector<float> contig_posns = cmaps_contigs[contig_id];
+
         vector<float> seg_ncp_vector = non_collapse_prob_map[x];
         vector<float> contig_ncp_vector = non_collapse_prob_map_contig[contig_id];
 
@@ -209,7 +190,7 @@ void run_SA_fitting(map<int,vector<float>> cmaps_segs, map<int,vector<float>> cm
         vector<vector<array<int, 2>>> previous(contig_posns.size(), vector<array<int, 2>>(x_posns.size() - 1));
 
         init_fitting_aln(S, x_posns.size(),contig_posns.size(),x);
-        dp_align(S, previous, contig_posns, x_posns, x, lookback, curr_aligned_labs[(make_pair(x,contig_id))], seg_ncp_vector,
+        dp_align(S, previous, contig_posns, x_posns, true, lookback, curr_aligned_labs[(make_pair(x,contig_id))], seg_ncp_vector,
                 contig_ncp_vector, swap_b_x);
 
         int contig_end = contig_posns.size()- 2;
@@ -276,22 +257,20 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
             vector<vector<float>> S(contig_posns.size(), vector<float>(x_posns.size() - 1));
             vector<vector<array<int, 2>>> previous(contig_posns.size(), vector<array<int, 2>>(x_posns.size() - 1));
             if (!local_aln) {
-                init_semiglobal(S,x_posns.size(),contig_posns.size(),x);
+                init_semiglobal_aln(S,x_posns.size(),contig_posns.size(),x);
 
             } else {
                 init_local_aln(S,x_posns.size(),contig_posns.size(),x);
             }
 
-            dp_align(S, previous, contig_posns, x_posns, x, lookback, curr_aligned_labs[(make_pair(x,contig_id))], seg_ncp_vector,
+            dp_align(S, previous, contig_posns, x_posns, false, lookback, curr_aligned_labs[(make_pair(x,contig_id))], seg_ncp_vector,
                      contig_ncp_vector, swap_b_x);
 
             array<int, 2> best_start;
-            string tip_aln_status;
-            if (tip_aln) {
-                tip_aln_status = "_tip";
-                best_start = tip_aln_backtrack_start(S, contig_posns.size(), x_posns.size());
+            if (!local_aln) {
+                best_start = sg_aln_backtrack_start(S, contig_posns.size(), x_posns.size());
             } else {
-                best_start = get_backtrack_start(S, contig_posns.size(), x_posns.size());
+                best_start = local_backtrack_start(S, contig_posns.size(), x_posns.size());
             }
             vector<tuple<int, int, float>> aln_list = get_aln_list(S, previous, best_start);
             float exp_score_thresh_lab, exp_score_thresh_len;
@@ -299,6 +278,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
             exp_thresh = fmax(exp_score_thresh_lab,exp_score_thresh_len);
             curr_best_score = S[best_start[0]][best_start[1]];
 
+            string tip_aln_status;
             //if it passes the e-value write it, and do not update the contig
             if (curr_best_score > exp_thresh) {
                 x_aligned_count += 1;
@@ -309,6 +289,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
 
                 //make sure it's actually a tip, not a middle.
                 if (tip_aln) {
+                    tip_aln_status = "_tip";
                     if (((contig_posns.size()-2) - get<0>(aln_list[0]) > 3) && get<0>(aln_list.back()) > 2) {
                         continue;
                     }
@@ -370,12 +351,12 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
              p_val = p_val_RG;
              cout << "detection mode ON, local ON, swap_b_x ON" << endl;
 
-         } else if (string(argv[i]) == "-alnref") {
-             local_aln = true;
-             swap_b_x = true; //from SegAligner.h
-             flipped = "_flipped";
-             do_tip = false;
-             cout << "detection mode ON (local ON)" << endl;
+//         } else if (string(argv[i]) == "-alnref") {
+//             local_aln = true;
+//             swap_b_x = true; //from SegAligner.h
+//             flipped = "_flipped";
+//             do_tip = false;
+//             cout << "detection mode ON (local ON)" << endl;
 
          } else if (string(argv[i]).rfind("-prefix=", 0) == 0) {
              sample_prefix = string(argv[i]).substr(string(argv[i]).find('=') + 1);
@@ -388,6 +369,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
              cout << "Local alignment mode" << endl;
 
          } else if (string(argv[i]) == "-fitting") {
+             fitting_aln = true;
              cout << "Fitting alignment mode. Multithreading will be off." << endl;
              cout << "" << endl;
 
@@ -459,7 +441,12 @@ int main (int argc, char *argv[]) {
     parse_cmap(ref_cmap_file,cmaps_segs_raw);
     //cmap_map_to_string(cmap_map) //DEBUG
     //add reverse segs
-    map<int,vector<float>> cmaps_segs = make_reverse_cmap(cmaps_segs_raw, min_map_len);
+    map<int, vector<float>>cmaps_segs;
+    if (!fitting_aln) {
+        cmaps_segs = make_reverse_cmap(cmaps_segs_raw, min_map_len);
+    } else {
+        cmaps_segs = cmaps_segs_raw;
+    }
 
     //make contigs cmaps
     map<int,vector<float>> cmaps_contigs;

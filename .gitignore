@@ -1,0 +1,4 @@
+SegAligner/.idea/*
+SegAligner/cmake-build-debug/*
+bionanoUtil.pyc
+SegAligner/*.o
