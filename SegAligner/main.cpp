@@ -230,6 +230,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
             curr_aligned_labs[make_pair(x,contig_id)] = contig_used_label_map[contig_id];
         }
 
+        int min_aln_labels = 6;
         vector<float> x_posns = cmaps_segs[x];
         vector<float> contig_posns = cmaps_contigs[contig_id];
         vector<float> seg_ncp_vector = non_collapse_prob_map[x];
@@ -295,7 +296,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                     }
                 }
 
-                if (aln_list.size() < 3 || (!tip_aln && aln_list.size() < 6)) {
+                if (aln_list.size() < 3 || (!tip_aln && aln_list.size() < min_aln_labels)) {
                     continue;
                 }
 
@@ -303,12 +304,15 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 float mean = get<2>(aln_list[0])/(aln_list.size()-1);
                 float median = compute_aln_median(aln_list);
 
-//                if ((abs(x) == 2 && contig_id == 80) || (x == -48 && contig_id == 80)) {
-//                    cout << x << " " << contig_id << " " << curr_best_score << " " << aln_list.size() << " " << mean << " " << median << "\n";
-//                }
-
                 if (mean < mean_thresh || median < med_thresh) {
                     continue;
+
+                } else if (aln_list.size() == 3) {
+                    float diff1 = (get<2>(aln_list[0]) - get<2>(aln_list[1]));
+                    float diff2 = (get<2>(aln_list[1]) - get<2>(aln_list[2]));
+                    if (diff1 < med_thresh || diff2 < med_thresh) {
+                        continue;
+                    }
                 }
 
                 string seg_id = to_string(abs(x));

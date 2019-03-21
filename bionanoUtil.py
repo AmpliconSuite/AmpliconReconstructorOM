@@ -135,14 +135,13 @@ def add_full_reverse_cmaps(cmaps,key_dict):
         
         cmaps[new_ID][tot_labs+1] = cmap_len
 
-#TODO RETURN AN OBJECT OF THE ALIGNMENT
 class SA_Obj(object):
     def __init__(self, contig_id, raw_aln_list):
         self.contig_id = contig_id
         self.seg_id = raw_aln_list[0]
         self.seg_endpoints = raw_aln_list[1]
         self.contig_endpoints = raw_aln_list[2]
-        self.direction = raw_aln_list[3]
+        self.alignment_dir = raw_aln_list[3]
         self.aln_score = raw_aln_list[4]
         self.alignment = raw_aln_list[5]
         self.is_tip_aln = raw_aln_list[6]
@@ -153,7 +152,7 @@ class SA_Obj(object):
         return "seg_id: " + self.seg_id + " seg_labs: " + str(self.seg_endpoints) + " contig_labs: " + str(self.contig_endpoints) + " dir: " + self.alignment_dir + " aln_score: " + str(self.aln_score)
 
     def aln_to_string_list(self):
-        return [str(x) for x in [self.seg_id,self.seg_endpoints,self.contig_endpoints,self.direction]]
+        return [str(x) for x in [self.seg_id,self.seg_endpoints,self.contig_endpoints,self.alignment_dir]]
 
 #parses the output from SegAligner
 #REFACTOR 

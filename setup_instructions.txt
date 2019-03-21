@@ -4,11 +4,17 @@
 #add AmpliconReconstructor and SegAligner to path
 echo "export AR_SRC=$PWD" >> ~/.bashrc
 echo "export SA_SRC=$PWD/SegAligner" >> ~/.bashrc
+
 ##USER MUST REPLACE INFORMATION ON THE FOLLOWING LINE
 echo "export HG19_DIR=[your directory path containing hg19.fa]" >> ~/.bashrc
+
+#add AR python libs to PYTHONPATH
+echo "export PYTHONPATH=$PYTHONPATH:$AR_SRC >> ~/.bashrc"
+
 source ~/.bashrc
 echo $AR_SRC
 echo $SA_SRC
+
 #alias AmpliconReconstructor
 echo "alias AmpliconReconstructor='python2 $AR_SRC/AmpliconReconstructor.py'" >> ~/.bashrc
 echo "alias AR='python2 $AR_SRC/AmpliconReconstructor.py'" >> ~/.bashrc

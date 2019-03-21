@@ -260,7 +260,7 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--segs", help="reference genome cmap file. Key file must be present in same directory and be named [CMAP]_key.txt", required=True)
     parser.add_argument("-c", "--contigs", help="contigs cmap file", required=True)
     parser.add_argument("-g", help="AA breakpoint graph file",required=True)
-    parser.add_argument("-p", "--p_value", help="p-value threshold for alignments", type=float, default=0.05)
+    # parser.add_argument("-p", "--p_value", help="p-value threshold for alignments", type=float, default=0.05)
     parser.add_argument("-o", "--output_prefix", help="output filename prefix (assumes working directory & ref/segs name unless otherwise specified")
     parser.add_argument("-t", "--threads", help="number of threads to use (default 4)", type=int, default=4)
     parser.add_argument("-e", "--enzyme", help="labeling enzyme", choices=["BspQI","DLE1"],required=True)
@@ -301,8 +301,9 @@ if __name__ == "__main__":
     contig_unaligned_regions = get_unaligned_segs(a_dir,aln_flist)
 
     #get the scoring thresholds.
-    print "Plotting score distributions"
-    make_score_plots(a_dir + "AR_segs_all_scores.txt",args.output_prefix)
+    if args.plot_scores:
+        print "Plotting score distributions"
+        make_score_plots(a_dir + "AR_segs_all_scores.txt",args.output_prefix)
 
 
     #SCORING OF UNALIGNED REGIONS
