@@ -145,8 +145,11 @@ def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme):
             outfile.write(line)
 
     print "Creating new CMAP"
-    subprocess.call("python2 " + os.environ['AR_SRC'] + "/graph_to_cmap.py -i " + new_graphfile + " -r " + 
-        os.environ['HG19_DIR'] + "/hg19.fa -e " + enzyme,shell=True)
+    seg_outname_pair = os.path.split(segs_fname)[0] + "_includes_detected"
+    cmd = "python2 {}/graph_to_cmap.py -i {} -r {}/hg19.fa -e {} -o {}".format(os.environ['AR_SRC'],new_graphfile,os.environ['HG19_DIR'],enzyme,seg_outname)
+    # subprocess.call("python2 " + os.environ['AR_SRC'] + "/graph_to_cmap.py -i " + new_graphfile + " -r " + 
+    #     os.environ['HG19_DIR'] + "/hg19.fa -e " + enzyme,shell=True)
+    subprocess.call(cmd,shell=True)
 
 def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unaligned_label_trans,id_start):
     #must indicate that the reference genome used (field in the head)

@@ -139,7 +139,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
 
         print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
 
-        if len(possible_paths) > 1000:
+        if len(possible_paths) > 100:
             print("too many candidate paths to search")
             possible_paths = []
 
