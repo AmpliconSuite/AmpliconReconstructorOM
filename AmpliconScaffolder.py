@@ -208,7 +208,7 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
         # reverse the reference sequence if "-"
         isRev = "_r" if contig_dir == "-" else ""
 
-        outname = "AR_segs_" + trans_contig_id + "_" + unique_id + "_rg" + isRev + "_aln.txt"
+        outname = "SA_segs_" + trans_contig_id + "_" + unique_id + "_rg" + isRev + "_aln.txt"
         with open(w_dir + outname,'w') as outfile:
             outfile.write(head_list[0])
             outfile.write(meta_string)
@@ -291,7 +291,7 @@ if __name__ == "__main__":
     ref_genome_file = os.environ['AR_SRC'] + "/ref_genomes/hg19_" + args.enzyme + ".cmap"
 
     print "Doing full segment alignments"
-    arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "AR_segs"]
+    arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_segs"]
     # #CONTIG SEG ALIGNMENTS
     run_SegAligner(args.contigs,args.segs,arg_list)
 
@@ -303,7 +303,7 @@ if __name__ == "__main__":
     #get the scoring thresholds.
     if args.plot_scores:
         print "Plotting score distributions"
-        make_score_plots(a_dir + "AR_segs_all_scores.txt",args.output_prefix)
+        make_score_plots(a_dir + "SA_segs_all_scores.txt",args.output_prefix)
 
 
     #SCORING OF UNALIGNED REGIONS
@@ -313,20 +313,20 @@ if __name__ == "__main__":
     elif contig_unaligned_regions:
         print "Doing unaligned region detection"
         unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_prefix,args.enzyme)
-        arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "AR_ref","-detection",]
+        arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_ref","-detection",]
         #CONTIG UNALIGNED REGION ALIGNMENTS
         print unaligned_region_filename + " is the file to open"
         run_SegAligner(ref_genome_file,unaligned_region_filename,arg_list)
         with open(args.g) as infile:
             index_start = sum(1 for _ in infile if _.startswith("sequence"))
 
-        aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "AR_ref" in x]
+        aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "SA_ref" in x]
         if aln_flist:
             print "Found new segments, re-writing graph and CMAP"
             bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start)
             rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
-            #remove "AR_ref_" files (temporary alignments)
-            subprocess.call("rm " + a_dir + "AR_ref_*_aln.txt 2>/dev/null", shell=True)
+            #remove "SA_ref_" files (temporary alignments)
+            subprocess.call("rm " + a_dir + "SA_ref_*_aln.txt 2>/dev/null", shell=True)
 
     else:
         print "No large unaligned regions found on segment-aligned contigs"
