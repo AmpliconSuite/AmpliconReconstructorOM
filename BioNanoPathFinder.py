@@ -853,6 +853,7 @@ if __name__ == '__main__':
     parser.add_argument("--noImpute",help="Do not impute the paths", action='store_true',default=False)
     parser.add_argument("--outdir", type=str, help="Destination for output files. Will create folder if it does not already exist",required=True)
     parser.add_argument("--prefix",dest="samp_name", type=str, help="Filename prefix for output files.",default="BNPF_out")
+    parser.add_argument("--no_connect",action='store_true',help="Do not perform intercontig connection step")
     args = parser.parse_args()
 
     impute = False if args.noImpute else True
@@ -922,7 +923,12 @@ if __name__ == '__main__':
 
     #make intercontig edges
     G = construct_combined_graph(contig_graphs)
-    intercontig_edges = find_intercontig_edges(alt_paths,contig_graphs)
+    if args.no_connect:
+        print "skipping contig connection step"
+        intercontig_edges = set()
+    else:
+        intercontig_edges = find_intercontig_edges(alt_paths,contig_graphs)
+
     G.edges|=intercontig_edges
     G.construct_edge_lookup()
     G.construct_node_id_lookup()
