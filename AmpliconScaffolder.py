@@ -145,7 +145,7 @@ def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme):
             outfile.write(line)
 
     print "Creating new CMAP"
-    seg_outname_pair = os.path.split(segs_fname)[0] + "_includes_detected"
+    seg_outname = os.path.split(segs_fname)[0] + "_includes_detected"
     cmd = "python2 {}/graph_to_cmap.py -i {} -r {}/hg19.fa -e {} -o {}".format(os.environ['AR_SRC'],new_graphfile,os.environ['HG19_DIR'],enzyme,seg_outname)
     # subprocess.call("python2 " + os.environ['AR_SRC'] + "/graph_to_cmap.py -i " + new_graphfile + " -r " + 
     #     os.environ['HG19_DIR'] + "/hg19.fa -e " + enzyme,shell=True)
