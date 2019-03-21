@@ -25,6 +25,7 @@ inter_contig_link_bp_thresh = 50000
 inter_contig_label_overlap = 6
 long_gap_length = 250000 #long gap threshold between alignments
 long_gap_cost = 0
+max_dfs_depth = 100
 
 #uses a single list to keep the found paths to avoid having to flatten after returning
 def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,last_edge):
@@ -35,31 +36,32 @@ def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,las
             if not (exp_length - curr_length > min(10000*(len(curr_path)), 25000)):
                 p_paths.append(curr_path)
           
-        #get adj verts
-        s_edges = s.elist
-        for edge in s_edges:
-            edge_rep = edge.__repr__()
-            if last_edge == edge.edge_type or (last_edge in ["concordant","discordant"] and edge.edge_type in ["concordant","discordant"]):
-                continue
-            
-            #must obey copy count
-            if c_count_d[edge_rep] > edge_cc[edge_rep]:
-                continue
-            
-            u = edge.neighbor(s)
-            edge_len = 0
-            if edge.edge_type == "sequence":
-                edge_len+=(abs(s.pos - u.pos) + 1)
-                
-            #no direct loopbacks on short segs
-            if len(curr_path) > 1:
-                if(u.vid == curr_path[-2].vid and edge_len < 500):
+        if len(curr_path) < max_dfs_depth:
+            #get adj verts
+            s_edges = s.elist
+            for edge in s_edges:
+                edge_rep = edge.__repr__()
+                if last_edge == edge.edge_type or (last_edge in ["concordant","discordant"] and edge.edge_type in ["concordant","discordant"]):
                     continue
+                
+                #must obey copy count
+                if c_count_d[edge_rep] > edge_cc[edge_rep]:
+                    continue
+                
+                u = edge.neighbor(s)
+                edge_len = 0
+                if edge.edge_type == "sequence":
+                    edge_len+=(abs(s.pos - u.pos) + 1)
+                    
+                #no direct loopbacks on short segs
+                if len(curr_path) > 1:
+                    if(u.vid == curr_path[-2].vid and edge_len < 500):
+                        continue
 
-            c_count_d[edge_rep]+=1
-            #recursive call
-            recursive_path_find(t,curr_path + [u], exp_length, curr_length + edge_len, p_paths, c_count_d, edge.edge_type)
-            c_count_d[edge_rep]-=1
+                c_count_d[edge_rep]+=1
+                #recursive call
+                recursive_path_find(t,curr_path + [u], exp_length, curr_length + edge_len, p_paths, c_count_d, edge.edge_type)
+                c_count_d[edge_rep]-=1
 
 #method for checking if a better imputed path exists between two nodes on an edge
 def path_alignment_correction(G,c_id,contig_cmap,impute=True):
@@ -134,6 +136,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         curr_path = [s]
 
         #don't look if there's a oversized gap or imputation is off
+        print "Searching for paths on edge " + s.__repr__() + " " + t.__repr__()
         if impute and not e.gap:
             recursive_path_find(t,curr_path,contig_distance,seg_overhang_sum,possible_paths,c_count_d,"sequence")
 

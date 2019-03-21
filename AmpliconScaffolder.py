@@ -17,6 +17,8 @@ from collections import defaultdict
 
 unaligned_label_cutoff = 15
 unaligned_size_cutoff = 150000
+unaligned_size_lower_cutoff = 150000
+unaligned_size_upper_cutoff = 1000000
 
 #identify unaligned regions in contigs
 def get_unaligned_segs(aln_path,aln_flist):
