@@ -853,7 +853,7 @@ if __name__ == '__main__':
     parser.add_argument("--noImpute",help="Do not impute the paths", action='store_true',default=False)
     parser.add_argument("--outdir", type=str, help="Destination for output files. Will create folder if it does not already exist",required=True)
     parser.add_argument("--prefix",dest="samp_name", type=str, help="Filename prefix for output files.",default="BNPF_out")
-    parser.add_argument("--no_connect",action='store_true',help="Do not perform intercontig connection step")
+    parser.add_argument("--noConnect",action='store_true',help="Do not perform intercontig connection step")
     args = parser.parse_args()
 
     impute = False if args.noImpute else True

@@ -39,6 +39,12 @@ def get_unaligned_segs(aln_path,aln_flist):
             contig_free_lab_set-=curr_lab_range_set
 
         #extract unaligned regions using aligned region labels
+
+        #determine what percent is aligned, skip if too much unaligned in contig.
+        percent_unaligned = float(len(contig_free_lab_set))/len(contig_cmaps[c_id])
+        if percent_unaligned > 0.9:
+            continue
+
         sorted_contig_free_labs = sorted(list(contig_free_lab_set))
         chunk_list = []
         prev = -2
@@ -300,11 +306,6 @@ if __name__ == "__main__":
     # #CONTIG SEG ALIGNMENTS
     run_SegAligner(args.contigs,args.segs,arg_list)
 
-    #extract aligned regions
-    aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "flipped" not in x and "_ref_" not in x and "rg" not in x]
-    #extract the unaligned regions given the alignments
-    contig_unaligned_regions = get_unaligned_segs(a_dir,aln_flist)
-
     #get the scoring thresholds.
     if args.plot_scores:
         print "Plotting score distributions"
@@ -317,6 +318,10 @@ if __name__ == "__main__":
 
     elif contig_unaligned_regions:
         print "Doing unaligned region detection"
+         #extract aligned regions
+        aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "flipped" not in x and "_ref_" not in x and "rg" not in x]
+        #extract the unaligned regions given the alignments
+        contig_unaligned_regions = get_unaligned_segs(a_dir,aln_flist)
         unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_prefix,args.enzyme)
         arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_ref","-detection",]
         #CONTIG UNALIGNED REGION ALIGNMENTS
