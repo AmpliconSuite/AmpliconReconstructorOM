@@ -16,9 +16,10 @@ from collections import defaultdict
 #development version
 
 unaligned_label_cutoff = 15
-unaligned_size_cutoff = 150000
+search_upper_cutoff_labels = 600
+#unaligned_size_cutoff = 150000
 unaligned_size_lower_cutoff = 150000
-unaligned_size_upper_cutoff = 1000000
+unaligned_size_upper_cutoff = 5000000
 
 #identify unaligned regions in contigs
 def get_unaligned_segs(aln_path,aln_flist):
@@ -58,9 +59,15 @@ def get_unaligned_segs(aln_path,aln_flist):
         #check if unaligned region is large
         for l in chunk_list:
             unaligned_size = contig_cmaps[c_id][l[-1]+1] - contig_cmaps[c_id][l[0]+1]
-            if l[-1] - l[0] > unaligned_label_cutoff and unaligned_size > unaligned_size_cutoff:
-                #add the unaligned region
-                contig_unaligned_regions[c_id].append(l)
+            #check if too small
+            if l[-1] - l[0] > unaligned_label_cutoff and unaligned_size > unaligned_size_lower_cutoff:
+                #check if too big:
+                if unaligned_size > unaligned_size_upper_cutoff:
+                    contig_unaligned_regions[c_id].append(l[:search_upper_cutoff_labels])
+
+                else:
+                    #add the unaligned region
+                    contig_unaligned_regions[c_id].append(l)
 
 
     return contig_unaligned_regions
