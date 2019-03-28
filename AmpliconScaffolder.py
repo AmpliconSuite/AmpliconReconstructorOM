@@ -323,29 +323,30 @@ if __name__ == "__main__":
     if args.no_ref_search:
         print "REF SEARCH OFF, SKIPPING REF SEARCH STEP"
 
-    elif contig_unaligned_regions:
+    else:
         print "Doing unaligned region detection"
          #extract aligned regions
         aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "flipped" not in x and "_ref_" not in x and "rg" not in x]
         #extract the unaligned regions given the alignments
         contig_unaligned_regions = get_unaligned_segs(a_dir,aln_flist)
-        unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_prefix,args.enzyme)
-        arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_ref","-detection",]
-        #CONTIG UNALIGNED REGION ALIGNMENTS
-        print unaligned_region_filename + " is the file to open"
-        run_SegAligner(ref_genome_file,unaligned_region_filename,arg_list)
-        with open(args.g) as infile:
-            index_start = sum(1 for _ in infile if _.startswith("sequence"))
+        if not contig_unaligned_regions:
+            print "No large unaligned regions found on segment-aligned contigs"
 
-        aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "SA_ref" in x]
-        if aln_flist:
-            print "Found new segments, re-writing graph and CMAP"
-            bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start)
-            rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
-            #remove "SA_ref_" files (temporary alignments)
-            subprocess.call("rm " + a_dir + "SA_ref_*_aln.txt 2>/dev/null", shell=True)
+        else:
+            unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_prefix,args.enzyme)
+            arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_ref","-detection",]
+            #CONTIG UNALIGNED REGION ALIGNMENTS
+            print unaligned_region_filename + " is the file to open"
+            run_SegAligner(ref_genome_file,unaligned_region_filename,arg_list)
+            with open(args.g) as infile:
+                index_start = sum(1 for _ in infile if _.startswith("sequence"))
 
-    else:
-        print "No large unaligned regions found on segment-aligned contigs"
+            aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "SA_ref" in x]
+            if aln_flist:
+                print "Found new segments, re-writing graph and CMAP"
+                bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start)
+                rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
+                #remove "SA_ref_" files (temporary alignments)
+                subprocess.call("rm " + a_dir + "SA_ref_*_aln.txt 2>/dev/null", shell=True)
 
     print "Completed " + time.ctime(time.time()) + "\n"
