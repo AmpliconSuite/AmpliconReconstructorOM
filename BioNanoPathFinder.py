@@ -245,19 +245,13 @@ def aa_id_to_cmap_id(i):
 def match_cmap_graph_edge(aa_graph):
     cmap_id_to_edge = {}
     for curr_edge in aa_graph.es.values():
-        #below code unrefined
         if curr_edge.edge_type == "sequence":
-            ns_chrom = curr_edge.v1.chrom
-            ns_pos1 = curr_edge.v1.pos
-            ns_pos2 = curr_edge.v2.pos
-            posns = sorted([ns_pos1,ns_pos2])
-            #check if concordant edge
-            seg_id = ns_chrom + ":" + str(posns[0]) + "-|" + ns_chrom + ":" + str(posns[1]) + "+"
+            seg_id = curr_edge.__repr__().replace("->","|")
             try:
                 cmap_id = seg_to_cmap_id[seg_id]
                 cmap_id_to_edge[cmap_id] = curr_edge
             except KeyError:
-                print("Couldn't locate segment " + seg_id)
+                sys.stderr.write("ERROR: Couldn't locate segment " + seg_id + "\n")
                 sys.exit()
 
     return cmap_id_to_edge
@@ -815,8 +809,7 @@ def add_alternate_paths(contig_graphs,scaffold_heaviest_paths):
             G_contig = contig_graphs[c_id]
             alt_first_nodes = [first_node,]
             alt_last_nodes = [last_node,]
-            # print alt_first_nodes,alt_last_nodes
-            # print G_contig.edge_lookup.keys()
+
             for i in G_contig.nodes:
                 for node,hp_i in zip([first_node,last_node],[hp[1],hp[-2]]):
                     for node_pair in [(node,i.n_id),(i.n_id,node)]:
@@ -899,6 +892,7 @@ if __name__ == '__main__':
 
     #match cmap to AA edges
     cmap_id_to_edge = match_cmap_graph_edge(breakpointG)
+    print sorted(cmap_id_to_edge.keys())
     print("Matched ids to AA edges")
 
     #get aln files
@@ -912,7 +906,6 @@ if __name__ == '__main__':
     #parse each aln file
     print "Parsing alignments"
     for i in rel_files:
-        print i
         seg_aln_obj = parse_seg_alignment_file(adir + i)
         c_id = seg_aln_obj.contig_id
         contig_alignment_dict[c_id].append(seg_aln_obj)

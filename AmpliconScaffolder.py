@@ -210,7 +210,8 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
             p1 = temp
 
         #padding with 10 to see if it helps
-        bpg_list.append((chromID,str(p1-10),str(p2+10)))
+        if (chromID,str(p1-10),str(p2+10)) not in bpg_list:
+            bpg_list.append((chromID,str(p1-10),str(p2+10)))
 
         # meta_list.append(trans_contig_id)
         unique_id = str(id_start + aln_num)
