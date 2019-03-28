@@ -66,146 +66,110 @@ class contig_alignment_graph(object):
     def construct_node_id_lookup(self):
         self.node_id_lookup = {i.n_id:i for i in self.nodes}
 
-#TODO: REFACTOR
-#connect overlapping contig graphs
-def find_intercontig_edges(scaffold_paths,contig_graphs):
-    #take the scaffold heaviest paths and convert unique id to named segments for
-    #overlap identification
-    ##put all the graphs together, no intercontig edges present yet
+
+#by default check if it is the alignment at the end of a contig
+#right = True checks if alignment at the start of a contig
+def is_end_aln(G,node_id,contig_cmap,right=False):
+    curr = G.node_id_lookup[node_id]
+    contig_endpoints = curr.aln_obj.contig_endpoints
+
+    if right:
+        dist_delta = contig_cmap[contig_endpoints[0]]
+        lab_delta = contig_endpoints[0]
+
+    else:
+        dist_delta = contig_cmap[max(contig_cmap.keys())] - contig_cmap[contig_endpoints[1]]
+        lab_delta = max(contig_cmap.keys()) - contig_endpoints[1]
+
+    return (dist_delta < 100000 and lab_delta < 10)
+
+
+def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
+    prefix_f = defaultdict(list)
+    prefix_r = defaultdict(list)
+    suffix_f = defaultdict(list)
+    suffix_r = defaultdict(list)
     scaffold_paths_named = defaultdict(list)
+    prefix_suffix_list = []
     for c_id,path_list in scaffold_paths.iteritems():
         G = contig_graphs[c_id]
-        for hp_ids in path_list:
+        for path_ind,hp_ids in enumerate(path_list):
             curr_path = [(G.node_id_lookup[i].seg_id,G.node_id_lookup[i].direction) for i in hp_ids]
-            scaffold_paths_named[c_id].append(curr_path)
-
-    suffix_d = {}
-    prefix_d_fwd = {}
-    prefix_d_rev = {}
-    suffix_d_rev = {}
-    for c_id, path_list in scaffold_paths_named.iteritems():
-        for path_ind,curr_path in enumerate(path_list):
+            fwd_num_seq = ["-" + x[0] if x[1] == "-" else x[0] for x in curr_path]
+            rev_num_seq = [str(-1*int(x)) for x in fwd_num_seq[::-1]]
             path_len = len(curr_path)
-            #Construct lookup for suffixes and map suffixes to graph_id
-            for ind in range(path_len):
-                curr_suffix = ",".join([str(-1*int(x[0])) if x[1] == "-" else x[0] for x in curr_path[ind:]])
-                if curr_suffix not in suffix_d:
-                    suffix_d[curr_suffix] = []
 
-                suffix_d[curr_suffix].append((c_id,ind,path_ind))
-
-            #prefixes in the forward direction
-            for ind in range(1,path_len):
-                curr_prefix = ",".join([str(-1*int(x[0])) if x[1] == "-" else x[0] for x in curr_path[:ind]])
-                if curr_prefix not in prefix_d_fwd:
-                    prefix_d_fwd[curr_prefix] = []
-
-                prefix_d_fwd[curr_prefix].append((c_id,ind-1,path_ind)) #up to but not including ind
-
-            #prefixes in the reverse direction
-            for ind in range(1,path_len):
-                curr_num_end_seq = [-1*int(x[0]) if x[1] == "-" else int(x[0]) for x in curr_path[ind:]]
-                rev_num_seq = [str(-1*x) for x in curr_num_end_seq[::-1]]
-                rev_prefix = ",".join(rev_num_seq)
-                if not rev_prefix in prefix_d_rev:
-                    prefix_d_rev[rev_prefix] = []
-
-                prefix_d_rev[rev_prefix].append((c_id,ind,path_ind))
-
-            #suffixes in the reverse direction
-            for ind in range(1,path_len):
-                curr_num_end_seq = [-1*int(x[0]) if x[1] == "-" else int(x[0]) for x in curr_path[:ind]]
-                rev_num_seq = [str(-1*x) for x in curr_num_end_seq[::-1]]
-                rev_prefix = ",".join(rev_num_seq)
-                if not rev_prefix in suffix_d_rev:
-                    suffix_d_rev[rev_prefix] = []
-
-                suffix_d_rev[rev_prefix].append((c_id,ind-1,path_ind))
+            #now get pres and suffs (if they're okay)
+            if is_end_aln(G,hp_ids[0],contig_cmaps[c_id],right=True):
+                for ind in range(1,path_len):
+                    curr_prefix_f = ",".join(fwd_num_seq[:ind])
+                    curr_prefix_r = ",".join(rev_num_seq[ind:])
+                    prefix_f[curr_prefix_f].append((c_id,ind-1,path_ind))
+                    prefix_r[curr_prefix_r].append((c_id,path_len - ind - 1,path_ind))
 
 
-    s_p_matches = []
-    suffix_set = set(suffix_d.keys())
-    print suffix_set
-    #intersect fwd set with suffix
-    fwd_prefix_set = set(prefix_d_fwd.keys())
-    fwd_intersect_keys = suffix_set.intersection(fwd_prefix_set)
-    print fwd_prefix_set
+            if is_end_aln(G,hp_ids[-1],contig_cmaps[c_id]):
+                for ind in range(1,path_len):
+                    curr_suffix_f = ",".join(fwd_num_seq[ind:])
+                    curr_suffix_r = ",".join(rev_num_seq[:ind])
+                    suffix_f[curr_suffix_f].append((c_id,ind,path_ind))
+                    suffix_r[curr_suffix_r].append((c_id,path_len - ind,path_ind))
 
-    #intersect rev set with suffix
-    rev_prefix_set = set(prefix_d_rev.keys())
-    rev_intersect_keys = suffix_set.intersection(rev_prefix_set)
-    print rev_prefix_set
-    #
 
-    rev_suffix_set = set(suffix_d_rev.keys())
-    fwd_rev_suff_intersect_keys = rev_suffix_set.intersection(fwd_prefix_set)
+    p_f_set = set(prefix_f.keys())
+    p_r_set = set(prefix_r.keys())
+    s_f_set = set(suffix_f.keys())
+    s_r_set = set(suffix_r.keys())
+
+    ##identify the overlaps
+    #S+ -> P+
+    s_p_intersect_keys = s_f_set.intersection(p_f_set)
+    print s_p_intersect_keys
+    print ""
+
+    #S+ -> S-
+    s_s_intersect_keys = s_f_set.intersection(s_r_set)
+    print s_s_intersect_keys
+    print ""
+
+    #P- -> P+
+    p_p_intersect_keys = p_r_set.intersection(p_f_set)
+    print p_p_intersect_keys
+    print ""
 
     #make a set of new edges
     intercontig_edges = set()
-
-    #connect matches with an inter-contig edge.
-    #the tuple
-    pairings = [(fwd_intersect_keys,prefix_d_fwd,0), (rev_intersect_keys,prefix_d_rev,-1), ()]
-
-    #
     added_edges = set()
-    for intersect_keys,prefix_d_curr,end_ind in zip([fwd_intersect_keys,rev_intersect_keys],[prefix_d_fwd,prefix_d_rev],[0,-1]):
+
+    param_list = [(s_p_intersect_keys,False,False,-1,suffix_f,prefix_f),(s_s_intersect_keys,True,True,-1,suffix_f,suffix_r),
+    (p_p_intersect_keys,True,True,0,prefix_r,prefix_f)]
+    for intersect_keys,disallow_self,orientation_flip,s_ind,source_d,dest_d in param_list:
         for i in intersect_keys:
-            suffix_tup_list,prefix_tup_list = suffix_d[i],prefix_d_curr[i]
-            for prefix_tup in prefix_tup_list:
-                for suffix_tup in suffix_tup_list:
-                    suffix_cid,suffix_ind,s_path_ind = suffix_tup
-                    prefix_cid,prefix_ind,p_path_ind = prefix_tup
-                    if prefix_cid == suffix_cid and prefix_d_curr == prefix_d_rev:
-                        continue
-
-                    Gs = contig_graphs[suffix_cid]
-                    Gp = contig_graphs[prefix_cid]
-                    hp_ids_suff = scaffold_paths[suffix_cid][s_path_ind]
-                    hp_ids_pre = scaffold_paths[prefix_cid][p_path_ind]
-                    s = Gs.node_id_lookup[hp_ids_suff[suffix_ind]]
-                    t = Gp.node_id_lookup[hp_ids_pre[end_ind]]
-                    if (s.n_id,t.n_id) in added_edges:
-                        continue
-
-                    new_edge = segment_edge(s,t,False)
-                    new_edge.intercontig = True
-                    if prefix_d_curr == prefix_d_rev:
-                        new_edge.orientation_flip = True
-
-                    print new_edge.edge_to_string(),end_ind
-                    intercontig_edges.add(new_edge)
-                    added_edges.add((s.n_id,t.n_id))
-                    added_edges.add((t.n_id,s.n_id))
-
-    for i in fwd_rev_suff_intersect_keys:
-        suffix_tup_list,prefix_tup_list = suffix_d_rev[i],prefix_d_fwd[i]
-        for prefix_tup in prefix_tup_list:
-            for suffix_tup in suffix_tup_list:
-                suffix_cid,suffix_ind,s_path_ind = suffix_tup
-                prefix_cid,prefix_ind,p_path_ind = prefix_tup
-                if prefix_cid == suffix_cid:
+            source_list, dest_list = source_d[i],dest_d[i]
+            pairings = [(s,t) for s in source_list for t in dest_list]
+            for source_tup,dest_tup in pairings:
+                s_cid,_,s_path_ind = source_tup
+                t_cid,t_ind,t_path_ind = dest_tup
+                if disallow_self and s_cid == t_cid:
                     continue
 
-                Gs = contig_graphs[suffix_cid]
-                Gp = contig_graphs[prefix_cid]
-                hp_ids_suff = scaffold_paths[suffix_cid][s_path_ind]
-                hp_ids_pre = scaffold_paths[prefix_cid][p_path_ind]
-                a = Gp.node_id_lookup[hp_ids_pre[0]]
-                b = Gs.node_id_lookup[hp_ids_suff[suffix_ind]]
-                if (a.n_id,b.n_id) in added_edges:
+                Gs = contig_graphs[s_cid]
+                Gt = contig_graphs[t_cid]
+                hp_ids_s = scaffold_paths[s_cid][s_path_ind]
+                hp_ids_t = scaffold_paths[t_cid][t_path_ind]
+                s = Gs.node_id_lookup[hp_ids_s[s_ind]]
+                t = Gt.node_id_lookup[hp_ids_t[t_ind]]
+                if (s.n_id,t.n_id) in added_edges:
                     continue
 
-                new_edge = segment_edge(a,b,False)
+                new_edge = segment_edge(s,t,False)
                 new_edge.intercontig = True
-                new_edge.orientation_flip = True
+                if orientation_flip:
+                    new_edge.orientation_flip = True
 
-                print new_edge.edge_to_string(),end_ind
+                # print new_edge.edge_to_string(),end_ind
                 intercontig_edges.add(new_edge)
-                added_edges.add((a.n_id,b.n_id))
-                added_edges.add((b.n_id,a.n_id))
-
-    # for i in intercontig_edges:
-    #     print(i.edge_to_string())
+                added_edges.add((s.n_id,t.n_id))
+                added_edges.add((t.n_id,s.n_id))
 
     return intercontig_edges

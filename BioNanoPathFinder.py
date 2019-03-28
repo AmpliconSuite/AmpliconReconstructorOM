@@ -923,11 +923,11 @@ if __name__ == '__main__':
 
     #make intercontig edges
     G = construct_combined_graph(contig_graphs)
-    if args.no_connect:
+    if args.noConnect:
         print "skipping contig connection step"
         intercontig_edges = set()
     else:
-        intercontig_edges = find_intercontig_edges(alt_paths,contig_graphs)
+        intercontig_edges = get_intercontig_edges(alt_paths,contig_graphs,contig_cmaps)
 
     G.edges|=intercontig_edges
     G.construct_edge_lookup()
