@@ -349,7 +349,11 @@ def make_contig_aln_graph(aln_obj_list,contig_id):
     sorted_node_l = []
     for i in sorted_aln_l:
         curr_node = segment_node(contig_id,i)
-        curr_node.aa_e = cmap_id_to_edge[curr_node.seg_id]
+        try:
+            curr_node.aa_e = cmap_id_to_edge[curr_node.seg_id]
+        except KeyError:
+            sys.stderr.write("Segment " + curr_node.seg_id + " not found in BPG\n")
+            sys.stderr.write("Alignment files may not match to breakpoint graph.\n")
 
         sorted_node_l.append(curr_node)
         G.nodes.add(curr_node)

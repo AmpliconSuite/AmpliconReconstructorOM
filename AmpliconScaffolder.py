@@ -175,6 +175,7 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
     seg_dir_count = defaultdict(int)
     bpg_list = []
     aln_num = 0
+    u_id_lookup = {}
     print "aln_files len",len(aln_files)
     for f in aln_files:
         f_fields = os.path.splitext(f)
@@ -212,9 +213,14 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
         #padding with 10 to see if it helps
         if (chromID,str(p1-10),str(p2+10)) not in bpg_list:
             bpg_list.append((chromID,str(p1-10),str(p2+10)))
+            unique_id = str(id_start + aln_num)
+            u_id_lookup[(chromID,str(p1-10),str(p2+10))] = unique_id
+            
 
-        # meta_list.append(trans_contig_id)
-        unique_id = str(id_start + aln_num)
+        else:
+            unique_id = u_id_lookup[(chromID,str(p1-10),str(p2+10))]
+            
+
         meta_list.append(unique_id)
         if contig_dir == "-":
             aln_field_list = aln_field_list[::-1]
