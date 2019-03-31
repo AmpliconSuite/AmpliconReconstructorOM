@@ -199,7 +199,6 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
         except KeyError:
             continue
 
-        aln_num+=1
         #set up the breakpoint graph stuff
         ref_genome_id = aln_field_list[0][0]
         chromID = ref_genome_key_dict[ref_genome_id][0]
@@ -213,10 +212,10 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
         #padding with 10 to see if it helps
         if (chromID,str(p1-10),str(p2+10)) not in bpg_list:
             bpg_list.append((chromID,str(p1-10),str(p2+10)))
+            aln_num+=1
             unique_id = str(id_start + aln_num)
             u_id_lookup[(chromID,str(p1-10),str(p2+10))] = unique_id
             
-
         else:
             unique_id = u_id_lookup[(chromID,str(p1-10),str(p2+10))]
             
