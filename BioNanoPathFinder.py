@@ -25,8 +25,8 @@ inter_contig_link_bp_thresh = 50000
 inter_contig_label_overlap = 6
 long_gap_length = 250000 #long gap threshold between alignments
 long_gap_cost = 0
-max_dfs_depth = 100
-max_paths_to_check = 1000
+max_dfs_depth = 50
+max_paths_to_check = 500
 
 #uses a single list to keep the found paths to avoid having to flatten after returning
 def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,last_edge):
@@ -34,6 +34,7 @@ def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,las
     #check if path exceeds size difference constraints
     if not (curr_length - exp_length > min(10000*(len(curr_path)),40000)):  
         if s.vid == t.vid:
+            #check that is not too short
             if not (exp_length - curr_length > min(10000*(len(curr_path)), 25000)):
                 p_paths.append(curr_path)
           
