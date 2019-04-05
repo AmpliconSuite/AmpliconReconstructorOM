@@ -387,11 +387,11 @@ def make_contig_aln_graph(aln_obj_list,contig_id):
             curr_next+=1
 
     G.ordered_node_list = sorted_node_l
-    print contig_id
-    for e in G.edges:
-        print e.edge_to_string()
+    # print contig_id
+    # for e in G.edges:
+    #     print e.edge_to_string()
 
-    print ""
+    # print ""
     return G
 
 #parse breakpoint graph file to get CN info
@@ -645,6 +645,10 @@ def all_unique_non_extentible_paths(G,edge_cc,scaffold_alt_paths):
     print "Total intial paths discovered: " + str(len(all_paths))
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
     ss_paths = filter_subsequence_paths(G,cc_paths)
+    for i in ss_paths:
+        print path_to_string(G,i,show_contig=True)
+
+    print ""
     print ("Total final paths: " + str(len(ss_paths)))
     return ss_paths
     
@@ -670,30 +674,51 @@ def get_final_direction(aln_dir,flipped):
 def path_to_cycle_list(G,path):
     # node_seq = [[G.node_id_lookup[i[0]],i[1]] for i in path]
     seg_seq = [(G.node_id_lookup[i[0]],i[1]) for i in path]
+    # print [(x[0].n_id,x[1]) for x in seg_seq]
     circular = False
-    if (path[-1][0],path[0][0]) in G.edge_lookup:
-        looping_edge = (path[-1][0],path[0][0])
-        if G.edge_lookup[looping_edge].forbidden:
+    e_tup = (path[0][0],path[-1][0]) if i[1] < 0 else (path[-1][0],path[0][0])
+    if e_tup in G.edge_lookup:
+        looping_edge = G.edge_lookup[e_tup]
+        if looping_edge.forbidden:
             seg_seq.pop()
             circular = False
 
         else: 
             circular = True
 
-    #construct final cycle sequence and remove duplicate nodes caused by inter_contigs
     cycle_list = []
-    prev = None
 
-    for ind,i in enumerate(seg_seq):
+    #construct final cycle sequence and remove duplicate nodes caused by inter_contigs
+    aug_seg_seq = seg_seq + [seg_seq[0]]
+    for ind,i in enumerate(aug_seg_seq[:-1]):
         oriented_segment_id = i[0].seg_id + get_final_direction(i[0].direction,i[1])
-        if oriented_segment_id != prev:
-            cycle_list.append(oriented_segment_id)
-            prev = oriented_segment_id
+        #check if edge is intercontig, if it is then this thing is duplicated
+        try:
+            if i[1] < 0:
+                curr_edge = G.edge_lookup[(aug_seg_seq[ind+1][0].n_id,i[0].n_id)]
+
+            else:
+                curr_edge = G.edge_lookup[(i[0].n_id,aug_seg_seq[ind+1][0].n_id)]
+
+            if not curr_edge.intercontig:
+                cycle_list.append(oriented_segment_id)
+
+        except KeyError:
+            if ind == len(seg_seq)-1:
+                cycle_list.append(oriented_segment_id)
+
+            else:
+                sys.stderr.write("Could not find expected interior edge in path at index " + str(ind))
+                sys.stderr.write(path_to_string(G,path))
 
     if not circular:
         cycle_list = ["0+"] + cycle_list + ["0-"]
+
     elif circular and len(cycle_list) > 1 and cycle_list[-1] == cycle_list[0]:
         cycle_list.pop()
+
+    # print cycle_list
+    # print ""
 
     return cycle_list,circular
 
@@ -756,12 +781,17 @@ def write_path_cycles(G,paths,outname):
             cycle_list,_ = path_to_cycle_list(G,i)
             outfile.write("Cycle=%d;Copy_count=0;Segments=%s\n" % (ind+1,",".join(cycle_list)))
 
-def path_to_string(G,path):
+def path_to_string(G,path,show_contig = False):
     line = ""
     for i in path:
         line+=G.node_id_lookup[i[0]].seg_id
         line+=G.node_id_lookup[i[0]].direction
-        line+=","
+        if show_contig:
+            line+="(c_id:"
+            line+=G.node_id_lookup[i[0]].contig_id
+            line+=(")")
+
+        line+=", "
 
     return line
 
@@ -922,6 +952,7 @@ if __name__ == '__main__':
 
     #make intercontig edges
     G = construct_combined_graph(contig_graphs)
+
     if args.noConnect:
         print "skipping contig connection step"
         intercontig_edges = set()

@@ -11,7 +11,6 @@ def median(L):
 def parse_cmap(cmapf,keep_length = False):
     cmaps = {}
     #contigCovs = {}
-
     with open(cmapf) as infile:
         for line in infile:
             if line.startswith("#h"):
