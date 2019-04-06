@@ -124,18 +124,18 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
     ##identify the overlaps
     #S+ -> P+
     s_p_intersect_keys = s_f_set.intersection(p_f_set)
-    # print s_p_intersect_keys
-    # print ""
+    print s_p_intersect_keys
+    print ""
 
     #S+ -> S-
     s_s_intersect_keys = s_f_set.intersection(s_r_set)
-    # print s_s_intersect_keys
-    # print ""
+    print s_s_intersect_keys
+    print ""
 
     #P- -> P+
     p_p_intersect_keys = p_r_set.intersection(p_f_set)
-    # print p_p_intersect_keys
-    # print ""
+    print p_p_intersect_keys
+    print ""
 
     #make a set of new edges
     intercontig_edges = set()

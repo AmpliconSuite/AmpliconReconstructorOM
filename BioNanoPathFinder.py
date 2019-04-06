@@ -521,7 +521,7 @@ def get_scaffold_heaviest_path(contig_G,s,topo_sorted_ids,weight_dict):
     return heaviest_path[::-1],max_weight
 
 #recursive pathfinding for non-extendable paths
-def path_recursion(G,u,visited,curr_path,paths,edge_dir):
+def path_recursion(G,u,visited,curr_path,paths,edge_dir,p_flipped):
     if edge_dir == 1:
         unvisited_next = set([x for x in G.adj_fwd_dict[u]]) - visited
     else:
@@ -543,7 +543,8 @@ def path_recursion(G,u,visited,curr_path,paths,edge_dir):
             if curr_edge.intercontig and curr_edge.orientation_flip:
                 new_edge_dir*=-1
 
-            path_recursion(G,v,new_visited,curr_path + [(v,new_edge_dir)],paths,new_edge_dir)
+            if not curr_edge.orientation_flip and p_flipped:
+                path_recursion(G,v,new_visited,curr_path + [(v,new_edge_dir)],paths,new_edge_dir,curr_edge.orientation_flip)
 
 #check if one path is entirely a subsequence of another
 def check_LCS(path1,path2):
@@ -591,7 +592,7 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
 def filter_subsequence_paths(G,paths):
     kept = []
     #sort by weight, then keep
-    print("sorting by weight")
+    # print("sorting by weight")
     paths_weight_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
 
     for ind_i,i in enumerate(paths_weight_sorted):
@@ -631,10 +632,10 @@ def all_unique_non_extentible_paths(G,edge_cc,scaffold_alt_paths):
     #iterate through nodes and recurse on the pseudo-directed graph to get the paths
     for i in [x.n_id for x in G.nodes if not x.imputed and x.n_id not in shp_interior_nodes]:
         paths = []
-        path_recursion(G,i,set([i]),[(i,1)],paths,1)
+        path_recursion(G,i,set([i]),[(i,1)],paths,1,False)
         all_paths.extend(paths)
         paths = []
-        path_recursion(G,i,set([i]),[(i,-1)],paths,-1)
+        path_recursion(G,i,set([i]),[(i,-1)],paths,-1,False)
         all_paths.extend(paths)
 
 
@@ -831,7 +832,7 @@ def get_scaffold_heaviest_paths(contig_alignment_dict,impute,contig_cmaps):
 
 #add alternate "heaviest" paths, i.e. alternate paths formed by forbidden edge endpoints
 def add_alternate_paths(contig_graphs,scaffold_heaviest_paths):
-    #the set of paths considered for inter-contig connections
+    #the set of paths considered for intercontig connections
     connectable_paths = {}
     for c_id,shp_tup in scaffold_heaviest_paths.iteritems():
         if len(shp_tup[0]) == 1:
