@@ -543,7 +543,7 @@ def path_recursion(G,u,visited,curr_path,paths,edge_dir,p_flipped):
             if curr_edge.intercontig and curr_edge.orientation_flip:
                 new_edge_dir*=-1
 
-            if not curr_edge.orientation_flip and p_flipped:
+            if not (curr_edge.orientation_flip and p_flipped):
                 path_recursion(G,v,new_visited,curr_path + [(v,new_edge_dir)],paths,new_edge_dir,curr_edge.orientation_flip)
 
 #check if one path is entirely a subsequence of another
