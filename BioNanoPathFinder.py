@@ -57,7 +57,7 @@ def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,las
                     
                 #no direct loopbacks on short segs
                 if len(curr_path) > 1:
-                    if(u.vid == curr_path[-2].vid and edge_len < 500):
+                    if(u.vid == curr_path[-2].vid and edge_len < 100):
                         continue
 
                 c_count_d[edge_rep]+=1
@@ -613,14 +613,16 @@ def filter_subsequence_paths(G,paths):
                 found = True
                 break
 
-            elif set(j_seg_path) in kept_path_node_set:
+            elif frozenset(i) in kept_path_node_set:
                 found = True
                 break
                     
         if not found:
             kept.append(i)
-            kept_path_node_set.add(frozenset(i_seg_path))
-            kept_path_node_set.add(frozenset(rev_i_seg_path))
+            # print path_to_string(G,i)
+            kept_path_node_set.add(frozenset(i))
+            #make rev
+            kept_path_node_set.add(frozenset([(x[0],-1*x[1]) for x in i]))
 
     return kept
 

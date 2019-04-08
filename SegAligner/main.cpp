@@ -434,9 +434,11 @@ int main (int argc, char *argv[]) {
     bool limit_lookback, do_tip;
     tie(contig_list_file, limit_lookback, do_tip) = parse_args(argc,argv);
 
-    if (!limit_lookback || fitting_aln) {
+    if (!limit_lookback) {
         lookback = 9999999;
         cout << "Alignment banding OFF. \n";
+    } else if (fitting_aln) {
+        lookback = 100;
     }
 
     //make segs cmap
