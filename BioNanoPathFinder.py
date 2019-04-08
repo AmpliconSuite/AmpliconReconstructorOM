@@ -561,9 +561,9 @@ def check_LCS(path1,path2):
     if M[x][y] == min(x,y):
         return True
 
-    #Handles long paths with minor modifications. Filtered later by score so better one is kept.
-    elif min(x,y) > 5 and M[x][y] > min(x,y) - 3:
-        return True
+    # #Handles long paths with minor modifications. Filtered later by score so better one is kept.
+    # elif min(x,y) > 10 and M[x][y] > min(x,y) - 3:
+    #     return True
 
     return False
 
@@ -591,6 +591,7 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
 #return all paths from a list of paths which are not a sub-sequence
 def filter_subsequence_paths(G,paths):
     kept = []
+    kept_path_node_set = set() #set of sets
     #sort by weight, then keep
     # print("sorting by weight")
     paths_weight_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
@@ -611,9 +612,15 @@ def filter_subsequence_paths(G,paths):
             if check_LCS(i_seg_path,j_seg_path) or check_LCS(rev_i_seg_path,j_seg_path):
                 found = True
                 break
+
+            elif set(j_seg_path) if kept_path_node_set:
+                found = True
+                break
                     
         if not found:
             kept.append(i)
+            kept_path_node_set.add(set(i_seg_path))
+            kept_path_node_set.add(set(rev_i_seg_path))
 
     return kept
 
