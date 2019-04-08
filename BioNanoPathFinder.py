@@ -589,14 +589,13 @@ def check_rotations(G,kept,i,rev_i):
         j_circ = path_is_circular(G,j)
         if i_circ != j_circ:
             continue
-            
+
         for rot_ind in range(len(j)):
             r_j = j[rot_ind:] + j[:rot_ind]
             if check_LCS(i,r_j) or check_LCS(rev_i,r_j):
                 return True
 
     return False
-
 
 #return all paths from a list of paths which are not a sub-sequence
 def filter_subsequence_paths(G,paths):
@@ -609,7 +608,7 @@ def filter_subsequence_paths(G,paths):
         rev_i = [(x[0],-1*x[1]) for x in i][::-1]
   
         #check if the path or a rotation of the path is a subsequence
-        if not check_rotations(kept,i,rev_i):
+        if not check_rotations(G,kept,i,rev_i):
             kept.append(i)
 
     return kept
