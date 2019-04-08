@@ -613,7 +613,7 @@ def filter_subsequence_paths(G,paths):
                 found = True
                 break
 
-            elif set(j_seg_path) if kept_path_node_set:
+            elif set(j_seg_path) in kept_path_node_set:
                 found = True
                 break
                     
