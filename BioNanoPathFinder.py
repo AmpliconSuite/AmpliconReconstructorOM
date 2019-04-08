@@ -583,43 +583,34 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
 
     return cc_valid_paths
 
+def check_rotations(G,kept,i,rev_i):
+    i_circ = path_is_circular(G,i)
+    for j in kept:
+        j_circ = path_is_circular(G,j)
+        if i_circ != j_circ:
+            continue
+            
+        for rot_ind in range(len(j)):
+            r_j = j[rot_ind:] + j[:rot_ind]
+            if check_LCS(i,r_j) or check_LCS(rev_i,r_j):
+                return True
+
+    return False
+
+
 #return all paths from a list of paths which are not a sub-sequence
 def filter_subsequence_paths(G,paths):
     kept = []
-    kept_path_node_set = set() #set of sets
-    #sort by weight, then keep
-    # print("sorting by weight")
     paths_weight_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
-
     for ind_i,i in enumerate(paths_weight_sorted):
-        found = False
         if ind_i % 1000 == 1 and ind_i > 1:
             print("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths)),str(len(kept))))
 
-        # i_weight = get_path_weight(G,i)
-        # print path_to_string(G,i),i_weight
-        i_seg_path = [(G.node_id_lookup[x[0]].seg_id,G.node_id_lookup[x[0]].direction,G.node_id_lookup[x[0]].contig_id) for x in i]
-        rev_i_seg_path = [(G.node_id_lookup[x[0]].seg_id,G.node_id_lookup[x[0]].direction,G.node_id_lookup[x[0]].contig_id) for x in i[::-1]]
-
-        found = False
-        for j in kept:
-            j_seg_path = [(G.node_id_lookup[x[0]].seg_id,G.node_id_lookup[x[0]].direction,G.node_id_lookup[x[0]].contig_id) for x in j]
-            if check_LCS(i_seg_path,j_seg_path) or check_LCS(rev_i_seg_path,j_seg_path):
-                found = True
-                break
-
-            elif frozenset(i) in kept_path_node_set:
-                found = True
-                break
-
-            
-                    
-        if not found:
+        rev_i = [(x[0],-1*x[1]) for x in i][::-1]
+  
+        #check if the path or a rotation of the path is a subsequence
+        if not check_rotations(kept,i,rev_i):
             kept.append(i)
-            # print path_to_string(G,i)
-            kept_path_node_set.add(frozenset(i))
-            #make rev
-            kept_path_node_set.add(frozenset([(x[0],-1*x[1]) for x in i]))
 
     return kept
 
@@ -644,7 +635,6 @@ def all_unique_non_extentible_paths(G,edge_cc,scaffold_alt_paths):
         path_recursion(G,i,set([i]),[(i,-1)],paths,-1,False)
         all_paths.extend(paths)
 
-
     # with open("dump.txt",'w') as outfile:
     #     for i in all_paths:
     #         outfile.write(path_to_string(G,i) + "\n")
@@ -652,10 +642,7 @@ def all_unique_non_extentible_paths(G,edge_cc,scaffold_alt_paths):
     print "Total intial paths discovered: " + str(len(all_paths))
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
     ss_paths = filter_subsequence_paths(G,cc_paths)
-    for i in ss_paths:
-        print path_to_string(G,i,show_contig=True)
 
-    print ""
     print ("Total final paths: " + str(len(ss_paths)))
     return ss_paths
     
@@ -677,25 +664,44 @@ def get_final_direction(aln_dir,flipped):
 
     return aln_dir
 
-#produce the AA-style cycle as a list
-def path_to_cycle_list(G,path):
-    # node_seq = [[G.node_id_lookup[i[0]],i[1]] for i in path]
+#return circularity and looping edge
+def path_is_circular(G,path):
     seg_seq = [(G.node_id_lookup[i[0]],i[1]) for i in path]
     # print [(x[0].n_id,x[1]) for x in seg_seq]
     circular = False
+    looping_edge = None
     e_tup = (path[0][0],path[-1][0]) if i[1] < 0 else (path[-1][0],path[0][0])
     if e_tup in G.edge_lookup:
         looping_edge = G.edge_lookup[e_tup]
         if looping_edge.forbidden:
-            seg_seq.pop()
             circular = False
 
         else: 
             circular = True
 
-    cycle_list = []
+    return circular
+
+#produce the AA-style cycle as a list
+def path_to_cycle_list(G,path):
+    # node_seq = [[G.node_id_lookup[i[0]],i[1]] for i in path]
+    seg_seq = [(G.node_id_lookup[i[0]],i[1]) for i in path]
+    # # print [(x[0].n_id,x[1]) for x in seg_seq]
+    # circular = False
+    # e_tup = (path[0][0],path[-1][0]) if i[1] < 0 else (path[-1][0],path[0][0])
+    # if e_tup in G.edge_lookup:
+    #     looping_edge = G.edge_lookup[e_tup]
+    #     if looping_edge.forbidden:
+    #         seg_seq.pop()
+    #         circular = False
+
+    #     else: 
+    #         circular = True
+
+
+    circular = path_is_circular(G,path)
 
     #construct final cycle sequence and remove duplicate nodes caused by inter_contigs
+    cycle_list = []
     aug_seg_seq = seg_seq + [seg_seq[0]]
     for ind,i in enumerate(aug_seg_seq[:-1]):
         oriented_segment_id = i[0].seg_id + get_final_direction(i[0].direction,i[1])
