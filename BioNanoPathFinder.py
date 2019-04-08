@@ -619,8 +619,8 @@ def filter_subsequence_paths(G,paths):
                     
         if not found:
             kept.append(i)
-            kept_path_node_set.add(set(i_seg_path))
-            kept_path_node_set.add(set(rev_i_seg_path))
+            kept_path_node_set.add(frozenset(i_seg_path))
+            kept_path_node_set.add(frozenset(rev_i_seg_path))
 
     return kept
 
