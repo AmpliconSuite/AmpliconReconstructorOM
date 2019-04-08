@@ -155,40 +155,35 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         best_score = float('-inf')
         
         for path in possible_paths:
-            #make contig local cmap
-            contig_start_pos = contig_cmap[contig_start_label]
-            local_contig_cmap = []
-            local_contig_rev_lookup = {}
-            for ind,x in enumerate(range(contig_start_label,contig_end_label+1)):
-                local_contig_cmap.append(contig_cmap[x] - contig_start_pos)
-                local_contig_rev_lookup[x] = ind+1
-
-            #get compound cmap containing the individual segments
-            compound_cmap,compound_rev_lookup = path_to_cmaps(path,s_id,s_end,t_id,t_start)
-
             #get path score
-            p_score, seg_aln_obj = path_score_from_SA_fitting_aln(compound_cmap,local_contig_cmap,c_id)
-
-            if path == [s,t]:
-                if e.gap:
-                    # print "hit gap"
-                    e.junction_score = 0
-                else:
-                    e.junction_score = p_score
-
+            if e.gap:
+                # print "hit gap"
+                e.junction_score = 0
+                p_score = float('-inf')
 
             else:
+                #make contig local cmap
+                contig_start_pos = contig_cmap[contig_start_label]
+                local_contig_cmap = []
+                local_contig_rev_lookup = {}
+                for ind,x in enumerate(range(contig_start_label,contig_end_label+1)):
+                    local_contig_cmap.append(contig_cmap[x] - contig_start_pos)
+                    local_contig_rev_lookup[x] = ind+1
 
-                if p_score > best_score and len(path) % 2 == 0:
-                    best_score = p_score
-                    best_path = path
-                    best_aln = seg_aln_obj
-                    best_compound_rev_lookup = compound_rev_lookup
+                #get compound cmap containing the individual segments
+                compound_cmap,compound_rev_lookup = path_to_cmaps(path,s_id,s_end,t_id,t_start)
+                p_score, seg_aln_obj = path_score_from_SA_fitting_aln(compound_cmap,local_contig_cmap,c_id)
+                e.junction_score = p_score
+
+            if p_score > best_score and len(path) % 2 == 0:
+                best_score = p_score
+                best_path = path
+                best_aln = seg_aln_obj
+                best_compound_rev_lookup = compound_rev_lookup
         
         if len(best_path) > 2:
             es_to_add|=add_path(G,best_path,best_aln,i,j,best_score,contig_start_label,contig_end_label,
                 c_id,best_compound_rev_lookup)
-
 
     G.edges|=es_to_add
 
@@ -616,6 +611,8 @@ def filter_subsequence_paths(G,paths):
             elif frozenset(i) in kept_path_node_set:
                 found = True
                 break
+
+            
                     
         if not found:
             kept.append(i)

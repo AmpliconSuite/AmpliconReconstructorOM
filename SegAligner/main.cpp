@@ -437,8 +437,6 @@ int main (int argc, char *argv[]) {
     if (!limit_lookback) {
         lookback = 9999999;
         cout << "Alignment banding OFF. \n";
-    } else if (fitting_aln) {
-        lookback = 100;
     }
 
     //make segs cmap
