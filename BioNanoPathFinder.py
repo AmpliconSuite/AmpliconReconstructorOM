@@ -67,7 +67,14 @@ def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,las
 
 #method for checking if a better imputed path exists between two nodes on an edge
 def path_alignment_correction(G,c_id,contig_cmap,impute=True):
+    # for e in G.edges:
+    #     print e.edge_to_string()
+
     align_vertex_list = G.ordered_node_list
+    # print "averts"
+    # for i in align_vertex_list:
+    #     print i.n_id
+
     es_to_remove = set()
     es_to_add = set()
     #for each edge, find all imputable paths between the two nodes
@@ -84,8 +91,12 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
             # print "unfound edge"
             continue
 
-        #do arithmetic on boundaries
+        if i.aln_obj.contig_endpoints[1] >= j.aln_obj.contig_endpoints[0]:
+            print "Tight junction at " + e.edge_to_string()
+            e.junction_score = 1
+            continue
 
+        #do arithmetic on boundaries
         s_end = i.aln_obj.seg_endpoints[-1]
         t_start = j.aln_obj.seg_endpoints[0]
         # print len(vectorized_segs[i.seg_id]),s_end
@@ -109,7 +120,6 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         else:
             s = v2
             s_overhang = vectorized_segs[i.seg_id][-1] - s_last_aln_pos
-            
         
         v1,v2 = j.aa_e.v1,j.aa_e.v2
         if v1.pos > v2.pos:
@@ -126,7 +136,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         else:
             t = v1
             t_overhang = t_first_aln_pos
-            
+
         contig_start_label = i.aln_obj.contig_endpoints[-1]
         contig_end_label = j.aln_obj.contig_endpoints[0]
         #look up the expected distance
@@ -143,6 +153,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
             recursive_path_find(t,curr_path,contig_distance,seg_overhang_sum,possible_paths,c_count_d,"sequence")
 
         print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
+
 
         if len(possible_paths) > max_paths_to_check:
             print("too many candidate paths to search")
@@ -180,12 +191,19 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
                 best_path = path
                 best_aln = seg_aln_obj
                 best_compound_rev_lookup = compound_rev_lookup
-        
-        if len(best_path) > 2:
+
+            if path == [s,t]:
+                s_t_score = p_score
+
+        if len(best_path) > 2 and best_score > s_t_score:
             es_to_add|=add_path(G,best_path,best_aln,i,j,best_score,contig_start_label,contig_end_label,
                 c_id,best_compound_rev_lookup)
 
     G.edges|=es_to_add
+    # for e in G.edges:
+    #     print e.edge_to_string()
+
+    print ""
 
 #makes CMAP from imputed path
 #returns combined & partial cmaps
@@ -293,10 +311,10 @@ def add_path(G,path,seg_aln_obj,i,j,p_score,c_start_l,c_end_l,contig_id,compound
         aln_score = -1
 
         new_aln_obj = SA_Obj(contig_id,[curr_undirected_id,seg_endpoints,contig_endpoints,alignment_dir,aln_score,[],False])
+        new_aln_obj.imputed_alignment = relabel_seg_aln(seg_aln_obj,compound_rev_lookup[curr_id],c_start_l,curr_id)
         new_node = segment_node(contig_id,new_aln_obj,imputed=True)
+        new_node.n_id=new_node.n_id + ".imp." + str(ind)
         #add the imputed alignment
-        new_node.aln_obj.imputed_alignment = relabel_seg_aln(seg_aln_obj,compound_rev_lookup[curr_id],c_start_l,curr_id)
-
         G.nodes.add(new_node)
         ordered_nodes.append(new_node)
 
@@ -365,7 +383,7 @@ def make_contig_aln_graph(aln_obj_list,contig_id):
                 break
 
             #forbidden
-            if j.contig_endpoints[0] <= i.contig_endpoints[1]:
+            if j.contig_endpoints[0] < i.contig_endpoints[1] - 1: #ALLOWING OVERHANG 1
                 curr_edge = segment_edge(sorted_node_l[ind_i],sorted_node_l[ind_j],True)
 
             #not forbidden
@@ -516,17 +534,18 @@ def get_scaffold_heaviest_path(contig_G,s,topo_sorted_ids,weight_dict):
     return heaviest_path[::-1],max_weight
 
 #recursive pathfinding for non-extendable paths
-def path_recursion(G,u,visited,curr_path,paths,edge_dir,p_flipped):
+def path_recursion(G,u,visited,curr_path,paths,edge_dir,p_intercontig):
     if edge_dir == 1:
         unvisited_next = set([x for x in G.adj_fwd_dict[u]]) - visited
     else:
         unvisited_next = set([x for x in G.adj_rev_dict[u]]) - visited
 
     if not unvisited_next:
+        # print "TN: " + path_to_string(G,curr_path,True)
         paths.append(curr_path)
 
     else:
-        # print "PN: " + path_to_string(G,curr_path)
+        # print "PN: " + path_to_string(G,curr_path,True)
         # print "UN: " + str(unvisited_next)
         # print ""
         for v in unvisited_next:
@@ -535,14 +554,14 @@ def path_recursion(G,u,visited,curr_path,paths,edge_dir,p_flipped):
             n_tup = tuple([u,v][::edge_dir])
             curr_edge = G.edge_lookup[n_tup]
             new_edge_dir = edge_dir
-            if curr_edge.intercontig and curr_edge.orientation_flip:
+            if curr_edge.orientation_flip:
                 new_edge_dir*=-1
 
-            if not (curr_edge.orientation_flip and p_flipped):
-                path_recursion(G,v,new_visited,curr_path + [(v,new_edge_dir)],paths,new_edge_dir,curr_edge.orientation_flip)
+            if not (curr_edge.intercontig and p_intercontig):
+                path_recursion(G,v,new_visited,curr_path + [(v,new_edge_dir)],paths,new_edge_dir,curr_edge.intercontig)
 
 #check if one path is entirely a subsequence of another
-def check_LCS(path1,path2):
+def check_LCS(path1,path2,downsample=False):
     x,y = len(path1),len(path2)
     M = [[0]*(y+1) for i in xrange(x+1)]
     for i in range(1,x+1):
@@ -556,9 +575,9 @@ def check_LCS(path1,path2):
     if M[x][y] == min(x,y):
         return True
 
-    # #Handles long paths with minor modifications. Filtered later by score so better one is kept.
-    # elif min(x,y) > 10 and M[x][y] > min(x,y) - 3:
-    #     return True
+    #Handles long paths with minor modifications. Filtered later by score so better one is kept.
+    elif downsample and min(x,y) > 12 and M[x][y] > min(x,y) - 3:
+        return True
 
     return False
 
@@ -585,15 +604,22 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
 
 def check_rotations(G,kept,i,rev_i):
     i_circ = path_is_circular(G,i)
+    # i_set = set([x[0] for x in i])
     for j in kept:
         j_circ = path_is_circular(G,j)
         if i_circ != j_circ:
             continue
 
-        for rot_ind in range(len(j)):
-            r_j = j[rot_ind:] + j[:rot_ind]
-            if check_LCS(i,r_j) or check_LCS(rev_i,r_j):
-                return True
+        elif not i_circ:
+            if len(j) > 1 or len(i) == 1:
+                if check_LCS(i,j) or check_LCS(rev_i,j):
+                    return True
+
+        elif len(j) > 1:
+            for rot_ind in range(len(j)):
+                r_j = j[rot_ind:] + j[:rot_ind]
+                if check_LCS(i,r_j) or check_LCS(rev_i,r_j):
+                    return True
 
     return False
 
@@ -601,10 +627,12 @@ def check_rotations(G,kept,i,rev_i):
 def filter_subsequence_paths(G,paths):
     kept = []
     paths_weight_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
+    downsample = True if len(paths) > 20000 else False
     for ind_i,i in enumerate(paths_weight_sorted):
-        if ind_i % 1000 == 1 and ind_i > 1:
+        if ind_i % 500 == 1 and ind_i > 1:
             print("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths)),str(len(kept))))
 
+        # print ind_i
         rev_i = [(x[0],-1*x[1]) for x in i][::-1]
   
         #check if the path or a rotation of the path is a subsequence
@@ -614,7 +642,7 @@ def filter_subsequence_paths(G,paths):
     return kept
 
 #get heaviest paths for each of the scaffold graphs
-def all_unique_non_extentible_paths(G,edge_cc,scaffold_alt_paths):
+def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
     all_paths = []
 
     #construct all the intermediate nodes not to start at 
@@ -622,21 +650,26 @@ def all_unique_non_extentible_paths(G,edge_cc,scaffold_alt_paths):
     shp_interior_nodes = set()
     for c_id,path_list in scaffold_alt_paths.iteritems():
         for path in path_list:
+            # print path
             for i in path[1:-1]:
                 shp_interior_nodes.add(i)
+                # print i
 
     #iterate through nodes and recurse on the pseudo-directed graph to get the paths
     for i in [x.n_id for x in G.nodes if not x.imputed and x.n_id not in shp_interior_nodes]:
+        # print i
         paths = []
-        path_recursion(G,i,set([i]),[(i,1)],paths,1,False)
+        path_recursion(G,i,set([i]),[(i,1)],paths,1,True)
         all_paths.extend(paths)
         paths = []
-        path_recursion(G,i,set([i]),[(i,-1)],paths,-1,False)
+        path_recursion(G,i,set([i]),[(i,-1)],paths,-1,True)
         all_paths.extend(paths)
 
-    # with open("dump.txt",'w') as outfile:
-    #     for i in all_paths:
-    #         outfile.write(path_to_string(G,i) + "\n")
+    with open("dump.txt",'w') as outfile:
+        for i in all_paths:
+            outfile.write(path_to_string(G,i,True) + "\n")
+    # for i in all_paths:
+    #     print i
 
     print "Total intial paths discovered: " + str(len(all_paths))
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
@@ -665,17 +698,16 @@ def get_final_direction(aln_dir,flipped):
 
 #return circularity and looping edge
 def path_is_circular(G,path):
+    # print "checking circ"
     seg_seq = [(G.node_id_lookup[i[0]],i[1]) for i in path]
     # print [(x[0].n_id,x[1]) for x in seg_seq]
     circular = False
-    looping_edge = None
+    i = path[-1]
     e_tup = (path[0][0],path[-1][0]) if i[1] < 0 else (path[-1][0],path[0][0])
     if e_tup in G.edge_lookup:
+        # print 
         looping_edge = G.edge_lookup[e_tup]
-        if looping_edge.forbidden:
-            circular = False
-
-        else: 
+        if not looping_edge.forbidden:
             circular = True
 
     return circular
@@ -684,22 +716,9 @@ def path_is_circular(G,path):
 def path_to_cycle_list(G,path):
     # node_seq = [[G.node_id_lookup[i[0]],i[1]] for i in path]
     seg_seq = [(G.node_id_lookup[i[0]],i[1]) for i in path]
-    # # print [(x[0].n_id,x[1]) for x in seg_seq]
-    # circular = False
-    # e_tup = (path[0][0],path[-1][0]) if i[1] < 0 else (path[-1][0],path[0][0])
-    # if e_tup in G.edge_lookup:
-    #     looping_edge = G.edge_lookup[e_tup]
-    #     if looping_edge.forbidden:
-    #         seg_seq.pop()
-    #         circular = False
-
-    #     else: 
-    #         circular = True
-
-
     circular = path_is_circular(G,path)
 
-    #construct final cycle sequence and remove duplicate nodes caused by inter_contigs
+    #construct final cycle sequence and remove duplicate nodes caused by intercontig
     cycle_list = []
     aug_seg_seq = seg_seq + [seg_seq[0]]
     for ind,i in enumerate(aug_seg_seq[:-1]):
@@ -729,8 +748,6 @@ def path_to_cycle_list(G,path):
     elif circular and len(cycle_list) > 1 and cycle_list[-1] == cycle_list[0]:
         cycle_list.pop()
 
-    # print cycle_list
-    # print ""
 
     return cycle_list,circular
 
@@ -738,6 +755,9 @@ def path_to_cycle_list(G,path):
 def write_path_alignment(G,path,outname,weight):
     seg_seq,circular = path_to_cycle_list(G,path)
     node_seq = [G.node_id_lookup[i[0]] for i in path]
+    # print seg_seq,circular
+    # print [x.n_id for x in node_seq]
+    # print ""
 
     with open(outname,'w') as outfile:
         outfile.write("#seg_seq\tmedian_aln_score\tmean_aln_score\ttotal_score\tcircular\n")
@@ -940,7 +960,6 @@ if __name__ == '__main__':
 
     #match cmap to AA edges
     cmap_id_to_edge = match_cmap_graph_edge(breakpointG)
-    print sorted(cmap_id_to_edge.keys())
     print("Matched ids to AA edges")
 
     #get aln files
@@ -980,7 +999,7 @@ if __name__ == '__main__':
 
     #connect heaviest paths across contigs
     print("Finding all non-extendible paths")
-    all_paths = all_unique_non_extentible_paths(G,edge_cc,alt_paths)
+    all_paths = all_unique_non_extendible_paths(G,edge_cc,alt_paths)
 
     all_paths_weights = [get_path_weight(G,p) for p in all_paths] 
     if args.noImpute: outname+="_noImpute"

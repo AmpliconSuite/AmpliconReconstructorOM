@@ -144,7 +144,7 @@ class SA_Obj(object):
         self.aln_score = raw_aln_list[4]
         self.alignment = raw_aln_list[5]
         self.is_tip_aln = raw_aln_list[6]
-        self.aln_id = "_".join([str(self.contig_id),str(self.seg_id),str(self.contig_endpoints[0]),str(self.contig_endpoints[1])])
+        self.aln_id = "_".join([str(self.contig_id),str(self.seg_id)+self.alignment_dir,str(self.contig_endpoints[0]),str(self.contig_endpoints[1])])
         self.imputed_alignment = []
 
     def aln_summary_to_string(self):
