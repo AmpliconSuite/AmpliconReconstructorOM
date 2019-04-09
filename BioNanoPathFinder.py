@@ -624,20 +624,28 @@ def check_rotations(G,kept,i,rev_i):
     return False
 
 #return all paths from a list of paths which are not a sub-sequence
-def filter_subsequence_paths(G,paths):
+def filter_subsequence_paths(G,paths_sorted):
     kept = []
-    paths_weight_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
+    contig_to_paths = defaultdict(list)
     downsample = True if len(paths) > 20000 else False
-    for ind_i,i in enumerate(paths_weight_sorted):
-        if ind_i % 500 == 1 and ind_i > 1:
+    for ind_i,i in enumerate(paths_sorted):
+        if ind_i % 1000 == 1 and ind_i > 1:
             print("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths)),str(len(kept))))
 
         # print ind_i
         rev_i = [(x[0],-1*x[1]) for x in i][::-1]
   
         #check if the path or a rotation of the path is a subsequence
-        if not check_rotations(G,kept,i,rev_i):
+        i_contig_set = set([G.node_id_lookup[x[0]].contig_id for x in i])
+
+        kept_to_check = set()
+        for c, in i_contig_set:
+            kept_to_check.update(contig_to_paths[c])
+
+        if not check_rotations(G,kept_to_check,i,rev_i):
             kept.append(i)
+            for c in i_contig_set:
+                contig_to_paths[c].append(i)
 
     return kept
 
@@ -665,15 +673,17 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
         path_recursion(G,i,set([i]),[(i,-1)],paths,-1,True)
         all_paths.extend(paths)
 
-    with open("dump.txt",'w') as outfile:
-        for i in all_paths:
-            outfile.write(path_to_string(G,i,True) + "\n")
+    # with open("dump.txt",'w') as outfile:
+    #     for i in all_paths:
+    #         outfile.write(path_to_string(G,i,True) + "\n")
     # for i in all_paths:
     #     print i
 
     print "Total intial paths discovered: " + str(len(all_paths))
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
-    ss_paths = filter_subsequence_paths(G,cc_paths)
+    paths_weight_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
+    pws_with_scaffold_hps = scaffold_alt_paths + paths_weight_sorted
+    ss_paths = filter_subsequence_paths(G,pws_with_scaffold_hps)
 
     print ("Total final paths: " + str(len(ss_paths)))
     return ss_paths
