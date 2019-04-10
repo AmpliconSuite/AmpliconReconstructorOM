@@ -873,7 +873,6 @@ def add_alternate_paths(contig_graphs,scaffold_heaviest_paths):
         
         else:
             hp = shp_tup[0]
-            # print hp
             first_node = hp[0]
             last_node = hp[-1]
             G_contig = contig_graphs[c_id]
@@ -888,10 +887,11 @@ def add_alternate_paths(contig_graphs,scaffold_heaviest_paths):
                         if node_pair in G_contig.edge_lookup:
                             curr_edge = G_contig.edge_lookup[node_pair]
                             if curr_edge.forbidden:
-                                if (node,hp_i) in G_contig.edge_lookup:
+                                if (node,hp_i) in G_contig.edge_lookup and hp_i == hp[1]:
                                     if not G_contig.edge_lookup[(node,hp_i)].forbidden:
                                         alt_first_nodes.append(i.n_id)
-                                else:
+
+                                elif (hp_i,node) in G_contig.edge_lookup and hp_i == hp[-2]:
                                     if not G_contig.edge_lookup[(hp_i,node)].forbidden:
                                         alt_last_nodes.append(i.n_id)
 
