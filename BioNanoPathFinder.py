@@ -593,7 +593,6 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
 
 def check_rotations(G,kept,i,rev_i):
     i_circ = path_is_circular(G,i)
-    # i_set = set([x[0] for x in i])
     for j in kept:
         j_circ = path_is_circular(G,j)
         if i_circ != j_circ:
@@ -797,9 +796,6 @@ def write_path_alignment(G,path,outname,weight):
 
             for i in alignment:
                 seg_label = i["seg_label"]
-                # if i["seg_dir"] == "-":
-                    # seg_label = str(translate_reversed_label(vectorized_segs,v.seg_id,int(seg_label)))
-
                 outlist = [v.contig_id,v.seg_id,i["contig_label"],seg_label,contig_dir,i["seg_dir"],str(aln_ind),"0","0",imputed]
                 outfile.write("\t".join(outlist) + "\n")
 
@@ -917,7 +913,6 @@ if __name__ == '__main__':
     parser.add_argument("--adir", dest="adir",help="Directory where SegAligner alignments for the sample are located", required=True)
     parser.add_argument("-c", "--contigs", help="contig cmap", required=True)
     parser.add_argument("-s", "--segs", help="segments cmap file. Key file must be present in same directory and be named [CMAP]_key.txt", required=True)
-    # parser.add_argument("-k", "--keyfile", help="segments cmap key file",required=True)
     parser.add_argument("-g", "--graph", help="AA graph file",required=True)
     parser.add_argument("--noImpute",help="Do not impute the paths", action='store_true',default=False)
     parser.add_argument("--outdir", type=str, help="Destination for output files. Will create folder if it does not already exist",required=True)
@@ -946,8 +941,6 @@ if __name__ == '__main__':
     segs_cmaps = parse_cmap(segs_cmaps_file,True)
 
     #read segs key
-    # key_file = args.keyfile
-    #TODO: CHECK IF KEYFILE EXISTS
     keyfile = os.path.splitext(args.segs)[0] + "_key.txt"
     if not os.path.exists(keyfile):
         print(keyfile + " not found. Graph CMAP and *_key.txt must in same folder. Exiting.")
