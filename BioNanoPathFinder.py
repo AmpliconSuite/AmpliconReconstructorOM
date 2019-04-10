@@ -887,6 +887,8 @@ def add_alternate_paths(contig_graphs,scaffold_heaviest_paths):
             for i in G_contig.nodes:
                 for node,hp_i in zip([first_node,last_node],[hp[1],hp[-2]]):
                     for node_pair in [(node,i.n_id),(i.n_id,node)]:
+                        if i.imputed:
+                            continue
                         if node_pair in G_contig.edge_lookup:
                             curr_edge = G_contig.edge_lookup[node_pair]
                             if curr_edge.forbidden:
