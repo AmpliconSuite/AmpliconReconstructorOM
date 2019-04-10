@@ -682,7 +682,7 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
     print "Total intial paths discovered: " + str(len(all_paths))
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
     paths_weight_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
-    pws_with_scaffold_hps = scaffold_alt_paths + paths_weight_sorted
+    pws_with_scaffold_hps = scaffold_alt_paths.values() + paths_weight_sorted
     ss_paths = filter_subsequence_paths(G,pws_with_scaffold_hps)
 
     print ("Total final paths: " + str(len(ss_paths)))
