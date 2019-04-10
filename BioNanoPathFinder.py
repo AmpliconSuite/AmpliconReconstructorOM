@@ -627,10 +627,10 @@ def check_rotations(G,kept,i,rev_i):
 def filter_subsequence_paths(G,paths_sorted):
     kept = []
     contig_to_paths = defaultdict(list)
-    downsample = True if len(paths) > 20000 else False
+    downsample = True if len(paths_sorted) > 20000 else False
     for ind_i,i in enumerate(paths_sorted):
         if ind_i % 1000 == 1 and ind_i > 1:
-            print("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths)),str(len(kept))))
+            print("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths_sorted)),str(len(kept))))
 
         # print ind_i
         rev_i = [(x[0],-1*x[1]) for x in i][::-1]
