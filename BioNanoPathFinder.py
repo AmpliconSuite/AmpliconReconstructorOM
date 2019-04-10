@@ -690,7 +690,10 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
 def get_path_weight(G,path):
     weight = G.node_id_lookup[path[0][0]].aln_obj.aln_score
     for s,t in zip(path[:-1],path[1:]):
-        weight+=G.weights[(s[0],t[0])]
+        try:
+            weight+=G.weights[(s[0],t[0])]
+        except KeyError:
+            print "BAD EDGE ON PATH " + path_to_string(G,path,True)
 
     if (path[-1][0],path[0][-1]) in G.edge_lookup:
         weight+=G.edge_lookup[(path[-1][0],path[0][-1])].junction_score
@@ -879,11 +882,12 @@ def add_alternate_paths(contig_graphs,scaffold_heaviest_paths):
             alt_first_nodes = [first_node,]
             alt_last_nodes = [last_node,]
 
-            for i in G_contig.nodes:
+            for i in [x for x in G_contig.nodes if not x.imputed]:
                 for node,hp_i in zip([first_node,last_node],[hp[1],hp[-2]]):
+                    if G_contig.node_id_lookup[hp_i].imputed:
+                        continue
+
                     for node_pair in [(node,i.n_id),(i.n_id,node)]:
-                        if i.imputed:
-                            continue
                         if node_pair in G_contig.edge_lookup:
                             curr_edge = G_contig.edge_lookup[node_pair]
                             if curr_edge.forbidden:
