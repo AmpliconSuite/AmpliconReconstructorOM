@@ -67,14 +67,7 @@ def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,las
 
 #method for checking if a better imputed path exists between two nodes on an edge
 def path_alignment_correction(G,c_id,contig_cmap,impute=True):
-    # for e in G.edges:
-    #     print e.edge_to_string()
-
     align_vertex_list = G.ordered_node_list
-    # print "averts"
-    # for i in align_vertex_list:
-    #     print i.n_id
-
     es_to_remove = set()
     es_to_add = set()
     #for each edge, find all imputable paths between the two nodes
@@ -85,10 +78,8 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         i = e.s
         j = e.t 
 
-        # print i.seg_id, j.seg_id
         if not e.s.aa_e or not e.t.aa_e:
             e.junction_score = 0
-            # print "unfound edge"
             continue
 
         if i.aln_obj.contig_endpoints[1] >= j.aln_obj.contig_endpoints[0]:
@@ -99,7 +90,6 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         #do arithmetic on boundaries
         s_end = i.aln_obj.seg_endpoints[-1]
         t_start = j.aln_obj.seg_endpoints[0]
-        # print len(vectorized_segs[i.seg_id]),s_end
         s_last_aln_pos = vectorized_segs[i.seg_id][s_end-1]
         t_first_aln_pos = vectorized_segs[j.seg_id][t_start-1]
         
@@ -168,7 +158,6 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         for path in possible_paths:
             #get path score
             if e.gap:
-                # print "hit gap"
                 e.junction_score = 0
                 p_score = float('-inf')
 
@@ -624,23 +613,27 @@ def check_rotations(G,kept,i,rev_i):
     return False
 
 #return all paths from a list of paths which are not a sub-sequence
-def filter_subsequence_paths(G,paths_sorted):
+def filter_subsequence_paths(G,paths):
     kept = []
     contig_to_paths = defaultdict(list)
+    paths_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
     downsample = True if len(paths_sorted) > 20000 else False
     for ind_i,i in enumerate(paths_sorted):
         if ind_i % 1000 == 1 and ind_i > 1:
             print("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths_sorted)),str(len(kept))))
 
-        # print ind_i
         rev_i = [(x[0],-1*x[1]) for x in i][::-1]
   
         #check if the path or a rotation of the path is a subsequence
         i_contig_set = set([G.node_id_lookup[x[0]].contig_id for x in i])
 
-        kept_to_check = set()
-        for c, in i_contig_set:
-            kept_to_check.update(contig_to_paths[c])
+        kept_to_check = []
+        ktc_set = set()
+        for c in i_contig_set:
+            for p in contig_to_paths[c]:
+                if not str(p) in ktc_set:
+                    kept_to_check.append(p)
+                    ktc_set.add(str(p))
 
         if not check_rotations(G,kept_to_check,i,rev_i):
             kept.append(i)
@@ -658,14 +651,11 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
     shp_interior_nodes = set()
     for c_id,path_list in scaffold_alt_paths.iteritems():
         for path in path_list:
-            # print path
             for i in path[1:-1]:
                 shp_interior_nodes.add(i)
-                # print i
 
     #iterate through nodes and recurse on the pseudo-directed graph to get the paths
     for i in [x.n_id for x in G.nodes if not x.imputed and x.n_id not in shp_interior_nodes]:
-        # print i
         paths = []
         path_recursion(G,i,set([i]),[(i,1)],paths,1,True)
         all_paths.extend(paths)
@@ -681,13 +671,21 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
 
     print "Total intial paths discovered: " + str(len(all_paths))
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
-    paths_weight_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
-    flattened_shps = [p for plist in scaffold_alt_paths.values() for p in plist]
-    pws_with_scaffold_hps = flattened_shps + paths_weight_sorted
-    ss_paths = filter_subsequence_paths(G,pws_with_scaffold_hps)
+    ss_paths = filter_subsequence_paths(G,cc_paths)
 
-    print ("Total final paths: " + str(len(ss_paths)))
-    return ss_paths
+    flattened_shps = [p for plist in scaffold_alt_paths.values() for p in plist]
+    flattened_directed_shps = []
+    for p in flattened_shps:
+        cl = []
+        for n in p:
+            cl.append((n,1))
+
+        flattened_directed_shps.append(cl)
+
+    pws_with_scaffold_hps = flattened_directed_shps + ss_paths
+
+    print ("Total final paths: " + str(len(pws_with_scaffold_hps)))
+    return pws_with_scaffold_hps
     
 #calculate the weight of a path
 def get_path_weight(G,path):
@@ -709,14 +707,11 @@ def get_final_direction(aln_dir,flipped):
 
 #return circularity and looping edge
 def path_is_circular(G,path):
-    # print "checking circ"
     seg_seq = [(G.node_id_lookup[i[0]],i[1]) for i in path]
-    # print [(x[0].n_id,x[1]) for x in seg_seq]
     circular = False
     i = path[-1]
     e_tup = (path[0][0],path[-1][0]) if i[1] < 0 else (path[-1][0],path[0][0])
     if e_tup in G.edge_lookup:
-        # print 
         looping_edge = G.edge_lookup[e_tup]
         if not looping_edge.forbidden:
             circular = True
