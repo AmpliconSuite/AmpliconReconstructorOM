@@ -1027,7 +1027,7 @@ if __name__ == '__main__':
 
 
     #write SHPs
-    flattened_shps = [p[0] for plist in scaffold_heaviest_paths.values() for p in plist]
+    flattened_shps = [p[0] for p in scaffold_heaviest_paths.values()]
     flattened_directed_shps = []
     for p in flattened_shps:
         print path_to_string(G,p,True)
