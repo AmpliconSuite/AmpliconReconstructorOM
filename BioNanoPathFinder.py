@@ -649,8 +649,7 @@ def filter_subsequence_paths(G,paths):
     return kept
 
 #get heaviest paths for each of the scaffold graphs
-def all_unique_non_extendible_paths(G,edge_cc):
-    all_paths = []
+def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
 
     #construct all the intermediate nodes not to start at 
     #(i.e. they are inside the heaviest path and not an endpoint)
@@ -661,6 +660,7 @@ def all_unique_non_extendible_paths(G,edge_cc):
                 shp_interior_nodes.add(i)
 
     #iterate through nodes and recurse on the pseudo-directed graph to get the paths
+    all_paths = []
     for i in [x.n_id for x in G.nodes if not x.imputed and x.n_id not in shp_interior_nodes]:
         paths = []
         path_recursion(G,i,set([i]),[(i,1)],paths,1,True)
@@ -1011,7 +1011,7 @@ if __name__ == '__main__':
 
     #connect heaviest paths across contigs
     print("Finding all non-extendible paths")
-    all_paths = all_unique_non_extendible_paths(G,edge_cc)
+    all_paths = all_unique_non_extendible_paths(G,edge_cc,all_paths)
 
     all_paths_weights = [get_path_weight(G,p) for p in all_paths] 
     if args.noImpute: outname+="_noImpute"
@@ -1027,7 +1027,6 @@ if __name__ == '__main__':
 
 
     #write SHPs
-    flattened_directed_shps = []
     flattened_shps = [p for plist in scaffold_heaviest_paths.values() for p in plist]
     flattened_directed_shps = []
     for p in flattened_shps:
