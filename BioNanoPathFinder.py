@@ -537,13 +537,13 @@ def path_recursion(G,u,visited,curr_path,paths,edge_dir,p_intercontig):
         # print "PN: " + path_to_string(G,curr_path,True)
         # print "UN: " + str(unvisited_next)
         # print ""
-        hit = False
         for v in unvisited_next:
             new_visited = copy.copy(visited)
             new_visited.add(v)
             n_tup = tuple([u,v][::edge_dir])
             curr_edge = G.edge_lookup[n_tup]
             if curr_edge.gap:
+                paths.append(curr_path)
                 continue
             new_edge_dir = edge_dir
             if curr_edge.orientation_flip:
@@ -552,9 +552,6 @@ def path_recursion(G,u,visited,curr_path,paths,edge_dir,p_intercontig):
             if not (curr_edge.intercontig and p_intercontig):
                 hit = True
                 path_recursion(G,v,new_visited,curr_path + [(v,new_edge_dir)],paths,new_edge_dir,curr_edge.intercontig)
-
-        if not hit:
-            paths.append(curr_path)
 
 #check if one path is entirely a subsequence of another
 def check_LCS(path1,path2,downsample=False):
