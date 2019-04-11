@@ -642,7 +642,7 @@ def filter_subsequence_paths(G,paths):
     return kept
 
 #get heaviest paths for each of the scaffold graphs
-def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
+def all_unique_non_extendible_paths(G,edge_cc):
     all_paths = []
 
     #construct all the intermediate nodes not to start at 
@@ -672,19 +672,19 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
     ss_paths = filter_subsequence_paths(G,cc_paths)
 
-    flattened_shps = [p for plist in scaffold_alt_paths.values() for p in plist]
-    flattened_directed_shps = []
-    for p in flattened_shps:
-        cl = []
-        for n in p:
-            cl.append((n,1))
+    # flattened_shps = [p for plist in scaffold_alt_paths.values() for p in plist]
+    # flattened_directed_shps = []
+    # for p in flattened_shps:
+    #     cl = []
+    #     for n in p:
+    #         cl.append((n,1))
 
-        flattened_directed_shps.append(cl)
+    #     flattened_directed_shps.append(cl)
 
-    pws_with_scaffold_hps = flattened_directed_shps + ss_paths
+    # pws_with_scaffold_hps = flattened_directed_shps + ss_paths
 
-    print ("Total final paths: " + str(len(pws_with_scaffold_hps)))
-    return pws_with_scaffold_hps
+    print ("Total final paths: " + str(len(ss_paths)))
+    return ss_paths
     
 #calculate the weight of a path
 def get_path_weight(G,path):
@@ -1004,7 +1004,7 @@ if __name__ == '__main__':
 
     #connect heaviest paths across contigs
     print("Finding all non-extendible paths")
-    all_paths = all_unique_non_extendible_paths(G,edge_cc,alt_paths)
+    all_paths = all_unique_non_extendible_paths(G,edge_cc)
 
     all_paths_weights = [get_path_weight(G,p) for p in all_paths] 
     if args.noImpute: outname+="_noImpute"
@@ -1017,6 +1017,14 @@ if __name__ == '__main__':
         write_path_alignment(G,i,fname,sorted_all_weights[ind])
     
     write_path_cycles(G,sorted_all_paths,outname + "_paths_cycles.txt")
+
+    alt_paths_flat = [x for pathl in alt_paths.values() for x in pathl]
+    for ind,i in enumerate(alt_paths_flat):
+        curr_pw = get_path_weight(G,i)
+        fname = "%s_scaffold_path_%d_aln.txt" % (outname,ind+1)
+        write_path_alignment(G,i,fname,curr_pw)
+
+    write_path_cycles(G,alt_paths_flat,outname + "_scaffold_paths.txt")
 
     #graph to cytoscape js file
     graph_dict = graphs_to_cytoscapejs_dict(G)
