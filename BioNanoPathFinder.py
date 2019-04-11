@@ -1030,7 +1030,6 @@ if __name__ == '__main__':
     flattened_shps = [p[0] for p in scaffold_heaviest_paths.values()]
     flattened_directed_shps = []
     for p in flattened_shps:
-        print path_to_string(G,p,True)
         cl = []
         for n in p:
             cl.append((n,1))
