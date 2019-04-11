@@ -1011,7 +1011,7 @@ if __name__ == '__main__':
 
     #connect heaviest paths across contigs
     print("Finding all non-extendible paths")
-    all_paths = all_unique_non_extendible_paths(G,edge_cc,all_paths)
+    all_paths = all_unique_non_extendible_paths(G,edge_cc,alt_paths)
 
     all_paths_weights = [get_path_weight(G,p) for p in all_paths] 
     if args.noImpute: outname+="_noImpute"
