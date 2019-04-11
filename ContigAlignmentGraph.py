@@ -81,7 +81,7 @@ def is_end_aln(G,node_id,contig_cmap,right=False):
         dist_delta = contig_cmap[max(contig_cmap.keys())] - contig_cmap[contig_endpoints[1]]
         lab_delta = max(contig_cmap.keys()) - contig_endpoints[1]
 
-    return (dist_delta < 100000 and lab_delta < 10)
+    return (dist_delta < 100000 and lab_delta < 12)
 
 
 def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
@@ -100,7 +100,7 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
             path_len = len(curr_path)
 
             #now get pres and suffs (if they're okay)
-            if is_end_aln(G,hp_ids[0],contig_cmaps[c_id],right=True):
+            if is_end_aln(G,hp_ids[0],contig_cmaps[c_id]):
                 for ind in range(1,path_len):
                     curr_prefix_f = ",".join(fwd_num_seq[:ind])
                     curr_prefix_r = ",".join(rev_num_seq[ind:])
@@ -108,7 +108,7 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
                     prefix_r[curr_prefix_r].append((c_id,path_len - ind - 1,path_ind))
 
 
-            if is_end_aln(G,hp_ids[-1],contig_cmaps[c_id]):
+            if is_end_aln(G,hp_ids[-1],contig_cmaps[c_id],right=True):
                 for ind in range(1,path_len):
                     curr_suffix_f = ",".join(fwd_num_seq[ind:])
                     curr_suffix_r = ",".join(rev_num_seq[:ind])
