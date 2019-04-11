@@ -1009,8 +1009,8 @@ if __name__ == '__main__':
     all_paths_weights = [get_path_weight(G,p) for p in all_paths] 
     if args.noImpute: outname+="_noImpute"
     #write aligned path results
+    #write discovered paths
     print("Writing paths")
-
     sorted_all_paths,sorted_all_weights = zip(*sorted(zip(all_paths,all_paths_weights),key=lambda x: x[1],reverse=True))
     for ind,i in enumerate(sorted_all_paths):
         fname = "%s_path_%d_aln.txt" % (outname,ind+1)
@@ -1018,13 +1018,24 @@ if __name__ == '__main__':
     
     write_path_cycles(G,sorted_all_paths,outname + "_paths_cycles.txt")
 
-    alt_paths_flat = [x for pathl in alt_paths.values() for x in pathl]
-    for ind,i in enumerate(alt_paths_flat):
+
+    #write SHPs
+    flattened_directed_shps = []
+    flattened_shps = [p for plist in scaffold_heaviest_paths.values() for p in plist]
+    flattened_directed_shps = []
+    for p in flattened_shps:
+        cl = []
+        for n in p:
+            cl.append((n,1))
+
+        flattened_directed_shps.append(cl)
+
+    for ind,i in enumerate(flattened_directed_shps):
         curr_pw = get_path_weight(G,i)
         fname = "%s_scaffold_path_%d_aln.txt" % (outname,ind+1)
         write_path_alignment(G,i,fname,curr_pw)
 
-    write_path_cycles(G,alt_paths_flat,outname + "_scaffold_paths.txt")
+    write_path_cycles(G,flattened_directed_shps,outname + "_scaffold_paths.txt")
 
     #graph to cytoscape js file
     graph_dict = graphs_to_cytoscapejs_dict(G)
