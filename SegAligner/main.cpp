@@ -24,11 +24,11 @@ bool swap_b_x = false;
 int n_detect_scores = 500;
 int n_threads = 1;
 int min_map_len = 10;
-int lookback = 5;
-int max_seg_contig_alns = 5;
+int lookback = 6;
+int max_seg_contig_alns = 6;
 float p_val = 0.0001;
 float p_val_tip = 0.000001;
-float p_val_RG =  0.0000001;
+float p_val_RG =  0.00000005;
 string sample_prefix = "SA_output";
 
 //bookkeeping variable instantiation
