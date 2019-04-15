@@ -13,14 +13,14 @@ complementary_nucleotide = {"A":"T","C":"G","G":"C","T":"A","N":"N"}
 Modified method from brentp on BioStars
 given a fasta file. yield dictionary of header, sequence
 """
-def fasta_reader(fasta_file,chroms_to_get):
+def fasta_reader(fasta_file,chroms_to_get,getAll = False):
 	fasta_dict = {}
 	with open(fasta_file) as infile:
 		faiter = (x[1] for x in groupby(infile, lambda line: line[0] == ">"))
 		for header in faiter:
 			# drop the ">"
 			seq_name = header.next()[1:].strip()
-			if seq_name in chroms_to_get:
+			if (seq_name in chroms_to_get) or getAll:
 				print("Reading " + seq_name)
 				# join all sequence lines to one.
 				seq = "".join(s.strip() for s in faiter.next())
@@ -56,7 +56,6 @@ def read_graph(graphF):
 def segsToSeq(segSeqL,seqD):
 	segSeqD = {}
 	for i in segSeqL:
-		print i
 		segSeqD[i[0]] = seqD[i[1]][i[2]:i[3]]
 
 	return segSeqD
@@ -102,12 +101,16 @@ def makeCMAP(outprefix, segSeqL, segSeqD, enzyme, regExpEnzTup, minLabel, minSiz
 	print("Finished")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input", help="breakpoint graph .txt file",required=True)
+
 parser.add_argument("-r", "--ref", help="reference genome fasta",required=True)
 parser.add_argument("-o", "--output", help="output prefix")
 parser.add_argument("-e", "--enzyme", help="restriction enzyme: BspQI, BbvCI, BsmI, BsrDI",default="BspQI")
 parser.add_argument("-l", "--labels", type=int, help="minimum number of labels in reported CMAP, default 0",default=0)
 parser.add_argument("-s", "--size", type=float, help="minimum map size in reported CMAP, default 0",default=0)
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument("-g", "--graph", help="breakpoint graph .txt file, if not supplied, --make_ref must be supplied")
+group.add_argument("--makeRef", help="Make CMAP from entire reference fasta",action='store_true')
+
 
 args = parser.parse_args()
 
@@ -135,7 +138,10 @@ if args.enzyme not in enzymeSequences:
 	sys.exit("Unrecognized enzyme "+ args.enzyme + ", exiting")
 
 if not args.output:
-	args.output = ".".join(args.input.rsplit(".")[:-1])
+	if args.graph:
+		args.output = ".".join(args.graph.rsplit(".")[:-1])
+	else:
+		args.output = ".".join(args.ref.rsplit(".")[:-1])
 
 outprefix = args.output
 if not args.enzyme in args.output:
@@ -143,7 +149,17 @@ if not args.enzyme in args.output:
 
 regExpEnzTup = enzymeSequences[args.enzyme]
 
-segSeqL,chroms_to_get = read_graph(args.input)
-seqD = fasta_reader(args.ref,chroms_to_get)
+if args.graph:
+	segSeqL,chroms_to_get = read_graph(args.graph)
+	seqD = fasta_reader(args.ref,chroms_to_get)
+
+else:
+	chroms_to_get = set()
+	seqD = fasta_reader(args.ref,chroms_to_get,True)
+	segSeqL = []
+	for i in sorted(seqD.keys(),key = lambda x: x[3:]):
+		segSeqL.append((i,i,0,len(seqD[i])))
+
+
 segSeqD = segsToSeq(segSeqL,seqD)
 makeCMAP(outprefix,segSeqL,segSeqD,args.enzyme,regExpEnzTup,args.labels,args.size)
