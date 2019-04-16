@@ -311,7 +311,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 } else if (aln_list.size() == 3) {
                     float diff1 = (get<2>(aln_list[0]) - get<2>(aln_list[1]));
                     float diff2 = (get<2>(aln_list[1]) - get<2>(aln_list[2]));
-                    if (diff1 < med_thresh || diff2 < med_thresh) {
+                    if (diff1 < 9000 || diff2 < 9000) {
                         continue;
                     }
                 }

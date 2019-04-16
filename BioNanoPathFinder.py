@@ -652,7 +652,12 @@ def filter_subsequence_paths(G,paths):
     kept = []
     contig_to_paths = defaultdict(list)
     paths_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
-    downsample = True if len(paths_sorted) > 20000 else False
+    downsample = True if len(paths_sorted) > 35000 else False
+
+    if downsample:
+        print "Limiting search to top 35000 paths from " + str(len(paths_sorted)) + " original paths"
+        paths_sorted = paths_sorted[:35000]
+
     for ind_i,i in enumerate(paths_sorted):
         if ind_i % 1000 == 1 and ind_i > 1:
             print("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths_sorted)),str(len(kept))))
