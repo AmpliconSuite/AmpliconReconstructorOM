@@ -158,7 +158,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         for path in possible_paths:
             #get path score
             if e.gap:
-                e.junction_score = 0
+                e.junction_score = long_gap_cost
                 p_score = float('-inf')
 
             else:
