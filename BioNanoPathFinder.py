@@ -945,7 +945,7 @@ if __name__ == '__main__':
     parser.add_argument("--outdir", type=str, help="Destination for output files. Will create folder if it does not already exist",required=True)
     parser.add_argument("--prefix",dest="samp_name", type=str, help="Filename prefix for output files.",default="BNPF_out")
     parser.add_argument("--noConnect",action='store_true',help="Do not perform intercontig connection step")
-    parser.add_argument("i","--instrument",choices=["Irys","Saphyr"],required=True)
+    parser.add_argument("-i","--instrument",choices=["Irys","Saphyr"],required=True)
     args = parser.parse_args()
 
     impute = False if args.noImpute else True
