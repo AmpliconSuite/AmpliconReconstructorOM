@@ -290,7 +290,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--enzyme", help="labeling enzyme", choices=["BspQI","DLE1"],required=True)
     parser.add_argument("--plot_scores", help="Save plots of the distributions of segment scores",action='store_true')
     parser.add_argument("--no_tip_aln",help="Disable tip alignment step",action='store_true')
-    parser.add_argument("--min_map_len",help="minimum number of labels on map contig when aligning (default 10). Larger values (~15) better for Saphyr data.",type=int, default=10)
+    parser.add_argument("--min_map_len",help="minimum number of labels on map contig when aligning (default 10). Slightly larger values (~12) better for Saphyr data.",type=int, default=10)
     parser.add_argument("--no_ref_search",help="Do not search unaligned regions against reference genome",action='store_true')
     parser.add_argument("-i","--instrument",choices=["Irys","Saphyr"],required=True)
 

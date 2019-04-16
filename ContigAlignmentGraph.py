@@ -26,6 +26,7 @@ class segment_edge(object):
         self.gap = False
         self.heaviest_path_edge = False
         self.orientation_flip = False
+        self.suboptimal = False
 
     def edge_to_string(self):
         return str((self.s.seg_id + self.s.direction,self.t.seg_id + self.t.direction,self.s.contig_id,self.t.contig_id,self.intercontig,self.imputed,self.orientation_flip))

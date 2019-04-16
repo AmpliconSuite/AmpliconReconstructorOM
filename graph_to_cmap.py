@@ -104,7 +104,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-r", "--ref", help="reference genome fasta",required=True)
 parser.add_argument("-o", "--output", help="output prefix")
-parser.add_argument("-e", "--enzyme", help="restriction enzyme: BspQI, BbvCI, BsmI, BsrDI",default="BspQI")
+parser.add_argument("-e", "--enzyme", help="restriction enzyme: BspQI, BbvCI, BsmI, BsrDI, DLE1",required=True)
 parser.add_argument("-l", "--labels", type=int, help="minimum number of labels in reported CMAP, default 0",default=0)
 parser.add_argument("-s", "--size", type=float, help="minimum map size in reported CMAP, default 0",default=0)
 group = parser.add_mutually_exclusive_group(required=True)

@@ -185,6 +185,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
                 s_t_score = p_score
 
         if len(best_path) > 2 and best_score > s_t_score:
+            e.suboptimal = True
             es_to_add|=add_path(G,best_path,best_aln,i,j,best_score,contig_start_label,contig_end_label,
                 c_id,best_compound_rev_lookup)
 
@@ -564,6 +565,10 @@ def path_recursion(G,u,visited,curr_path,paths,edge_dir,p_intercontig):
             if curr_edge.gap:
                 paths.append(curr_path)
                 continue
+
+            elif curr_edge.suboptimal:
+                continue
+                
             new_edge_dir = edge_dir
             if curr_edge.orientation_flip:
                 new_edge_dir*=-1
