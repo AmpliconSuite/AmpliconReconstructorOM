@@ -27,6 +27,7 @@ long_gap_length = 250000 #long gap threshold between alignments
 long_gap_cost = 0
 max_dfs_depth = 50
 max_paths_to_check = 500
+max_paths_to_keep = 500
 
 #uses a single list to keep the found paths to avoid having to flatten after returning
 def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,last_edge):
@@ -682,6 +683,8 @@ def filter_subsequence_paths(G,paths):
 
         if not check_rotations(G,kept,i,rev_i):
             kept.append(i)
+            if downsample and len(kept) > max_paths_to_keep:
+                break
 
     return kept
 
