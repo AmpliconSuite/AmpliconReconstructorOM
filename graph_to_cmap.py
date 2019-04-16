@@ -119,7 +119,7 @@ enzymeSequences = {
 	"BBVCI":("CCTCAGC",2),
 	"BSMI":("GAATGC",4),
 	"BSRDI":("GCAATG",5),
-	"DLE1":("CTTAAG",3)
+	"DLE1":("CTTAAG",2)
 	}
 
 #"bseCI":("ATCGAT",),

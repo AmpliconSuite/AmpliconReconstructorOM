@@ -1,4 +1,4 @@
-# CMAP = hg19_DLE1_key.txt
+# CMAP = hg19_DLE1_test_key.txt
 # filter: Minimum Labels = 0
 # filter: Minimum Size (Kb) = 0.0
 1	chr1	249250621.0
