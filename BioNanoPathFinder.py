@@ -568,7 +568,7 @@ def path_recursion(G,u,visited,curr_path,paths,edge_dir,p_intercontig):
 
             elif curr_edge.suboptimal:
                 continue
-                
+
             new_edge_dir = edge_dir
             if curr_edge.orientation_flip:
                 new_edge_dir*=-1
@@ -619,22 +619,30 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
 
     return cc_valid_paths
 
+def get_segdir_seq(G,path):
+    segdir_seq = [G.node_id_lookup[x[0]].seg_id + str(int(G.node_id_lookup[x[0]].direction + "1")*x[1]) for x in path]
+    return segdir_seq
+
 def check_rotations(G,kept,i,rev_i):
+    i_segdir_seq = get_segdir_seq(G,i)
+    rev_i_segdir_seq = get_segdir_seq(G,rev_i)
     i_circ = path_is_circular(G,i)
     for j in kept:
         j_circ = path_is_circular(G,j)
+        j_segdir_seq = get_segdir_seq(G,j)
         if i_circ != j_circ:
             continue
 
         elif not i_circ:
             if len(j) > 1 or len(i) == 1:
-                if check_LCS(i,j) or check_LCS(rev_i,j):
+                if check_LCS(i_segdir_seq,j_segdir_seq) or check_LCS(rev_i_segdir_seq,j_segdir_seq):
                     return True
 
         elif len(j) > 1:
             for rot_ind in range(len(j)):
                 r_j = j[rot_ind:] + j[:rot_ind]
-                if check_LCS(i,r_j) or check_LCS(rev_i,r_j):
+                r_j_segdir_seq = get_segdir_seq(G,r_j)
+                if check_LCS(i_segdir_seq,r_j_segdir_seq) or check_LCS(rev_i_segdir_seq,r_j_segdir_seq):
                     return True
 
     return False
@@ -652,20 +660,23 @@ def filter_subsequence_paths(G,paths):
         rev_i = [(x[0],-1*x[1]) for x in i][::-1]
   
         #check if the path or a rotation of the path is a subsequence
-        i_contig_set = set([G.node_id_lookup[x[0]].contig_id for x in i])
+        # i_contig_set = set([G.node_id_lookup[x[0]].contig_id for x in i])
 
-        kept_to_check = []
-        ktc_set = set()
-        for c in i_contig_set:
-            for p in contig_to_paths[c]:
-                if not str(p) in ktc_set:
-                    kept_to_check.append(p)
-                    ktc_set.add(str(p))
+        # kept_to_check = []
+        # ktc_set = set()
+        # for c in i_contig_set:
+        #     for p in contig_to_paths[c]:
+        #         if not str(p) in ktc_set:
+        #             kept_to_check.append(p)
+        #             ktc_set.add(str(p))
 
-        if not check_rotations(G,kept_to_check,i,rev_i):
+        # if not check_rotations(G,kept_to_check,i,rev_i):
+        #     kept.append(i)
+        #     for c in i_contig_set:
+        #         contig_to_paths[c].append(i)
+
+        if not check_rotations(G,kept,i,rev_i):
             kept.append(i)
-            for c in i_contig_set:
-                contig_to_paths[c].append(i)
 
     return kept
 
