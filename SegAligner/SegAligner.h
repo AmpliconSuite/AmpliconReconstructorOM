@@ -6,7 +6,7 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
 pair<float,float> compute_partial_score_threshold(float full_threshold, const vector<tuple<int,int,float>> &aln_list,
                                                   vector<float> &contig_cmap);
 
-map<int,vector<float>> non_collapse_probs(map<int,vector<float>> &segs_cmaps);
+map<int,vector<float>> non_collapse_probs(map<int,vector<float>> &segs_cmaps, int inst_gen);
 
 float score_f(vector<float> &b_posns, vector<float> &x_posns, int i_ind, int j_ind, int p_ind, int q_ind,
               vector<float> &x_collapse_probs);

@@ -332,7 +332,7 @@ def path_score_from_SA_fitting_aln(compound_cmap,sub_vect,c_id):
 
     #call SA
     SA_SRC = os.environ["SA_SRC"]
-    cmd_list = [SA_SRC + "/SegAligner", compound_seg_fname, sub_contig_fname, "-fitting", "-min_labs=0", "-prefix=" + adir + "SA_temp"]
+    cmd_list = [SA_SRC + "/SegAligner", compound_seg_fname, sub_contig_fname, "-fitting", "-min_labs=0", "-prefix=" + adir + "SA_temp", "-gen=" + gen]
     with open(adir + "SA.stdout",'w') as outfile:
         call(cmd_list,stdout=outfile)
 
@@ -412,6 +412,25 @@ def get_edge_copy_counts(breakpoint_file):
                     cc_dict[fields[1]] = int(math.ceil(float(fields[2])))
     
     return cc_dict
+
+# #compute the distance between vectors
+# def compute_cc_dist(G,path,cc_dict):
+#     id_to_ind = {}
+#     curr_last = -1
+#     exp_cc_vect = []
+#     obs_cc_vect = []
+#     for n_id in path:
+#         seg_id = G.node_id_lookup[n_id].seg_id
+
+
+# def get_avg_path_weight(G,path):
+#     total_weight = get_path_weight(G,path)
+#     total_labels = 0
+#     for i in path:
+        
+
+# #if it's an LCS, but the CC-dist 
+
 
 #graph to cytoscape js dict
 def graphs_to_cytoscapejs_dict(G):
@@ -926,6 +945,7 @@ if __name__ == '__main__':
     parser.add_argument("--outdir", type=str, help="Destination for output files. Will create folder if it does not already exist",required=True)
     parser.add_argument("--prefix",dest="samp_name", type=str, help="Filename prefix for output files.",default="BNPF_out")
     parser.add_argument("--noConnect",action='store_true',help="Do not perform intercontig connection step")
+    parser.add_argument("i","--instrument",choices=["Irys","Saphyr"],required=True)
     args = parser.parse_args()
 
     impute = False if args.noImpute else True
@@ -936,6 +956,7 @@ if __name__ == '__main__':
     outdir = args.outdir
     if not os.path.exists(outdir): os.makedirs(outdir)
     if not outdir.endswith("/"): outdir+="/"
+    gen = "1" if args.instrument == "Irys" else "2"
 
     samp_name = args.samp_name
     outname = outdir + samp_name

@@ -25,9 +25,10 @@ int n_detect_scores = 500;
 int n_threads = 1;
 int min_map_len = 10;
 int lookback = 6;
+int inst_gen = 2;
 int max_seg_contig_alns = 6;
-float p_val = 0.0001;
-float p_val_tip = 0.000001;
+float p_val = 0.0005;
+float p_val_tip = 0.00001;
 float p_val_RG =  0.000000001;
 string sample_prefix = "SA_output";
 
@@ -387,6 +388,12 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
              //need num scores if detection is true
              n_detect_scores = stoi(string(argv[i]).substr(string(argv[i]).find('=') + 1));
 
+         } else if (string(argv[i]).rfind("-gen=", 0) == 0) {
+             inst_gen = stoi(string(argv[i]).substr(string(argv[i]).find('=') + 1));
+             if (inst_gen != 1 && inst_gen != 2) {
+                 cout << "1 or 2 are the only valid arguments for -gen";
+                 exit(1);
+             }
          }
 
          if (!flipped.empty()) {
@@ -457,8 +464,8 @@ int main (int argc, char *argv[]) {
     parse_cmap(contig_cmap_file, cmaps_contigs);
 
     //find collapse probs
-    map<int,vector<float>> non_collapse_prob_map = non_collapse_probs(cmaps_segs);
-    map<int,vector<float>> non_collapse_prob_map_contig = non_collapse_probs(cmaps_contigs);
+    map<int,vector<float>> non_collapse_prob_map = non_collapse_probs(cmaps_segs,inst_gen);
+    map<int,vector<float>> non_collapse_prob_map_contig = non_collapse_probs(cmaps_contigs,inst_gen);
 
     //-------------------------------------------------------
 

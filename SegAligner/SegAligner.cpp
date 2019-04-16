@@ -37,23 +37,27 @@ pair<float,float> compute_partial_score_threshold(float full_threshold, const ve
 
 //iterate over in-silico reference and estimate a probability that a given label will appear as collapsed with a left
 // or right neighbor
-map<int,vector<float>> non_collapse_probs(map<int,vector<float>> &segs_cmaps) {
+map<int,vector<float>> non_collapse_probs(map<int,vector<float>> &segs_cmaps,int inst_gen) {
     map<int,vector<tuple<float,float>>> non_collapse_pairs;
     map<int,vector<float>> non_collapse_prob_map;
-    int id;
-    int y_len;
-    float dist;
     float non_collapse = 1.0;
-    vector<float> y_posns;
     for (auto y = segs_cmaps.begin(); y != segs_cmaps.end(); ++y) {
-        id = y->first;
-        y_posns = y->second;
-        y_len = int(y->second.size()) - 1;
+        int id = y->first;
+        vector<float> y_posns = y->second;
+        int y_len = int(y->second.size()) - 1;
         non_collapse_pairs[id].emplace_back(1.0,1.0);
         for (int i = 1; i < y_len; ++i) {
             non_collapse_pairs[id].emplace_back(1.0,1.0);
-            dist = y_posns[i] - y_posns[i-1];
-            non_collapse = fmin(1.0f,powf(dist,4)/powf(2000,4));
+            float dist = y_posns[i] - y_posns[i-1];
+            if (inst_gen == 1) {
+                non_collapse = fmin(1.0f, powf(dist, 4) / powf(1850, 4));
+            } else {
+                if (dist < 475) {
+                    non_collapse = 0.0;
+                } else {
+                    non_collapse = fmin(1.0f,(dist-475)/1500.0);
+                }
+            }
             non_collapse_pairs[id][i] = make_pair(non_collapse,1.0);
             non_collapse_pairs[id][i-1] = make_pair(get<0>(non_collapse_pairs[id][i-1]),non_collapse);
             non_collapse_prob_map[id].push_back(get<0>(non_collapse_pairs[id][i-1])*non_collapse);

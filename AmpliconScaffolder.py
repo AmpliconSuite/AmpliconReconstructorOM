@@ -292,7 +292,7 @@ if __name__ == "__main__":
     parser.add_argument("--no_tip_aln",help="Disable tip alignment step",action='store_true')
     parser.add_argument("--min_map_len",help="minimum number of labels on map contig when aligning (default 10). Larger values (~15) better for Saphyr data.",type=int, default=10)
     parser.add_argument("--no_ref_search",help="Do not search unaligned regions against reference genome",action='store_true')
-
+    parser.add_argument("i","--instrument",choices=["Irys","Saphyr"],required=True)
 
     args = parser.parse_args()
 
@@ -308,6 +308,7 @@ if __name__ == "__main__":
 
     min_map_len = args.min_map_len #the default
     nthreads = args.threads
+    gen = "1" if args.instrument == "Irys" else "2"
 
     contig_cmaps = parse_cmap(args.contigs)
     seg_cmaps = parse_cmap(args.segs)
@@ -315,7 +316,7 @@ if __name__ == "__main__":
     ref_genome_file = os.environ['AR_SRC'] + "/ref_genomes/hg19_" + args.enzyme + ".cmap"
 
     print "Doing full segment alignments"
-    arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_segs"]
+    arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_segs", "-gen=" + gen]
     # #CONTIG SEG ALIGNMENTS
     run_SegAligner(args.contigs,args.segs,arg_list)
 
@@ -340,7 +341,7 @@ if __name__ == "__main__":
 
         else:
             unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_prefix,args.enzyme)
-            arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_ref","-detection",]
+            arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_ref","-detection","-gen=" + gen]
             #CONTIG UNALIGNED REGION ALIGNMENTS
             print unaligned_region_filename + " is the file to open"
             run_SegAligner(ref_genome_file,unaligned_region_filename,arg_list)
