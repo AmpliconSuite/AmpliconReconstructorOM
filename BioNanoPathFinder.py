@@ -738,6 +738,7 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
 
     print "Total intial paths discovered: " + str(len(all_paths))
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
+    print "Total CC filtered paths: " + str(len(cc_paths))
     ss_paths = filter_subsequence_paths(G,cc_paths)
 
     # flattened_shps = [p for plist in scaffold_alt_paths.values() for p in plist]
