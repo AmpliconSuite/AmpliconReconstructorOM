@@ -425,7 +425,7 @@ def get_edge_copy_counts(breakpoint_file):
 def adjust_cc(cc_dict,seq_edge_reps):
     #check if any > 5, then down it from there
     cutoff = 10.0
-    min_left = 2.0
+    min_left = 4.0
     try:
         seg_vals = [x for n,x in cc_dict.iteritems() if n in seq_edge_reps]
         min_over_cut = min([x for x in seg_vals if x >= cutoff])
