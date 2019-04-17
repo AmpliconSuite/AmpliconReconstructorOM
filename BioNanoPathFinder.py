@@ -25,7 +25,7 @@ inter_contig_link_bp_thresh = 50000
 inter_contig_label_overlap = 6
 long_gap_length = 250000 #long gap threshold between alignments
 long_gap_cost = 0
-max_dfs_depth = 50
+max_dfs_depth = 100
 max_paths_to_check = 500
 max_paths_to_keep = 500
 
@@ -401,6 +401,7 @@ def make_contig_aln_graph(aln_obj_list,contig_id):
 #parse breakpoint graph file to get CN info
 def get_edge_copy_counts(breakpoint_file):
     cc_dict = {}
+    seq_edge_reps = set()
     with open(breakpoint_file) as infile:
         for line in infile:
             if line.rstrip():
@@ -409,18 +410,25 @@ def get_edge_copy_counts(breakpoint_file):
                     curr_cc = math.ceil(float(fields[3]))
                     e_rep = fields[1] + "->" + fields[2]
                     cc_dict[e_rep] = curr_cc
+                    seq_edge_reps.add(e_rep)
                 
                 elif fields[0] in ["concordant","discordant"]:
-                    cc_dict[fields[1]] = math.ceil(float(fields[2]))
-    
-    return cc_dict
+                    if fields[1] in cc_dict:
+                        print "Edge name collision. Using larger weight"
+                        cc_dict[fields[1]] = max(cc_dict[fields[1]],math.ceil(float(fields[2])))
 
-def adjust_cc(cc_dict):
+                    else:
+                        cc_dict[fields[1]] = math.ceil(float(fields[2]))
+    
+    return cc_dict,seq_edge_reps
+
+def adjust_cc(cc_dict,seq_edge_reps):
     #check if any > 5, then down it from there
     cutoff = 10.0
     min_left = 2.0
     try:
-        min_over_cut = min([x for x in cc_dict.values() if x > cutoff])
+        seg_vals = [x for n,x in cc_dict.iteritems() if n in seq_edge_reps]
+        min_over_cut = min([x for x in seg_vals if x >= cutoff])
         print "Copy count min over cut: " + str(min_over_cut)
     except ValueError:
         "Did not adjust copy counts"
@@ -428,6 +436,9 @@ def adjust_cc(cc_dict):
 
     adj_cc_dict = {}
     for key,cc in cc_dict.iteritems():
+        if key not in seq_edge_reps:
+            continue
+            
         adjval = round(cc/min_over_cut)
         adj_cc_dict[key] = max(min_left,adjval) if cc >= cutoff else cc
 
@@ -1040,8 +1051,8 @@ if __name__ == '__main__':
     breakpoint_file = args.graph
     breakpointG = breakpoint_graph(breakpoint_file)
     #get max copy count
-    unadj_edge_cc = get_edge_copy_counts(breakpoint_file)
-    edge_cc = adjust_cc(unadj_edge_cc)
+    unadj_edge_cc,seq_edge_reps = get_edge_copy_counts(breakpoint_file)
+    edge_cc = adjust_cc(unadj_edge_cc,seq_edge_reps)
 
     #match cmap to AA edges
     cmap_id_to_edge = match_cmap_graph_edge(breakpointG)
