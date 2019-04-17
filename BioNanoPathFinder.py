@@ -437,10 +437,11 @@ def adjust_cc(cc_dict,seq_edge_reps):
     adj_cc_dict = {}
     for key,cc in cc_dict.iteritems():
         if key not in seq_edge_reps:
-            continue
-            
-        adjval = round(cc/min_over_cut)
-        adj_cc_dict[key] = max(min_left,adjval) if cc >= cutoff else cc
+            adj_cc_dict[key] = cc
+
+        else:
+            adjval = round(cc/min_over_cut)
+            adj_cc_dict[key] = max(min_left,adjval) if cc >= cutoff else cc
 
     return adj_cc_dict
 
