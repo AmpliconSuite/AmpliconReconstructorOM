@@ -445,25 +445,6 @@ def adjust_cc(cc_dict,seq_edge_reps):
 
     return adj_cc_dict
 
-# #compute the distance between vectors
-# def compute_cc_dist(G,path,cc_dict):
-#     id_to_ind = {}
-#     curr_last = -1
-#     exp_cc_vect = []
-#     obs_cc_vect = []
-#     for n_id in path:
-#         seg_id = G.node_id_lookup[n_id].seg_id
-
-
-# def get_avg_path_weight(G,path):
-#     total_weight = get_path_weight(G,path)
-#     total_labels = 0
-#     for i in path:
-        
-
-# #if it's an LCS, but the CC-dist 
-
-
 #graph to cytoscape js dict
 def graphs_to_cytoscapejs_dict(G):
     graph = {}
@@ -705,23 +686,6 @@ def filter_subsequence_paths(G,paths):
             print("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths_sorted)),str(len(kept))))
 
         rev_i = [(x[0],-1*x[1]) for x in i][::-1]
-  
-        #check if the path or a rotation of the path is a subsequence
-        # i_contig_set = set([G.node_id_lookup[x[0]].contig_id for x in i])
-
-        # kept_to_check = []
-        # ktc_set = set()
-        # for c in i_contig_set:
-        #     for p in contig_to_paths[c]:
-        #         if not str(p) in ktc_set:
-        #             kept_to_check.append(p)
-        #             ktc_set.add(str(p))
-
-        # if not check_rotations(G,kept_to_check,i,rev_i):
-        #     kept.append(i)
-        #     for c in i_contig_set:
-        #         contig_to_paths[c].append(i)
-
         if not check_rotations(G,kept,i,rev_i):
             kept.append(i)
             if downsample and len(kept) > max_paths_to_keep:
@@ -760,17 +724,6 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
     print "Total CC filtered paths: " + str(len(cc_paths))
     ss_paths = filter_subsequence_paths(G,cc_paths)
-
-    # flattened_shps = [p for plist in scaffold_alt_paths.values() for p in plist]
-    # flattened_directed_shps = []
-    # for p in flattened_shps:
-    #     cl = []
-    #     for n in p:
-    #         cl.append((n,1))
-
-    #     flattened_directed_shps.append(cl)
-
-    # pws_with_scaffold_hps = flattened_directed_shps + ss_paths
 
     print ("Total final paths: " + str(len(ss_paths)))
     return ss_paths
