@@ -632,8 +632,8 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
             if curr_node.aa_e:
                 cn_repr = curr_node.aa_e.__repr__()
                 if cn_repr in edge_cc:
-                    curr_seg_id =  curr_node.seg_id + curr_node.direction
-                    if curr_seg_id != p_seg_id or curr_node.contig_id != p_contig_id:
+                    curr_seg_id = curr_node.seg_id + curr_node.direction
+                    if curr_seg_id != p_seg_id or curr_node.contig_id == p_contig_id:
                         curr_path_edge_counts[cn_repr]+=1
                         #if some edge too many copies return false:
                         if curr_path_edge_counts[cn_repr] > edge_cc[cn_repr]:
