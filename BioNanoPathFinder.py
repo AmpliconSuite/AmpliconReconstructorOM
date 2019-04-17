@@ -624,16 +624,24 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
         failed = False
         curr_path_edge_counts = defaultdict(int)
         #iterate and count:
+        p_seg_id = None
+        p_contig_id = None
+
         for i in path:
             curr_node = G.node_id_lookup[i[0]]
             if curr_node.aa_e:
                 cn_repr = curr_node.aa_e.__repr__()
                 if cn_repr in edge_cc:
-                    curr_path_edge_counts[cn_repr]+=1
-                    #if some edge too many copies return false:
-                    if curr_path_edge_counts[cn_repr] > edge_cc[cn_repr]:
-                        failed = True
-                        break
+                    curr_seg_id =  curr_node.seg_id + curr_node.direction
+                    if curr_seg_id != p_seg_id or curr_node.contig_id != p_contig_id:
+                        curr_path_edge_counts[cn_repr]+=1
+                        #if some edge too many copies return false:
+                        if curr_path_edge_counts[cn_repr] > edge_cc[cn_repr]:
+                            failed = True
+                            break
+
+            p_seg_id = curr_seg_id
+            p_contig_id = curr_node.contig_id
 
         if not failed:
             cc_valid_paths.append(path)
