@@ -428,8 +428,8 @@ def adjust_cc(cc_dict):
 
     adj_cc_dict = {}
     for key,cc in cc_dict.iteritems():
-        adjval = cc/min_over_cut
-        adj_cc_dict[key] = max(min_left,adjval) if cc > cutoff else cc
+        adjval = round(cc/min_over_cut)
+        adj_cc_dict[key] = max(min_left,adjval) if cc >= cutoff else cc
 
     return adj_cc_dict
 
@@ -627,11 +627,13 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
         for i in path:
             curr_node = G.node_id_lookup[i[0]]
             if curr_node.aa_e and curr_node.aa_e in edge_cc:
-                curr_path_edge_counts[curr_node.aa_e]+=1
-                #if some edge too many copies return false:
-                if curr_path_edge_counts[curr_node.aa_e] > edge_cc[curr_node.aa_e]:
-                    failed = True
-                    break
+                cn_repr = curr_node.aa_e.__repr__()
+                if cn_repr in edge_cc:
+                    curr_path_edge_counts[cn_repr]+=1
+                    #if some edge too many copies return false:
+                    if curr_path_edge_counts[cn_repr] > edge_cc[cn_repr]:
+                        failed = True
+                        break
 
         if not failed:
             cc_valid_paths.append(path)
