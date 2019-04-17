@@ -419,8 +419,11 @@ def adjust_cc(cc_dict):
     #check if any > 5, then down it from there
     cutoff = 10.0
     min_left = 2.0
-    min_over_cut = min([x for x in cc_dict.values() if x > cutoff])
-    if not min_over_cut:
+    try:
+        min_over_cut = min([x for x in cc_dict.values() if x > cutoff])
+        print "Copy count min over cut: " + str(min_over_cut)
+    except ValueError:
+        "Did not adjust copy counts"
         return cc_dict
 
     adj_cc_dict = {}
@@ -1028,7 +1031,6 @@ if __name__ == '__main__':
     #get max copy count
     unadj_edge_cc = get_edge_copy_counts(breakpoint_file)
     edge_cc = adjust_cc(unadj_edge_cc)
-
 
     #match cmap to AA edges
     cmap_id_to_edge = match_cmap_graph_edge(breakpointG)
