@@ -406,14 +406,29 @@ def get_edge_copy_counts(breakpoint_file):
             if line.rstrip():
                 fields = line.rsplit()
                 if line.startswith("sequence"):
-                    curr_cc = int(math.ceil(float(fields[3])))
+                    curr_cc = math.ceil(float(fields[3]))
                     e_rep = fields[1] + "->" + fields[2]
                     cc_dict[e_rep] = curr_cc
                 
                 elif fields[0] in ["concordant","discordant"]:
-                    cc_dict[fields[1]] = int(math.ceil(float(fields[2])))
+                    cc_dict[fields[1]] = math.ceil(float(fields[2]))
     
     return cc_dict
+
+def adjust_cc(cc_dict):
+    #check if any > 5, then down it from there
+    cutoff = 10.0
+    min_left = 2.0
+    min_over_cut = min([x for x in cc_dict.values() if x > cutoff])
+    if not min_over_cut:
+        return cc_dict
+
+    adj_cc_dict = {}
+    for key,cc in cc_dict.iteritems():
+        adjval = cc/min_over_cut
+        adj_cc_dict[key] = max(min_left,adjval) if cc > cutoff else cc
+
+    return adj_cc_dict
 
 # #compute the distance between vectors
 # def compute_cc_dist(G,path,cc_dict):
@@ -652,6 +667,7 @@ def check_rotations(G,kept,i,rev_i):
 def filter_subsequence_paths(G,paths):
     kept = []
     contig_to_paths = defaultdict(list)
+    print "Sorting paths by weight"
     paths_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
     downsample = True if len(paths_sorted) > 35000 else False
 
@@ -1010,7 +1026,9 @@ if __name__ == '__main__':
     breakpoint_file = args.graph
     breakpointG = breakpoint_graph(breakpoint_file)
     #get max copy count
-    edge_cc = get_edge_copy_counts(breakpoint_file)
+    unadj_edge_cc = get_edge_copy_counts(breakpoint_file)
+    edge_cc = adjust_cc(unadj_edge_cc)
+
 
     #match cmap to AA edges
     cmap_id_to_edge = match_cmap_graph_edge(breakpointG)
