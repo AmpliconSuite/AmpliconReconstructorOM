@@ -626,7 +626,7 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
         #iterate and count:
         for i in path:
             curr_node = G.node_id_lookup[i[0]]
-            if curr_node.aa_e and curr_node.aa_e in edge_cc:
+            if curr_node.aa_e:
                 cn_repr = curr_node.aa_e.__repr__()
                 if cn_repr in edge_cc:
                     curr_path_edge_counts[cn_repr]+=1
