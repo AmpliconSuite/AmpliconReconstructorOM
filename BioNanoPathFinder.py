@@ -407,7 +407,7 @@ def get_edge_copy_counts(breakpoint_file):
             if line.rstrip():
                 fields = line.rsplit()
                 if line.startswith("sequence"):
-                    curr_cc = math.ceil(float(fields[3]))
+                    curr_cc = max(math.ceil(float(fields[3])),1.0)
                     e_rep = fields[1] + "->" + fields[2]
                     cc_dict[e_rep] = curr_cc
                     seq_edge_reps.add(e_rep)
@@ -418,7 +418,7 @@ def get_edge_copy_counts(breakpoint_file):
                         cc_dict[fields[1]] = max(cc_dict[fields[1]],math.ceil(float(fields[2])))
 
                     else:
-                        cc_dict[fields[1]] = math.ceil(float(fields[2]))
+                        cc_dict[fields[1]] = max(math.ceil(float(fields[2])),1.0)
     
     return cc_dict,seq_edge_reps
 

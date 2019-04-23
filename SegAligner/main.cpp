@@ -29,7 +29,7 @@ int inst_gen = 2;
 int max_seg_contig_alns = 6;
 float p_val = 0.0001;
 float p_val_tip = 0.00001;
-float p_val_RG =  0.000000005;
+float p_val_RG =  0.000000001;
 string sample_prefix = "SA_output";
 
 //bookkeeping variable instantiation
