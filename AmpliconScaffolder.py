@@ -15,11 +15,11 @@ from collections import defaultdict
 
 #development version
 
-unaligned_label_cutoff = 15
+unaligned_label_cutoff = 20
 search_upper_cutoff_labels = 500
 #unaligned_size_cutoff = 150000
-unaligned_size_lower_cutoff = 150000
-unaligned_size_upper_cutoff = 4000000
+unaligned_size_lower_cutoff = 200000
+unaligned_size_upper_cutoff = 5000000
 
 #identify unaligned regions in contigs
 def get_unaligned_segs(aln_path,aln_flist):

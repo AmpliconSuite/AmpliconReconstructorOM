@@ -428,7 +428,7 @@ def adjust_cc(cc_dict,seq_edge_reps):
     min_left = 4.0
     try:
         seg_vals = [x for n,x in cc_dict.iteritems() if n in seq_edge_reps]
-        min_over_cut = min([x for x in seg_vals if x >= cutoff])
+        min_over_cut = min([x for x in seg_vals if x >= cutoff and x < max(seg_vals)])
         print "Copy count min over cut: " + str(min_over_cut)
     except ValueError:
         "Did not adjust copy counts"
