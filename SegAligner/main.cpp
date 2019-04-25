@@ -215,6 +215,8 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 set<pair<int,int>> seg_contig_pairs, map<int,set<int>> contig_used_label_map, map<int,float> score_thresholds) {
 
 
+    int min_aln_labels = 6;
+    int min_tip_aln_labels = 5;
     map<int,set<int>> discovered_contig_used_labels;
     map<pair<int,int>,set<int>> curr_aligned_labs;
 
@@ -231,7 +233,6 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
             curr_aligned_labs[make_pair(x,contig_id)] = contig_used_label_map[contig_id];
         }
 
-        int min_aln_labels = 6;
         vector<float> x_posns = cmaps_segs[x];
         vector<float> contig_posns = cmaps_contigs[contig_id];
         vector<float> seg_ncp_vector = non_collapse_prob_map[x];
@@ -297,7 +298,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                     }
                 }
 
-                if (aln_list.size() < 3 || (!tip_aln && aln_list.size() < min_aln_labels)) {
+                if (aln_list.size() < min_tip_aln_labels || (!tip_aln && aln_list.size() < min_aln_labels)) {
                     continue;
                 }
 
@@ -307,26 +308,27 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
 
                 if (mean < mean_thresh || median < med_thresh) {
                     continue;
+                }
 
-                } else if (aln_list.size() < min_aln_labels) {
-                    bool bad_tiny_tip = false;
-                    for (int aln_index = 0; aln_index < aln_list.size() - 1; aln_index++) {
-                        float curr_diff = (get<2>(aln_list[aln_index]) - get<2>(aln_list[aln_index + 1]));
-                        if (curr_diff < 9000) {
-                            bad_tiny_tip = true;
-                            break;
-                        }
-                    }
-                    if (bad_tiny_tip) {
-                        continue;
-                    }
+//                } else if (aln_list.size() < min_aln_labels) {
+//                    bool bad_tiny_tip = false;
+//                    for (int aln_index = 0; aln_index < aln_list.size() - 1; aln_index++) {
+//                        float curr_diff = (get<2>(aln_list[aln_index]) - get<2>(aln_list[aln_index + 1]));
+//                        if (curr_diff < 9000) {
+//                            bad_tiny_tip = true;
+//                            break;
+//                        }
+//                    }
+//                    if (bad_tiny_tip) {
+//                        continue;
+//                    }
 //                    float curr_diff
 //                    float diff1 = (get<2>(aln_list[0]) - get<2>(aln_list[1]));
 //                    float diff2 = (get<2>(aln_list[1]) - get<2>(aln_list[2]));
 //                    if (diff1 < 9000 || diff2 < 9000) {
 //                        continue;
 //                    }
-                }
+//                }
 
                 string seg_id = to_string(abs(x));
                 if (x < 0) {
