@@ -146,6 +146,7 @@ class SA_Obj(object):
         self.is_tip_aln = raw_aln_list[6]
         self.aln_id = "_".join([str(self.contig_id),str(self.seg_id)+self.alignment_dir,str(self.contig_endpoints[0]),str(self.contig_endpoints[1])])
         self.imputed_alignment = []
+        self.is_RG_aln = False
 
     def aln_summary_to_string(self):
         return "seg_id: " + self.seg_id + " seg_labs: " + str(self.seg_endpoints) + " contig_labs: " + str(self.contig_endpoints) + " dir: " + self.alignment_dir + " aln_score: " + str(self.aln_score)
