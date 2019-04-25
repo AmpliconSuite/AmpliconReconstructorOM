@@ -55,7 +55,7 @@ map<int,vector<float>> non_collapse_probs(map<int,vector<float>> &segs_cmaps,int
                 if (dist < 475) {
                     non_collapse = 0.0;
                 } else {
-                    non_collapse = fmin(1.0f,(dist-475)/1600.0);
+                    non_collapse = fmin(1.0f,(dist-450)/1500.0);
                 }
             }
             non_collapse_pairs[id][i] = make_pair(non_collapse,1.0);

@@ -243,7 +243,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
         int x_aligned_count = 0;
         float mean_thresh,med_thresh;
         if (tip_aln) {
-            med_thresh = 8500;
+            med_thresh = 8750;
             mean_thresh = 8750;
         } else {
             med_thresh = 8000;
@@ -308,12 +308,24 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 if (mean < mean_thresh || median < med_thresh) {
                     continue;
 
-                } else if (aln_list.size() == 3) {
-                    float diff1 = (get<2>(aln_list[0]) - get<2>(aln_list[1]));
-                    float diff2 = (get<2>(aln_list[1]) - get<2>(aln_list[2]));
-                    if (diff1 < 9000 || diff2 < 9000) {
+                } else if (aln_list.size() < min_aln_labels) {
+                    bool bad_tiny_tip = false;
+                    for (int aln_index = 0; aln_index < aln_list.size() - 1; aln_index++) {
+                        float curr_diff = (get<2>(aln_list[aln_index]) - get<2>(aln_list[aln_index + 1]));
+                        if (curr_diff < 9000) {
+                            bad_tiny_tip = true;
+                            break;
+                        }
+                    }
+                    if (bad_tiny_tip) {
                         continue;
                     }
+//                    float curr_diff
+//                    float diff1 = (get<2>(aln_list[0]) - get<2>(aln_list[1]));
+//                    float diff2 = (get<2>(aln_list[1]) - get<2>(aln_list[2]));
+//                    if (diff1 < 9000 || diff2 < 9000) {
+//                        continue;
+//                    }
                 }
 
                 string seg_id = to_string(abs(x));
