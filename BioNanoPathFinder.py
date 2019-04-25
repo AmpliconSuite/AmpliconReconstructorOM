@@ -20,8 +20,6 @@ from ContigAlignmentGraph import *
 from collections import defaultdict
 
 #threshholds for linking contigs
-inter_contig_link_label_thresh = 5
-inter_contig_link_bp_thresh = 50000
 inter_contig_label_overlap = 6
 long_gap_length = 250000 #long gap threshold between alignments
 long_gap_cost = 0
@@ -384,7 +382,9 @@ def make_contig_aln_graph(aln_obj_list,contig_id):
                     curr_edge.gap = True
 
                 if lc_end == float('inf'):
-                    if not sorted_node_l[ind_j].aln_obj.is_tip_aln:
+                    curr_is_tip_aln = sorted_node_l[ind_j].aln_obj.is_tip_aln
+                    curr_is_RG = sorted_node_l[ind_j].aln_obj.is_RG_aln
+                    if not curr_is_tip_aln and not curr_is_RG:
                         lc_end = j.contig_endpoints[1]
 
             G.edges.add(curr_edge)
@@ -1025,6 +1025,9 @@ if __name__ == '__main__':
     for i in rel_files:
         seg_aln_obj = parse_seg_alignment_file(adir + i)
         c_id = seg_aln_obj.contig_id
+        if "_rg_" in i:
+            seg_aln_obj.is_RG_aln = True
+
         contig_alignment_dict[c_id].append(seg_aln_obj)
 
     #Get the heaviest path per scaffold
