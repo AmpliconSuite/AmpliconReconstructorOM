@@ -858,7 +858,7 @@ def write_path_cycles(G,paths,outname):
 
         for ind,i in enumerate(paths):
             cycle_list,_ = path_to_cycle_list(G,i)
-            outfile.write("Cycle=%d;Copy_count=0;Segments=%s\n" % (ind+1,",".join(cycle_list)))
+            outfile.write("Cycle=%d;Copy_count=1;Segments=%s\n" % (ind+1,",".join(cycle_list)))
 
 def path_to_string(G,path,show_contig = False):
     line = ""

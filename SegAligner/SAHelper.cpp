@@ -73,9 +73,9 @@ map<int,vector<float>> make_reverse_cmap(map<int,vector<float>> &cmap_map, int m
         full_cmap_map[map_id] = curr_posns;
         full_cmap_map[rev_map_id] = vector<float>();
         for (int j = curr_posns.size() - 2; j > -1; --j) {
-            full_cmap_map[rev_map_id].push_back(map_length - curr_posns[j]);
+            full_cmap_map[rev_map_id].push_back(curr_posns.back() - curr_posns[j]);
         }
-        full_cmap_map[rev_map_id].push_back(map_length);
+        full_cmap_map[rev_map_id].push_back(curr_posns.back());
     }
     return full_cmap_map;
 }
