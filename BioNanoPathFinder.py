@@ -431,7 +431,7 @@ def check_path_cc(path,cc_dict):
         curr_node = G.node_id_lookup[i[0]]
         cn_repr = curr_node.aa_e.__repr__()
         if not (curr_node.seg_id == p_seg_id and curr_node.contig_id != p_contig_id):
-            curr_path_edge_counts[cn_repr]+=1
+            path_edge_counts[cn_repr]+=1
 
         p_seg_id = curr_node.seg_id
         p_contig_id = curr_node.contig_id
