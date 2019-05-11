@@ -303,6 +303,7 @@ def add_path(G,path,seg_aln_obj,i,j,p_score,c_start_l,c_end_l,contig_id,compound
         new_aln_obj.imputed_alignment = relabel_seg_aln(seg_aln_obj,compound_rev_lookup[curr_id],c_start_l,curr_id)
         new_node = segment_node(contig_id,new_aln_obj,imputed=True)
         new_node.n_id=new_node.n_id + ".imp." + str(ind)
+        new_node.aa_e = cmap_id_to_edge[new_node.seg_id] #references global variable cmap_id_to_edge
         #add the imputed alignment
         G.nodes.add(new_node)
         ordered_nodes.append(new_node)
@@ -422,28 +423,55 @@ def get_edge_copy_counts(breakpoint_file):
     
     return cc_dict,seq_edge_reps
 
-def adjust_cc(cc_dict,seq_edge_reps):
-    #check if any > 5, then down it from there
-    cutoff = 10.0
-    min_left = 4.0
-    try:
-        seg_vals = [x for n,x in cc_dict.iteritems() if n in seq_edge_reps]
-        min_over_cut = min([x for x in seg_vals if x >= cutoff and x < max(seg_vals)])
-        print "Copy count min over cut: " + str(min_over_cut)
-    except ValueError:
-        "Did not adjust copy counts"
-        return cc_dict
+def check_path_cc(path,cc_dict):
+    path_edge_counts = defaultdict(int)
+    for i in path:
+        curr_node = G.node_id_lookup[i[0]]
+        cn_repr = curr_node.aa_e.__repr__()
+        if not (curr_node.seg_id == p_seg_id and curr_node.contig_id != p_contig_id):
+            curr_path_edge_counts[cn_repr]+=1
 
-    adj_cc_dict = {}
-    for key,cc in cc_dict.iteritems():
-        if key not in seq_edge_reps:
-            adj_cc_dict[key] = cc
+        p_seg_id = curr_node.seg_id
+        p_contig_id = curr_node.contig_id
 
-        else:
-            adjval = round(cc/min_over_cut)
-            adj_cc_dict[key] = max(min_left,adjval) if cc >= cutoff else cc
+    #now find the path singletons with the max in the edge_cc, this is the scaling factor
+    singletons = dict()
+    for key,value in path_edge_counts.iteritems():
+        if (value == 1):
+            singletons[key] = cc_dict[key]
 
-    return adj_cc_dict
+    max_singleton = max(singletons.values())
+
+    #anything with > 1 path count, that is larger than the rounded scaled counts causes a fail.
+    for seg_rep,value in path_edge_counts.iteritems():
+        scaled_cc = max(1,round(cc_dict[seg_rep]/max_singleton)) 
+        if scaled_cc < value:
+            return False
+
+    return True
+
+# def adjust_cc(cc_dict,seq_edge_reps):
+#     #check if any > 5, then down it from there
+#     cutoff = 10.0
+#     min_left = 4.0
+#     try:
+#         seg_vals = [x for n,x in cc_dict.iteritems() if n in seq_edge_reps]
+#         min_over_cut = min([x for x in seg_vals if x >= cutoff and x < max(seg_vals)])
+#         print "Copy count min over cut: " + str(min_over_cut)
+#     except ValueError:
+#         "Did not adjust copy counts"
+#         return cc_dict
+
+#     adj_cc_dict = {}
+#     for key,cc in cc_dict.iteritems():
+#         if key not in seq_edge_reps:
+#             adj_cc_dict[key] = cc
+
+#         else:
+#             adjval = round(cc/min_over_cut)
+#             adj_cc_dict[key] = max(min_left,adjval) if cc >= cutoff else cc
+
+#     return adj_cc_dict
 
 #graph to cytoscape js dict
 def graphs_to_cytoscapejs_dict(G):
@@ -614,30 +642,32 @@ def check_LCS(path1,path2,downsample=False):
 def filter_paths_by_cc(G,all_paths,edge_cc):
     cc_valid_paths = []
     for path in all_paths:
-        failed = False
-        curr_path_edge_counts = defaultdict(int)
-        #iterate and count:
-        p_seg_id = None
-        p_contig_id = None
+        if check_path_cc(path,cc_dict):
+            cc_valid_paths,append(path)
+        # failed = False
+        # curr_path_edge_counts = defaultdict(int)
+        # #iterate and count:
+        # p_seg_id = None
+        # p_contig_id = None
 
-        for i in path:
-            curr_node = G.node_id_lookup[i[0]]
-            if curr_node.aa_e:
-                cn_repr = curr_node.aa_e.__repr__()
-                if cn_repr in edge_cc:
-                    curr_seg_id = curr_node.seg_id
-                    if not (curr_seg_id == p_seg_id and curr_node.contig_id != p_contig_id):
-                        curr_path_edge_counts[cn_repr]+=1
-                        #if some edge too many copies return false:
-                        if curr_path_edge_counts[cn_repr] > edge_cc[cn_repr]:
-                            failed = True
-                            break
+        # for i in path:
+        #     curr_node = G.node_id_lookup[i[0]]
+        #     if curr_node.aa_e:
+        #         cn_repr = curr_node.aa_e.__repr__()
+        #         if cn_repr in edge_cc:
+        #             curr_seg_id = curr_node.seg_id
+        #             if not (curr_seg_id == p_seg_id and curr_node.contig_id != p_contig_id):
+        #                 curr_path_edge_counts[cn_repr]+=1
+        #                 #if some edge too many copies return false:
+        #                 if curr_path_edge_counts[cn_repr] > edge_cc[cn_repr]:
+        #                     failed = True
+        #                     break
 
-            p_seg_id = curr_seg_id
-            p_contig_id = curr_node.contig_id
+        #     p_seg_id = curr_seg_id
+        #     p_contig_id = curr_node.contig_id
 
-        if not failed:
-            cc_valid_paths.append(path)
+        # if not failed:
+        #     cc_valid_paths.append(path)
 
     return cc_valid_paths
 
@@ -1005,8 +1035,9 @@ if __name__ == '__main__':
     breakpoint_file = args.graph
     breakpointG = breakpoint_graph(breakpoint_file)
     #get max copy count
-    unadj_edge_cc,seq_edge_reps = get_edge_copy_counts(breakpoint_file)
-    edge_cc = adjust_cc(unadj_edge_cc,seq_edge_reps)
+    
+    edge_cc,seq_edge_reps = get_edge_copy_counts(breakpoint_file)    # unadj_edge_cc,seq_edge_reps = get_edge_copy_counts(breakpoint_file)
+    # edge_cc = adjust_cc(unadj_edge_cc,seq_edge_reps)
 
     #match cmap to AA edges
     cmap_id_to_edge = match_cmap_graph_edge(breakpointG)
