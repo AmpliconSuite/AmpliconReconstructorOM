@@ -642,7 +642,7 @@ def check_LCS(path1,path2,downsample=False):
 def filter_paths_by_cc(G,all_paths,edge_cc):
     cc_valid_paths = []
     for path in all_paths:
-        if check_path_cc(path,cc_dict):
+        if check_path_cc(path,edge_cc):
             cc_valid_paths,append(path)
         # failed = False
         # curr_path_edge_counts = defaultdict(int)
