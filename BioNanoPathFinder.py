@@ -425,6 +425,8 @@ def get_edge_copy_counts(breakpoint_file):
 
 def check_path_cc(path,cc_dict):
     path_edge_counts = defaultdict(int)
+    p_seg_id = None
+    p_contig_id = None
     for i in path:
         curr_node = G.node_id_lookup[i[0]]
         cn_repr = curr_node.aa_e.__repr__()
