@@ -423,8 +423,9 @@ def get_edge_copy_counts(breakpoint_file):
     
     return cc_dict,seq_edge_reps
 
-def check_path_cc(path,cc_dict):
+def check_path_cc(G,path,cc_dict):
     path_edge_counts = defaultdict(int)
+    last_node = G.node_id_lookup[path[-1][0]]
     p_seg_id = None
     p_contig_id = None
     for i in path:
@@ -436,6 +437,9 @@ def check_path_cc(path,cc_dict):
         p_seg_id = curr_node.seg_id
         p_contig_id = curr_node.contig_id
 
+    if path_is_circular(G,path):
+        path_edge_counts[cn_repr]-=1
+
     #now find the path singletons with the max in the edge_cc, this is the scaling factor
     singletons = dict()
     for key,value in path_edge_counts.iteritems():
@@ -444,9 +448,12 @@ def check_path_cc(path,cc_dict):
 
     max_singleton = max(singletons.values())
 
+    # print path_edge_counts
     #anything with > 1 path count, that is larger than the rounded scaled counts causes a fail.
     for seg_rep,value in path_edge_counts.iteritems():
+        # print seg_rep,value
         scaled_cc = max(1,round(cc_dict[seg_rep]/max_singleton)) 
+        # print scaled_cc
         if scaled_cc < value:
             return False
 
@@ -644,8 +651,8 @@ def check_LCS(path1,path2,downsample=False):
 def filter_paths_by_cc(G,all_paths,edge_cc):
     cc_valid_paths = []
     for path in all_paths:
-        if check_path_cc(path,edge_cc):
-            cc_valid_paths,append(path)
+        if check_path_cc(G,path,edge_cc):
+            cc_valid_paths.append(path)
         # failed = False
         # curr_path_edge_counts = defaultdict(int)
         # #iterate and count:
@@ -1092,12 +1099,13 @@ if __name__ == '__main__':
     #write aligned path results
     #write discovered paths
     print("Writing paths")
-    sorted_all_paths,sorted_all_weights = zip(*sorted(zip(all_paths,all_paths_weights),key=lambda x: x[1],reverse=True))
-    for ind,i in enumerate(sorted_all_paths):
-        fname = "%s_path_%d_aln.txt" % (outname,ind+1)
-        write_path_alignment(G,i,fname,sorted_all_weights[ind])
-    
-    write_path_cycles(G,sorted_all_paths,outname + "_paths_cycles.txt")
+    if all_paths:
+        sorted_all_paths,sorted_all_weights = zip(*sorted(zip(all_paths,all_paths_weights),key=lambda x: x[1],reverse=True))
+        for ind,i in enumerate(sorted_all_paths):
+            fname = "%s_path_%d_aln.txt" % (outname,ind+1)
+            write_path_alignment(G,i,fname,sorted_all_weights[ind])
+        
+        write_path_cycles(G,sorted_all_paths,outname + "_paths_cycles.txt")
 
 
     #write SHPs
