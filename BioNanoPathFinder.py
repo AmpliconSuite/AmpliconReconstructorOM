@@ -441,21 +441,28 @@ def check_path_cc(G,path,cc_dict):
         path_edge_counts[cn_repr]-=1
 
     #now find the path singletons with the max in the edge_cc, this is the scaling factor
-    singletons = dict()
-    for key,value in path_edge_counts.iteritems():
-        if (value == 1):
-            singletons[key] = cc_dict[key]
+    max_singleton = None
+    scale_val = 0
+    while not max_singleton:
+        scale_val+=1
+        singletons = dict()
+        for key,value in path_edge_counts.iteritems():
+            if (value == scale_val):
+                singletons[key] = cc_dict[key]
 
-    max_singleton = max(singletons.values())
+        if singletons:
+            max_singleton = max(singletons.values())
+        else:
+            continue
 
-    # print path_edge_counts
-    #anything with > 1 path count, that is larger than the rounded scaled counts causes a fail.
-    for seg_rep,value in path_edge_counts.iteritems():
-        # print seg_rep,value
-        scaled_cc = max(1,round(cc_dict[seg_rep]/max_singleton)) 
-        # print scaled_cc
-        if scaled_cc < value:
-            return False
+        # print path_edge_counts
+        #anything with > 1 path count, that is larger than the rounded scaled counts causes a fail.
+        for seg_rep,value in path_edge_counts.iteritems():
+            # print seg_rep,value
+            scaled_cc = max(scale_val,round(cc_dict[seg_rep]/max_singleton)) 
+            # print scaled_cc
+            if scaled_cc < value:
+                return False
 
     return True
 
