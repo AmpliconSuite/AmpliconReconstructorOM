@@ -137,9 +137,14 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         curr_path = [s]
 
         #don't look if there's a oversized gap or imputation is off
-        print "Searching for paths on edge " + s.__repr__() + " " + t.__repr__()
         if impute and not e.gap:
+            print "Searching for paths on edge " + s.__repr__() + " " + t.__repr__()
             recursive_path_find(t,curr_path,contig_distance,seg_overhang_sum,possible_paths,c_count_d,"sequence")
+            print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
+        
+        elif e.gap:
+            print "[gap] Not searching for paths on edge " + s.__repr__() + " " + t.__repr__()
+
 
         print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
 
@@ -449,7 +454,7 @@ def check_path_cc(G,path,cc_dict):
                 singletons[key] = cc_dict[key]
 
         if singletons:
-            max_singleton = (max(singletons.values())/i)
+            max_singleton = max(singletons.values())/i
         else:
             continue
 
