@@ -438,7 +438,9 @@ def check_path_cc(G,path,cc_dict):
         p_seg_id = curr_node.seg_id
         p_contig_id = curr_node.contig_id
 
-    if path_is_circular(G,path):
+    # if path_is_circular(G,path):
+    #     path_edge_counts[cn_repr]-=1
+    if G.node_id_lookup[path[0][0]].seg_id == p_seg_id:
         path_edge_counts[cn_repr]-=1
 
     #now find the path singletons with the max in the edge_cc, this is the scaling factor
