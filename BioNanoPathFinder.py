@@ -145,10 +145,6 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         elif e.gap:
             print "[gap] Not searching for paths on edge " + s.__repr__() + " " + t.__repr__()
 
-
-        print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
-
-
         if len(possible_paths) > max_paths_to_check:
             print("too many candidate paths to search")
             possible_paths = []
