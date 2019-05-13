@@ -460,6 +460,7 @@ def check_path_cc(G,path,cc_dict):
         #anything with > 1 path count, that is larger than the rounded scaled counts causes a fail.
         for seg_rep,value in path_edge_counts.iteritems():
             # print seg_rep,value
+            value-=1
             scaled_cc = max(scale_val,round(cc_dict[seg_rep]/max_singleton)) 
             # print scaled_cc
             if scaled_cc < value and value >= i:
@@ -761,9 +762,10 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
         path_recursion(G,i,set([i]),[(i,-1)],paths,-1,True)
         all_paths.extend(paths)
 
-    # with open("dump.txt",'w') as outfile:
-    #     for i in all_paths:
-    #         outfile.write(path_to_string(G,i,True) + "\n")
+    dump_paths_sorted = sorted(all_paths,reverse=True,key=lambda x: get_path_weight(G,x))
+    with open("dump.txt",'w') as outfile:
+        for i in dump_paths_sorted:
+            outfile.write(path_to_string(G,i,True) + "\n")
     # for i in all_paths:
     #     print i
 
@@ -947,6 +949,23 @@ def get_scaffold_heaviest_paths(contig_alignment_dict,impute,contig_cmaps):
                 edge.heaviest_path_edge = True
 
         scaffold_heaviest_paths[c_id] = (best_path,best_path_weight)
+
+        #remove unused RG edges
+        shp_node_set = set()
+        for i in best_path:
+            shp_node_set.add(i)
+
+        unkept_rg_edges = set()
+        for edge in G_contig.edges:
+            if edge.s.aln_obj.is_RG_aln and edge.s.n_id not in shp_node_set:
+                print edge.s.n_id
+                unkept_rg_edges.add(edge)
+
+            elif edge.t.aln_obj.is_RG_aln and edge.t.n_id not in shp_node_set:
+                print edge.t.n_id
+                unkept_rg_edges.add(edge)
+
+        G_contig.edges-=unkept_rg_edges
 
         #DEBUGGING print
         print "Heaviest path for contig " + c_id
