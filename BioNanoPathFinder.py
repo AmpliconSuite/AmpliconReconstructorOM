@@ -21,7 +21,7 @@ from collections import defaultdict
 
 #threshholds for linking contigs
 inter_contig_label_overlap = 6
-long_gap_length = 250000 #long gap threshold between alignments
+long_gap_length = 400000 #long gap threshold between alignments
 long_gap_cost = 0
 max_dfs_depth = 100
 max_paths_to_check = 500
