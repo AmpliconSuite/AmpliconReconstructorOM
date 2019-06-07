@@ -24,7 +24,7 @@ inter_contig_label_overlap = 6
 long_gap_length = 400000 #long gap threshold between alignments
 long_gap_cost = 0
 max_dfs_depth = 100
-max_paths_to_check = 500
+max_valid_dfs_paths = 1000
 max_paths_to_keep = 500
 
 #uses a single list to keep the found paths to avoid having to flatten after returning
@@ -37,7 +37,7 @@ def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,las
             if not (exp_length - curr_length > min(10000*(len(curr_path)), 25000)):
                 p_paths.append(curr_path)
           
-        if len(curr_path) < max_dfs_depth and len(p_paths) <= max_paths_to_check:
+        if len(curr_path) < max_dfs_depth and len(p_paths) <= max_valid_dfs_paths:
             #get adj verts
             s_edges = s.elist
             for edge in s_edges:
@@ -145,7 +145,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         elif e.gap:
             print "[gap] Not searching for paths on edge " + s.__repr__() + " " + t.__repr__()
 
-        if len(possible_paths) > max_paths_to_check:
+        if len(possible_paths) > max_valid_dfs_paths:
             print("too many candidate paths to search")
             possible_paths = []
 
