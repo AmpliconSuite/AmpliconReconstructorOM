@@ -112,6 +112,19 @@ def vectorize_cmaps(cmap_d):
             
     return vectorized_dict
 
+def parse_bed(bedfile):
+    bed_dict = defaultdict(list)
+    with open(bedfile) as infile:
+        for line in infile:
+            if not line.startswith("#"):
+                fields = line.rstrip().rsplit()
+                bed_dict[fields[0]].append((int(fields[1]),int(fields[2])))
+                
+    for chrom in bed_dict:
+        bed_dict[chrom] = sorted(bed_dict[chrom])
+    
+    return bed_dict     
+
 #take label number from a reversed segment and write it back to forward
 #ASSUMES 0-BASED INDEX
 def translate_reversed_label(cmaps,rev_seg_id,r_lab):
