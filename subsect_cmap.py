@@ -1,11 +1,18 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
+"""
+Jens Luebeck
+UC San Diego, Bioinformatics & Systems Biology
+jluebeck@ucsd.edu
+"""
+
 import sys
 import os
 import re
 import argparse
-import subprocess
 #from heapq import merge
 from itertools import groupby
+from collections import defaultdict
 
 complementary_nucleotide = {"A":"T","C":"G","G":"C","T":"A","N":"N"}
 
@@ -53,6 +60,25 @@ def read_graph(graphF):
 
 	return segSeqL,chroms_to_get
 
+def read_bed(bedfile):
+    bed_dict = defaultdict(list)
+    with open(bedfile) as infile:
+        for line in infile:
+            if not line.startswith("#"):
+                fields = line.rstrip().rsplit()
+                bed_dict[fields[0]].append((int(fields[1]),int(fields[2])))
+    
+
+    chroms_to_get = bed_dict.keys()
+    segSeqL = []
+    for chrom,region_list in bed_dict.iteritems():
+    	for p in region_list:
+    		pstring = str(p[0])+ "-|" + str(p[1]) + "+"
+    		segSeqL.append((pstring,chrom,p[0]-1,p[1]-1))
+
+    
+    return segSeqL,chroms_to_get
+
 def segsToSeq(segSeqL,seqD):
 	segSeqD = {}
 	for i in segSeqL:
@@ -62,8 +88,6 @@ def segsToSeq(segSeqL,seqD):
 
 def makeCMAP(outprefix, segSeqL, segSeqD, enzyme, regExpEnzTup, minLabel, minSize):
 	print "Generating CMAP for enzyme " + enzyme
-	#subprocess.call("./fa2cmap_multi.pl -i " + fastaF + " -o " + args.output
-	#	+ " -e " + enzyme, shell=True)
 	cmap_header = "# CMAP File Version:	0.1\n# Label Channels:	1\n# Nickase Recognition Site 1:	" + enzyme + "\n# Enzyme1:	" + enzyme + "\n# Number of Consensus Nanomaps:	" + str(len(segSeqD)) +"\n#h CMapId	ContigLength	NumSites	SiteID	LabelChannel	Position	StdDev	Coverage	Occurrence\n#f int	float	int	int	int	float	float	int	int\n"
 	key_header = "# CMAP = " + args.output + "_key.txt\n# filter: Minimum Labels = " + str(minLabel) + "\n# filter: Minimum Size (Kb) = " + str(minSize/1000.0) + "\n"
 	regExpEnz,offset = regExpEnzTup
@@ -108,9 +132,9 @@ parser.add_argument("-e", "--enzyme", help="restriction enzyme: BspQI, BbvCI, Bs
 parser.add_argument("-l", "--labels", type=int, help="minimum number of labels in reported CMAP, default 0",default=0)
 parser.add_argument("-s", "--size", type=float, help="minimum map size in reported CMAP, default 0",default=0)
 group = parser.add_mutually_exclusive_group(required=True)
-group.add_argument("-g", "--graph", help="breakpoint graph .txt file, if not supplied, --make_ref must be supplied")
+group.add_argument("-g", "--graph", help="breakpoint graph .txt file, if not supplied, --make_ref or --bed must be supplied")
 group.add_argument("--makeRef", help="Make CMAP from entire reference fasta",action='store_true')
-
+group.add_argument("-b", "--bed", help="breakpoint graph bed file, it not supplied, --make_ref or --graph must be supplied")
 
 args = parser.parse_args()
 
@@ -140,6 +164,10 @@ if args.enzyme not in enzymeSequences:
 if not args.output:
 	if args.graph:
 		args.output = ".".join(args.graph.rsplit(".")[:-1])
+
+	elif args.bed:
+		args.output = ".".join(args.bed.rsplit(".")[:-1])
+
 	else:
 		args.output = ".".join(args.ref.rsplit(".")[:-1])
 
@@ -151,6 +179,10 @@ regExpEnzTup = enzymeSequences[args.enzyme]
 
 if args.graph:
 	segSeqL,chroms_to_get = read_graph(args.graph)
+	seqD = fasta_reader(args.ref,chroms_to_get)
+
+elif args.bed:
+	segSeqL,chroms_to_get = read_bed(args.bed)
 	seqD = fasta_reader(args.ref,chroms_to_get)
 
 else:

@@ -72,7 +72,7 @@ def get_cmap_lens(cmapf):
 def parse_xmap(xmapf):
     detailFields = ["QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
     "QryStartPos","QryEndPos","RefStartPos","RefEndPos","Alignment"]
-    #xmapAln = {}
+    
     xmapPair = {}
     with open(xmapf) as infile:
         for line in infile:
