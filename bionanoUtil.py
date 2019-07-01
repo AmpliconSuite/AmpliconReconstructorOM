@@ -89,6 +89,57 @@ def parse_xmap(xmapf):
 
     return xmapPair
 
+#can handle poorly formatted .xmap files such as those from OMBlast.
+
+#refactor to handle more generic .xmap
+def parse_OMBlast_xmap(xmapf,molLenD,ref_vects):
+    detailFields = ["QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
+    "QryStartPos","QryEndPos","RefStartPos","RefEndPos","HitEnum"]
+    #xmapAln = {}
+    xmapPair = {}
+    with open(xmapf) as infile:
+        for line in infile:
+            if line.startswith("#h"):
+                head = line.rstrip().rsplit()[1:]
+
+            elif not line.startswith("#"):
+                fields = line.rstrip().rsplit()
+                fD = dict(zip(head,fields))
+                fD["Confidence"] = float(fD["Confidence"])
+                #handle OMBlast issue
+                #should implement a more generic version to handle all mis-capitalizations
+                if "RefcontigID" in fD: 
+                    fD["RefContigID"] = fD["RefcontigID"]
+
+                try:
+                    fD["QryLen"],fD["RefLen"] = float(fD["QryLen"]),float(fD["RefLen"])
+                except KeyError:
+                    fD["QryLen"] = molLenD[fD["QryContigID"]]
+                    fD["RefLen"] = ref_vects[fD["RefContigID"]][-1]
+                
+
+                #TODO: Implement a test for ordering of start, end
+                if fD["Orientation"] == "+":
+                    fD["QryStartPos"],fD["QryEndPos"] = float(fD["QryStartPos"]),float(fD["QryEndPos"])
+                    fD["RefStartPos"],fD["RefEndPos"] = float(fD["RefStartPos"]),float(fD["RefEndPos"])
+                else:
+                    fD["QryEndPos"],fD["QryStartPos"] = float(fD["QryStartPos"]),float(fD["QryEndPos"])
+                    fD["RefEndPos"],fD["RefStartPos"] = float(fD["RefStartPos"]),float(fD["RefEndPos"])
+                
+                xmapPair[fD["XmapEntryID"]] = {x:fD[x] for x in detailFields}
+                       
+                try:
+                    alnstring = ")" + fD["Alignment"] + "("
+                    aln_pairs = [(int(x.rsplit(",")[0]),int(x.rsplit(",")[1])) for x in alnstring.rsplit(")(")[1:-1]]             
+                    xmapPair[fD["XmapEntryID"]]["Alignment"] = aln_pairs
+                except KeyError:
+                    #xmap does not have Alignment field
+                     xmapPair[fD["XmapEntryID"]]["Alignment"] = []
+                
+
+    return xmapPair
+
+
 #read in key file 
 def parse_keyfile(keyF_name):
     keyCompD = {}
@@ -150,6 +201,22 @@ def add_full_reverse_cmaps(cmaps,key_dict):
         
         cmaps[new_ID][tot_labs+1] = cmap_len
 
+#takes vector of cmap vector of positions, including the length of the map
+def write_cmap_from_vector(cmap_vector,fname):
+    header_lines = "# hostname=BioNanoUtil\n"
+    header_lines += "# $ BioNanoUtil.py\n# CMAP File Version:\t0.1\n# Label Channels:\t1\n# Nickase Recognition Site 1:\tunknown\n"
+    header_lines += "# Number of Consensus Maps:\t"
+    header_lines += str(len(cmap_vector))
+    header_lines += "\n# Values corresponding to intervals (StdDev, HapDelta) refer to the interval between current site and next site\n#h\tCMapId\tContigLength\tNumSites\tSiteID\tLabelChannel\tPosition\tStdDev\tCoverage\tOccurrence\tChimQuality\n#f\tint\tfloat\tint\tint\tint\tfloat\tfloat\tfloat\tfloat\tfloat\n"
+    with open(fname,'w') as outfile:
+        outfile.write(header_lines)
+        for ind,cmap_posns in enumerate(cmap_vector):
+            map_b_len = str(cmap_posns[-1])
+            map_l_len = str(len(cmap_posns)-1)
+            for p_i,pos in enumerate(cmap_posns):
+                outfile.write("\t".join([str(ind+1),map_b_len,map_l_len,str(p_i+1),"1",str(pos),"1.0","1.0","1.0","0.0"]) + "\n")
+
+
 class SA_Obj(object):
     def __init__(self, contig_id, raw_aln_list):
         self.contig_id = contig_id
@@ -170,8 +237,7 @@ class SA_Obj(object):
     def aln_to_string_list(self):
         return [str(x) for x in [self.seg_id,self.seg_endpoints,self.contig_endpoints,self.alignment_dir]]
 
-#parses the output from SegAligner
-#REFACTOR 
+#parses the output from SegAligner 
 def parse_seg_alignment_file(alignfile):
     alignment = []
     tip_aln = True if "_tip_" in alignfile else False
@@ -197,17 +263,3 @@ def parse_seg_alignment_file(alignfile):
     aln_obj = SA_Obj(alignment[0]["contig_id"],[seg_id,seg_ends,contig_ends,strand,tot_score,alignment,tip_aln])
     return aln_obj
 
-#takes vector of cmap vector of positions, including the length of the map
-def write_cmap_from_vector(cmap_vector,fname):
-    header_lines = "# hostname=BioNanoUtil\n"
-    header_lines += "# $ BioNanoUtil.py\n# CMAP File Version:\t0.1\n# Label Channels:\t1\n# Nickase Recognition Site 1:\tunknown\n"
-    header_lines += "# Number of Consensus Maps:\t"
-    header_lines += str(len(cmap_vector))
-    header_lines += "\n# Values corresponding to intervals (StdDev, HapDelta) refer to the interval between current site and next site\n#h\tCMapId\tContigLength\tNumSites\tSiteID\tLabelChannel\tPosition\tStdDev\tCoverage\tOccurrence\tChimQuality\n#f\tint\tfloat\tint\tint\tint\tfloat\tfloat\tfloat\tfloat\tfloat\n"
-    with open(fname,'w') as outfile:
-        outfile.write(header_lines)
-        for ind,cmap_posns in enumerate(cmap_vector):
-            map_b_len = str(cmap_posns[-1])
-            map_l_len = str(len(cmap_posns)-1)
-            for p_i,pos in enumerate(cmap_posns):
-                outfile.write("\t".join([str(ind+1),map_b_len,map_l_len,str(p_i+1),"1",str(pos),"1.0","1.0","1.0","0.0"]) + "\n")
