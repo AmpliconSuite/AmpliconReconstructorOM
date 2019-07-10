@@ -70,7 +70,7 @@ def get_cmap_lens(cmapf):
 
 #parse xmap
 def parse_xmap(xmapf):
-    detailFields = ["QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
+    detailFields = ["XmapEntryID","QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
     "QryStartPos","QryEndPos","RefStartPos","RefEndPos","Alignment"]
     
     xmapPair = {}
@@ -93,7 +93,7 @@ def parse_xmap(xmapf):
 
 #refactor to handle more generic .xmap
 def parse_OMBlast_xmap(xmapf,molLenD,ref_vects):
-    detailFields = ["QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
+    detailFields = ["XmapEntryID","QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
     "QryStartPos","QryEndPos","RefStartPos","RefEndPos","HitEnum"]
     #xmapAln = {}
     xmapPair = {}

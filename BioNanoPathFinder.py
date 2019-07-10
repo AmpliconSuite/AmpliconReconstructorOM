@@ -12,6 +12,7 @@ import json
 import math
 import copy
 import argparse
+from Queue import Queue
 from subprocess import call
 from bionanoUtil import *
 from abstract_graph import *
@@ -23,21 +24,22 @@ from collections import defaultdict
 inter_contig_label_overlap = 6
 long_gap_length = 400000 #long gap threshold between alignments
 long_gap_cost = 0
-max_dfs_depth = 100
-max_valid_dfs_paths = 1000
+max_search_depth = 100
+max_impute_paths = 1023
 max_paths_to_keep = 500
 
 #uses a single list to keep the found paths to avoid having to flatten after returning
-def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,last_edge):
+def dfs_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,last_edge):
     s = curr_path[-1]
     #check if path exceeds size difference constraints
     if not (curr_length - exp_length > min(10000*(len(curr_path)),40000)):  
         if s.vid == t.vid:
             #check that is not too short
             if not (exp_length - curr_length > min(10000*(len(curr_path)), 25000)):
-                p_paths.append(curr_path)
+                if len(curr_path) % 2 == 0:
+                    p_paths.append(curr_path)
           
-        if len(curr_path) < max_dfs_depth and len(p_paths) <= max_valid_dfs_paths:
+        if len(curr_path) < max_search_depth and len(p_paths) <= max_impute_paths:
             #get adj verts
             s_edges = s.elist
             for edge in s_edges:
@@ -46,7 +48,7 @@ def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,las
                     continue
                 
                 #must obey copy count
-                if c_count_d[edge_rep] > edge_cc[edge_rep]:
+                if c_count_d[edge_rep] >= edge_cc[edge_rep]:
                     continue
                 
                 u = edge.neighbor(s)
@@ -61,8 +63,58 @@ def recursive_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,las
 
                 c_count_d[edge_rep]+=1
                 #recursive call
-                recursive_path_find(t,curr_path + [u], exp_length, curr_length + edge_len, p_paths, c_count_d, edge.edge_type)
+                dfs_path_find(t,curr_path + [u], exp_length, curr_length + edge_len, p_paths, c_count_d, edge.edge_type)
                 c_count_d[edge_rep]-=1
+
+#uses a single list to keep the found paths to avoid having to flatten after returning
+def bfs_path_find(s,t,exp_length,seg_overhang_sum):
+    p_paths = []
+    bfs_terminate_count = max_search_depth*max_impute_paths
+    curr_pop_count = 0
+    path_queue = Queue()
+    #Four things are stored in the each queue item
+    #path list,  cc_dict,   path_len,   last_edge_type
+    path_queue.put(([s],defaultdict(int),seg_overhang_sum,"sequence"))
+    while not path_queue.empty() and curr_pop_count < bfs_terminate_count:
+        curr_path,c_count_d,curr_length,last_edge = path_queue.get()
+        curr_last_node = curr_path[-1]
+        #check that it is not too long
+        path_too_long = (curr_length - exp_length > min(10000*(len(curr_path)),40000))
+        path_too_short = (exp_length - curr_length > min(10000*(len(curr_path)),25000))
+        if not path_too_long and not path_too_short:
+            if curr_last_node.vid == t.vid and len(curr_path) % 2 == 0:
+                p_paths.append(curr_path)
+
+        if not path_too_long and len(p_paths) <= max_impute_paths:
+            s_edges = curr_last_node.elist
+            for edge in s_edges:
+                if last_edge == edge.edge_type or (last_edge in ["concordant","discordant"] and edge.edge_type in ["concordant","discordant"]):
+                    continue
+
+                edge_rep = edge.__repr__()
+                #must obey copy count
+                if c_count_d[edge_rep] >= edge_cc[edge_rep]:
+                    continue
+
+                u = edge.neighbor(curr_last_node)
+                edge_len = 0
+                if edge.edge_type == "sequence":
+                    edge_len+=(abs(curr_last_node.pos - u.pos) + 1)
+
+                #no direct loopbacks on short segs
+                if len(curr_path) > 1:
+                    if(u.vid == curr_path[-2].vid and edge_len < 100):
+                        continue
+
+                c_count_d[edge_rep]+=1
+                path_queue.put((curr_path + [u], copy.copy(c_count_d), curr_length+edge_len, edge.edge_type))
+
+        elif len(p_paths) > max_impute_paths:
+            print("BFS to big, popcount " + str(curr_pop_count))
+
+        curr_pop_count+=1
+
+    return p_paths
 
 #method for checking if a better imputed path exists between two nodes on an edge
 def path_alignment_correction(G,c_id,contig_cmap,impute=True):
@@ -139,15 +191,24 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         #don't look if there's a oversized gap or imputation is off
         if impute and not e.gap:
             print "Searching for paths on edge " + s.__repr__() + " " + t.__repr__()
-            recursive_path_find(t,curr_path,contig_distance,seg_overhang_sum,possible_paths,c_count_d,"sequence")
-            print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
+            dfs_path_find(t,curr_path,contig_distance,seg_overhang_sum,possible_paths,c_count_d,"sequence")
         
         elif e.gap:
             print "[gap] Not searching for paths on edge " + s.__repr__() + " " + t.__repr__()
 
-        if len(possible_paths) > max_valid_dfs_paths:
-            print("too many candidate paths to search")
-            possible_paths = []
+        if len(possible_paths) > max_impute_paths:
+            print("Too many paths from DFS, attempting limited BFS")
+            bfs_possible_paths = bfs_path_find(s,t,contig_distance,seg_overhang_sum)
+            if len(bfs_possible_paths) <= max_impute_paths:
+                possible_paths = bfs_possible_paths
+                print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
+            else:
+                possible_paths = []
+                print("Too many BFS paths")
+
+        else:
+            print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
+
 
         if [s,t] not in possible_paths:
             possible_paths.append([s,t])
@@ -175,7 +236,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
                 p_score, seg_aln_obj = path_score_from_SA_fitting_aln(compound_cmap,local_contig_cmap,c_id)
                 e.junction_score = p_score
 
-            if p_score > best_score and len(path) % 2 == 0:
+            if p_score > best_score:
                 best_score = p_score
                 best_path = path
                 best_aln = seg_aln_obj

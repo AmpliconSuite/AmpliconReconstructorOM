@@ -101,6 +101,7 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
             path_len = len(curr_path)
 
             #now get pres and suffs (if they're okay)
+            #get all the prefixes, in both orientations
             if is_end_aln(G,hp_ids[0],contig_cmaps[c_id],left=True):
                 for ind in range(1,path_len):
                     curr_prefix_f = ",".join(fwd_num_seq[:ind])
@@ -108,13 +109,23 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
                     prefix_f[curr_prefix_f].append((c_id,ind-1,path_ind))
                     prefix_r[curr_prefix_r].append((c_id,path_len - ind - 1,path_ind))
 
+            #catch the case where a cycle is embedded in a single contig
+            else:
+                curr_prefix_f = fwd_num_seq[0]
+                prefix_f[curr_prefix_f].append((c_id,0,path_ind))
 
+
+            #get all the suffixes in similar fashion
             if is_end_aln(G,hp_ids[-1],contig_cmaps[c_id]):
                 for ind in range(1,path_len):
                     curr_suffix_f = ",".join(fwd_num_seq[ind:])
                     curr_suffix_r = ",".join(rev_num_seq[:ind])
                     suffix_f[curr_suffix_f].append((c_id,ind,path_ind))
                     suffix_r[curr_suffix_r].append((c_id,path_len - ind,path_ind))
+
+            else:
+                curr_suffix_f = fwd_num_seq[-1]
+                suffix_f[curr_suffix_f].append((c_id,path_len-1,path_ind))
 
 
     p_f_set = set(prefix_f.keys())
@@ -154,12 +165,23 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
                 if disallow_self and s_cid == t_cid:
                     continue
 
+
                 Gs = contig_graphs[s_cid]
                 Gt = contig_graphs[t_cid]
                 hp_ids_s = scaffold_paths[s_cid][s_path_ind]
                 hp_ids_t = scaffold_paths[t_cid][t_path_ind]
-                s = Gs.node_id_lookup[hp_ids_s[s_ind]]
-                t = Gt.node_id_lookup[hp_ids_t[t_ind]]
+                s_nid = hp_ids_s[s_ind]
+                t_nid = hp_ids_t[t_ind]
+                s = Gs.node_id_lookup[s_nid]
+                t = Gt.node_id_lookup[t_nid]
+
+                #disallow connecting if it is an internal node and the destination is off-contig
+                #also disallow if the two nodes are not appropriately ordered in thise case
+                #this is to handle the interior cycle case
+                if not (is_end_aln(Gs,s_nid,contig_cmaps[s_cid]) and is_end_aln(Gt,t_nid,contig_cmaps[t_cid],left=True)):
+                    if s_cid != t_cid or s.aln_obj.contig_endpoints[0] < t.aln_obj.contig_endpoints[-1]:
+                        continue
+
                 if (s.n_id,t.n_id) in added_edges:
                     continue
 
