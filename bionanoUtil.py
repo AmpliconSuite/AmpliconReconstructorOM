@@ -216,27 +216,6 @@ def write_cmap_from_vector(cmap_vector,fname):
             for p_i,pos in enumerate(cmap_posns):
                 outfile.write("\t".join([str(ind+1),map_b_len,map_l_len,str(p_i+1),"1",str(pos),"1.0","1.0","1.0","0.0"]) + "\n")
 
-
-class SA_Obj(object):
-    def __init__(self, contig_id, raw_aln_list):
-        self.contig_id = contig_id
-        self.seg_id = raw_aln_list[0]
-        self.seg_endpoints = raw_aln_list[1]
-        self.contig_endpoints = raw_aln_list[2]
-        self.alignment_dir = raw_aln_list[3]
-        self.aln_score = raw_aln_list[4]
-        self.alignment = raw_aln_list[5]
-        self.is_tip_aln = raw_aln_list[6]
-        self.aln_id = "_".join([str(self.contig_id),str(self.seg_id)+self.alignment_dir,str(self.contig_endpoints[0]),str(self.contig_endpoints[1])])
-        self.imputed_alignment = []
-        self.is_RG_aln = False
-
-    def aln_summary_to_string(self):
-        return "seg_id: " + self.seg_id + " seg_labs: " + str(self.seg_endpoints) + " contig_labs: " + str(self.contig_endpoints) + " dir: " + self.alignment_dir + " aln_score: " + str(self.aln_score)
-
-    def aln_to_string_list(self):
-        return [str(x) for x in [self.seg_id,self.seg_endpoints,self.contig_endpoints,self.alignment_dir]]
-
 #parses the output from SegAligner 
 def parse_seg_alignment_file(alignfile):
     alignment = []
@@ -260,6 +239,4 @@ def parse_seg_alignment_file(alignfile):
         contig_end = int(alignment[-1]["contig_label"])
         contig_ends = (contig_start,contig_end)
 
-    aln_obj = SA_Obj(alignment[0]["contig_id"],[seg_id,seg_ends,contig_ends,strand,tot_score,alignment,tip_aln])
-    return aln_obj
-
+    return alignment[0]["contig_id"],[seg_id,seg_ends,contig_ends,strand,tot_score,alignment,tip_aln]

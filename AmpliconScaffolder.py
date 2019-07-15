@@ -6,7 +6,8 @@ import bisect
 import argparse
 import subprocess
 import numpy as np
-from bionanoUtil import *
+import bionanoUtil
+import ContigAlignmentGraph
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -27,7 +28,8 @@ def get_unaligned_segs(aln_path,aln_flist):
     contig_unaligned_regions = defaultdict(list)
     for f in aln_flist:
         #parse the alnfile
-        aln_obj = parse_seg_alignment_file(aln_path + f)
+        a_c_id,a_list = parse_seg_alignment_file(aln_path + f)
+        aln_obj = SA_Obj(a_c_id,a_list)
         contig_id = aln_obj.contig_id
         contig_aln_dict[contig_id].append(aln_obj)
 
@@ -127,7 +129,8 @@ def detections_to_key(outfile,keyfile_info):
 def write_aligned_labels(a_dir, aln_flist, w_dir):
     contig_to_aligned_label_list = defaultdict(set)
     for f in aln_flist:
-        aln_obj = parse_seg_alignment_file(a_dir + f)
+        a_c_id,a_list = parse_seg_alignment_file(a_dir + f)
+        aln_obj = SA_Obj(a_c_id,a_list)
         contig_id = aln_obj.contig_id
         contig_ends = aln_obj.contig_endpoints
         contig_label_set = set(range(min(contig_ends),max(contig_ends)+1))

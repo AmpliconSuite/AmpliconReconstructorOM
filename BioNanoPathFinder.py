@@ -401,65 +401,12 @@ def path_score_from_SA_fitting_aln(compound_cmap,sub_vect,c_id):
 
     #read the files
     fitting_aln_file = adir + "SA_temp_1_1_fitting_aln.txt" 
-    aln_obj = parse_seg_alignment_file(fitting_aln_file)
+    a_c_id, a_list = parse_seg_alignment_file(fitting_aln_file)
+    aln_obj = SA_Obj(a_c_id,a_list)
     aln_obj.contig_id = c_id
     call("rm " + fitting_aln_file,shell=True)
     return aln_obj.aln_score, aln_obj
 
-#make graph from alignments, does not consider overlapping contigs
-def make_contig_aln_graph(aln_obj_list,contig_id):
-    G = contig_alignment_graph()
-    #sort align list by startpoint
-    sorted_aln_l = sorted(aln_obj_list,key=lambda x: x.contig_endpoints[0])
-
-    #make a list of sorted_aln_l nodes
-    sorted_node_l = []
-    for i in sorted_aln_l:
-        curr_node = segment_node(contig_id,i)
-        try:
-            curr_node.aa_e = cmap_id_to_edge[curr_node.seg_id]
-        except KeyError:
-            sys.stderr.write("Segment " + curr_node.seg_id + " not found in BPG\n")
-            sys.stderr.write("Alignment files may not match to breakpoint graph.\n")
-
-        sorted_node_l.append(curr_node)
-        G.nodes.add(curr_node)
-
-    for ind_i, i in enumerate(sorted_aln_l[:-1]):
-        lc_end = float('inf')
-        curr_next = 1
-        while ind_i + curr_next < len(sorted_aln_l):
-            ind_j = ind_i + curr_next
-            j = sorted_aln_l[ind_j]
-            if j.contig_endpoints[0] > lc_end:
-                break
-
-            #forbidden
-            if j.contig_endpoints[0] < i.contig_endpoints[1] - 1: #ALLOWING OVERHANG 1
-                curr_edge = segment_edge(sorted_node_l[ind_i],sorted_node_l[ind_j],True)
-
-            #not forbidden
-            else:
-                curr_edge = segment_edge(sorted_node_l[ind_i],sorted_node_l[ind_j],False)
-                if contig_cmaps[contig_id][j.contig_endpoints[0]] - contig_cmaps[contig_id][i.contig_endpoints[1]] > long_gap_length:
-                    curr_edge.gap = True
-
-                if lc_end == float('inf'):
-                    curr_is_tip_aln = sorted_node_l[ind_j].aln_obj.is_tip_aln
-                    curr_is_RG = sorted_node_l[ind_j].aln_obj.is_RG_aln
-                    if not curr_is_tip_aln and not curr_is_RG:
-                        lc_end = j.contig_endpoints[1]
-
-            G.edges.add(curr_edge)
-            curr_next+=1
-
-    G.ordered_node_list = sorted_node_l
-    # print contig_id
-    # for e in G.edges:
-    #     print e.edge_to_string()
-
-    # print ""
-    return G
 
 #parse breakpoint graph file to get CN info
 def get_edge_copy_counts(breakpoint_file):
@@ -1151,7 +1098,8 @@ if __name__ == '__main__':
     #parse each aln file
     print "Parsing alignments"
     for i in rel_files:
-        seg_aln_obj = parse_seg_alignment_file(adir + i)
+        a_c_id,a_list = parse_seg_alignment_file(adir + i)
+        seg_aln_obj = SA_Obj(a_c_id,a_list)
         c_id = seg_aln_obj.contig_id
         if "_rg_" in i:
             seg_aln_obj.is_RG_aln = True

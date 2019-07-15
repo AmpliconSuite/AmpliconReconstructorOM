@@ -1,5 +1,27 @@
 from collections import defaultdict
 
+#scaffold alignment object
+class SA_Obj(object):
+    def __init__(self, contig_id, raw_aln_list):
+        self.contig_id = contig_id
+        self.seg_id = raw_aln_list[0]
+        self.seg_endpoints = raw_aln_list[1]
+        self.contig_endpoints = raw_aln_list[2]
+        self.alignment_dir = raw_aln_list[3]
+        self.aln_score = raw_aln_list[4]
+        self.alignment = raw_aln_list[5]
+        self.is_tip_aln = raw_aln_list[6]
+        self.aln_id = "_".join([str(self.contig_id),str(self.seg_id)+self.alignment_dir,str(self.contig_endpoints[0]),str(self.contig_endpoints[1])])
+        self.imputed_alignment = []
+        self.is_RG_aln = False
+
+    def aln_summary_to_string(self):
+        return "seg_id: " + self.seg_id + " seg_labs: " + str(self.seg_endpoints) + " contig_labs: " + str(self.contig_endpoints) + " dir: " + self.alignment_dir + " aln_score: " + str(self.aln_score)
+
+    def aln_to_string_list(self):
+        return [str(x) for x in [self.seg_id,self.seg_endpoints,self.contig_endpoints,self.alignment_dir]]
+
+
 #node class for alignment
 class segment_node(object):
     def __init__(self,contig_id,aln_obj,imputed=False):
@@ -67,6 +89,60 @@ class contig_alignment_graph(object):
     def construct_node_id_lookup(self):
         self.node_id_lookup = {i.n_id:i for i in self.nodes}
 
+#make graph from alignments, does not consider overlapping contigs
+def make_contig_aln_graph(aln_obj_list,contig_id):
+    G = contig_alignment_graph()
+    #sort align list by startpoint
+    sorted_aln_l = sorted(aln_obj_list,key=lambda x: x.contig_endpoints[0])
+
+    #make a list of sorted_aln_l nodes
+    sorted_node_l = []
+    for i in sorted_aln_l:
+        curr_node = segment_node(contig_id,i)
+        try:
+            curr_node.aa_e = cmap_id_to_edge[curr_node.seg_id]
+        except KeyError:
+            sys.stderr.write("Segment " + curr_node.seg_id + " not found in BPG\n")
+            sys.stderr.write("Alignment files may not match to breakpoint graph.\n")
+
+        sorted_node_l.append(curr_node)
+        G.nodes.add(curr_node)
+
+    for ind_i, i in enumerate(sorted_aln_l[:-1]):
+        lc_end = float('inf')
+        curr_next = 1
+        while ind_i + curr_next < len(sorted_aln_l):
+            ind_j = ind_i + curr_next
+            j = sorted_aln_l[ind_j]
+            if j.contig_endpoints[0] > lc_end:
+                break
+
+            #forbidden
+            if j.contig_endpoints[0] < i.contig_endpoints[1] - 1: #ALLOWING OVERHANG 1
+                curr_edge = segment_edge(sorted_node_l[ind_i],sorted_node_l[ind_j],True)
+
+            #not forbidden
+            else:
+                curr_edge = segment_edge(sorted_node_l[ind_i],sorted_node_l[ind_j],False)
+                if contig_cmaps[contig_id][j.contig_endpoints[0]] - contig_cmaps[contig_id][i.contig_endpoints[1]] > long_gap_length:
+                    curr_edge.gap = True
+
+                if lc_end == float('inf'):
+                    curr_is_tip_aln = sorted_node_l[ind_j].aln_obj.is_tip_aln
+                    curr_is_RG = sorted_node_l[ind_j].aln_obj.is_RG_aln
+                    if not curr_is_tip_aln and not curr_is_RG:
+                        lc_end = j.contig_endpoints[1]
+
+            G.edges.add(curr_edge)
+            curr_next+=1
+
+    G.ordered_node_list = sorted_node_l
+    # print contig_id
+    # for e in G.edges:
+    #     print e.edge_to_string()
+
+    # print ""
+    return G
 
 #by default check if it is the alignment at the end of a contig
 #right = True checks if alignment at the start of a contig
