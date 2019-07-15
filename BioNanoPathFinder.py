@@ -938,7 +938,7 @@ def get_scaffold_heaviest_paths(contig_alignment_dict,impute,contig_cmaps):
         print "Path imputation, contig id: ",c_id
         aln_obj_list = contig_alignment_dict[c_id]
         #put the contig segment alignments into the graph
-        contig_graphs[c_id] = make_contig_aln_graph(aln_obj_list,c_id)
+        contig_graphs[c_id] = make_contig_aln_graph(aln_obj_list,c_id,long_gap_length)
         G_contig = contig_graphs[c_id]
         path_alignment_correction(G_contig,c_id,contig_cmaps[c_id],impute)
         G_contig.construct_edge_lookup()
@@ -965,11 +965,11 @@ def get_scaffold_heaviest_paths(contig_alignment_dict,impute,contig_cmaps):
 
         unkept_rg_edges = set()
         for edge in G_contig.edges:
-            if edge.s.aln_obj.is_RG_aln and edge.s.n_id not in shp_node_set:
+            if edge.s.aln_obj.is_detection_aln and edge.s.n_id not in shp_node_set:
                 print edge.s.n_id
                 unkept_rg_edges.add(edge)
 
-            elif edge.t.aln_obj.is_RG_aln and edge.t.n_id not in shp_node_set:
+            elif edge.t.aln_obj.is_detection_aln and edge.t.n_id not in shp_node_set:
                 print edge.t.n_id
                 unkept_rg_edges.add(edge)
 

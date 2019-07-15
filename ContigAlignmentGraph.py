@@ -13,7 +13,7 @@ class SA_Obj(object):
         self.is_tip_aln = raw_aln_list[6]
         self.aln_id = "_".join([str(self.contig_id),str(self.seg_id)+self.alignment_dir,str(self.contig_endpoints[0]),str(self.contig_endpoints[1])])
         self.imputed_alignment = []
-        self.is_RG_aln = False
+        self.is_detection_aln = False
 
     def aln_summary_to_string(self):
         return "seg_id: " + self.seg_id + " seg_labs: " + str(self.seg_endpoints) + " contig_labs: " + str(self.contig_endpoints) + " dir: " + self.alignment_dir + " aln_score: " + str(self.aln_score)
@@ -90,7 +90,7 @@ class contig_alignment_graph(object):
         self.node_id_lookup = {i.n_id:i for i in self.nodes}
 
 #make graph from alignments, does not consider overlapping contigs
-def make_contig_aln_graph(aln_obj_list,contig_id):
+def make_contig_aln_graph(aln_obj_list,contig_id,long_gap_length,allowed_overlap=1,match_AA=True):
     G = contig_alignment_graph()
     #sort align list by startpoint
     sorted_aln_l = sorted(aln_obj_list,key=lambda x: x.contig_endpoints[0])
@@ -99,11 +99,12 @@ def make_contig_aln_graph(aln_obj_list,contig_id):
     sorted_node_l = []
     for i in sorted_aln_l:
         curr_node = segment_node(contig_id,i)
-        try:
-            curr_node.aa_e = cmap_id_to_edge[curr_node.seg_id]
-        except KeyError:
-            sys.stderr.write("Segment " + curr_node.seg_id + " not found in BPG\n")
-            sys.stderr.write("Alignment files may not match to breakpoint graph.\n")
+        if match_AA:
+            try:
+                curr_node.aa_e = cmap_id_to_edge[curr_node.seg_id]
+            except KeyError:
+                sys.stderr.write("Segment " + curr_node.seg_id + " not found in BPG\n")
+                sys.stderr.write("Alignment files may not match to breakpoint graph.\n")
 
         sorted_node_l.append(curr_node)
         G.nodes.add(curr_node)
@@ -118,7 +119,7 @@ def make_contig_aln_graph(aln_obj_list,contig_id):
                 break
 
             #forbidden
-            if j.contig_endpoints[0] < i.contig_endpoints[1] - 1: #ALLOWING OVERHANG 1
+            if j.contig_endpoints[0] < i.contig_endpoints[1] - allowed_overlap: #ALLOWING OVERHANG 1 by default
                 curr_edge = segment_edge(sorted_node_l[ind_i],sorted_node_l[ind_j],True)
 
             #not forbidden
@@ -129,19 +130,14 @@ def make_contig_aln_graph(aln_obj_list,contig_id):
 
                 if lc_end == float('inf'):
                     curr_is_tip_aln = sorted_node_l[ind_j].aln_obj.is_tip_aln
-                    curr_is_RG = sorted_node_l[ind_j].aln_obj.is_RG_aln
-                    if not curr_is_tip_aln and not curr_is_RG:
+                    curr_is_detected = sorted_node_l[ind_j].aln_obj.is_detection_aln
+                    if not curr_is_tip_aln and not curr_is_detected:
                         lc_end = j.contig_endpoints[1]
 
             G.edges.add(curr_edge)
             curr_next+=1
 
     G.ordered_node_list = sorted_node_l
-    # print contig_id
-    # for e in G.edges:
-    #     print e.edge_to_string()
-
-    # print ""
     return G
 
 #by default check if it is the alignment at the end of a contig
