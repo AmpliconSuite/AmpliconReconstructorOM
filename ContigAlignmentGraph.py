@@ -127,8 +127,8 @@ def make_contig_aln_graph(aln_obj_list,contig_id,long_gap_length,allowed_overlap
                 curr_edge = segment_edge(sorted_node_l[ind_i],sorted_node_l[ind_j],False)
 
                 #if using om data
-                if contig_cmaps:
-                    if contig_cmap[j.contig_endpoints[0]] - contig_cmap[contig_id][i.contig_endpoints[1]] > long_gap_length:
+                if contig_cmap:
+                    if contig_cmap[j.contig_endpoints[0]] - contig_cmap[i.contig_endpoints[1]] > long_gap_length:
                         curr_edge.gap = True
 
                 #if using real coordinates
