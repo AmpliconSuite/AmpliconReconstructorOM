@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 
 #scaffold alignment object
