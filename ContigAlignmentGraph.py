@@ -109,7 +109,7 @@ def make_contig_aln_graph(aln_obj_list,contig_id,long_gap_length,allowed_overlap
                 sorted_aln_l.append(i)
             except KeyError:
                 sys.stderr.write("Segment " + curr_node.seg_id + " not found in BPG\n")
-                sys.stderr.write("Alignment files may not match to breakpoint graph.\n")
+                sys.stderr.write("Alignment files may not match to breakpoint graph.\n\n")
 
 
     for ind_i, i in enumerate(sorted_aln_l[:-1]):

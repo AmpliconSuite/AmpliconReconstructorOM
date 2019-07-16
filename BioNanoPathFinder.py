@@ -27,6 +27,7 @@ long_gap_cost = 0
 max_search_depth = 100
 max_impute_paths = 1023
 max_paths_to_keep = 500
+max_impute_edge_cc = 20
 
 #uses a single list to keep the found paths to avoid having to flatten after returning
 def dfs_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,last_edge):
@@ -48,7 +49,7 @@ def dfs_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,last_edge
                     continue
                 
                 #must obey copy count
-                if c_count_d[edge_rep] >= edge_cc[edge_rep]:
+                if c_count_d[edge_rep] >= min(edge_cc[edge_rep],max_impute_edge_cc):
                     continue
                 
                 u = edge.neighbor(s)
@@ -93,7 +94,7 @@ def bfs_path_find(s,t,exp_length,seg_overhang_sum):
 
                 edge_rep = edge.__repr__()
                 #must obey copy count
-                if c_count_d[edge_rep] >= edge_cc[edge_rep]:
+                if c_count_d[edge_rep] >= min(edge_cc[edge_rep],max_impute_edge_cc):
                     continue
 
                 u = edge.neighbor(curr_last_node)
@@ -110,7 +111,8 @@ def bfs_path_find(s,t,exp_length,seg_overhang_sum):
                 path_queue.put((curr_path + [u], copy.copy(c_count_d), curr_length+edge_len, edge.edge_type))
 
         elif len(p_paths) > max_impute_paths:
-            print("BFS to big, popcount " + str(curr_pop_count))
+            print("BFS too large: " + str(curr_pop_count))
+            break
 
         curr_pop_count+=1
 
