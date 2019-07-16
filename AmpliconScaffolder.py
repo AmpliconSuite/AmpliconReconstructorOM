@@ -6,8 +6,8 @@ import bisect
 import argparse
 import subprocess
 import numpy as np
-import bionanoUtil
-import ContigAlignmentGraph
+from bionanoUtil import *
+from ContigAlignmentGraph import *
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
