@@ -89,13 +89,10 @@ def parse_xmap(xmapf):
 
     return xmapPair
 
-#can handle poorly formatted .xmap files such as those from OMBlast.
-
-#refactor to handle more generic .xmap
-def parse_OMBlast_xmap(xmapf,molLenD,ref_vects):
+#can handle poorly formatted .xmap files, such as those from OMBlast.
+def parse_generic_xmap(xmapf,molLenD,ref_vects):
     detailFields = ["XmapEntryID","QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
     "QryStartPos","QryEndPos","RefStartPos","RefEndPos","HitEnum"]
-    #xmapAln = {}
     xmapPair = {}
     with open(xmapf) as infile:
         for line in infile:
@@ -105,26 +102,26 @@ def parse_OMBlast_xmap(xmapf,molLenD,ref_vects):
             elif not line.startswith("#"):
                 fields = line.rstrip().rsplit()
                 fD = dict(zip(head,fields))
+                
+                #handle mis-capitalizations
+                for i in fD:
+                    for dname in detailFields:
+                        if i.lower() == dname.lower():
+                            fD[dname] = fD[i]
+
                 fD["Confidence"] = float(fD["Confidence"])
-                #handle OMBlast issue
-                #should implement a more generic version to handle all mis-capitalizations
-                if "RefcontigID" in fD: 
-                    fD["RefContigID"] = fD["RefcontigID"]
 
                 try:
                     fD["QryLen"],fD["RefLen"] = float(fD["QryLen"]),float(fD["RefLen"])
                 except KeyError:
                     fD["QryLen"] = molLenD[fD["QryContigID"]]
                     fD["RefLen"] = ref_vects[fD["RefContigID"]][-1]
-                
 
-                #TODO: Implement a test for ordering of start, end
+                fD["QryStartPos"],fD["QryEndPos"] = sorted([float(fD["QryStartPos"]),float(fD["QryEndPos"])])
                 if fD["Orientation"] == "+":
-                    fD["QryStartPos"],fD["QryEndPos"] = float(fD["QryStartPos"]),float(fD["QryEndPos"])
-                    fD["RefStartPos"],fD["RefEndPos"] = float(fD["RefStartPos"]),float(fD["RefEndPos"])
+                    fD["RefStartPos"],fD["RefEndPos"] = sorted([float(fD["RefStartPos"]),float(fD["RefEndPos"])])
                 else:
-                    fD["QryEndPos"],fD["QryStartPos"] = float(fD["QryStartPos"]),float(fD["QryEndPos"])
-                    fD["RefEndPos"],fD["RefStartPos"] = float(fD["RefStartPos"]),float(fD["RefEndPos"])
+                    fD["RefEndPos"],fD["RefStartPos"] = sorted([float(fD["RefStartPos"]),float(fD["RefEndPos"])])
                 
                 xmapPair[fD["XmapEntryID"]] = {x:fD[x] for x in detailFields}
                        

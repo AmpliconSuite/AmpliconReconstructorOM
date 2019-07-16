@@ -78,7 +78,6 @@ class contig_alignment_graph(object):
             if not i.forbidden:
                 self.adj_rev_dict[i.t.n_id].append(i.s.n_id)
 
-
     #this is a weird way to solve it
     def construct_weights(self):
         for i in self.edges:
