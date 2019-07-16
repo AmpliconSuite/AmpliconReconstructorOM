@@ -89,8 +89,9 @@ class contig_alignment_graph(object):
         self.node_id_lookup = {i.n_id:i for i in self.nodes}
 
 #make graph from alignments, does not consider overlapping contigs
-def make_contig_aln_graph(aln_obj_list,contig_id,long_gap_length,allowed_overlap=1,match_AA=True):
+def make_contig_aln_graph(aln_obj_list,contig_id,long_gap_length,allowed_overlap=1,cmap_id_to_edge={},contig_cmap={}):
     G = contig_alignment_graph()
+    match_AA = True if cmap_id_to_edge else False
     #sort align list by startpoint
     sorted_aln_l = sorted(aln_obj_list,key=lambda x: x.contig_endpoints[0])
 
@@ -124,8 +125,16 @@ def make_contig_aln_graph(aln_obj_list,contig_id,long_gap_length,allowed_overlap
             #not forbidden
             else:
                 curr_edge = segment_edge(sorted_node_l[ind_i],sorted_node_l[ind_j],False)
-                if contig_cmaps[contig_id][j.contig_endpoints[0]] - contig_cmaps[contig_id][i.contig_endpoints[1]] > long_gap_length:
-                    curr_edge.gap = True
+
+                #if using om data
+                if contig_cmaps:
+                    if contig_cmap[j.contig_endpoints[0]] - contig_cmap[contig_id][i.contig_endpoints[1]] > long_gap_length:
+                        curr_edge.gap = True
+
+                #if using real coordinates
+                else:
+                    if j.contig_endpoints[0] - i.contig_endpoints[1] > long_gap_length:
+                        curr_edge.gap = True
 
                 if lc_end == float('inf'):
                     curr_is_tip_aln = sorted_node_l[ind_j].aln_obj.is_tip_aln
