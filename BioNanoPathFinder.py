@@ -111,7 +111,7 @@ def bfs_path_find(s,t,exp_length,seg_overhang_sum):
                 path_queue.put((curr_path + [u], copy.copy(c_count_d), curr_length+edge_len, edge.edge_type))
 
         elif len(p_paths) > max_impute_paths:
-            print("BFS too large: " + str(curr_pop_count))
+            print("BFS too large, stopped at " + str(curr_pop_count))
             break
 
         curr_pop_count+=1
@@ -478,29 +478,6 @@ def check_path_cc(G,path,cc_dict):
 
     return True
 
-# def adjust_cc(cc_dict,seq_edge_reps):
-#     #check if any > 5, then down it from there
-#     cutoff = 10.0
-#     min_left = 4.0
-#     try:
-#         seg_vals = [x for n,x in cc_dict.iteritems() if n in seq_edge_reps]
-#         min_over_cut = min([x for x in seg_vals if x >= cutoff and x < max(seg_vals)])
-#         print "Copy count min over cut: " + str(min_over_cut)
-#     except ValueError:
-#         "Did not adjust copy counts"
-#         return cc_dict
-
-#     adj_cc_dict = {}
-#     for key,cc in cc_dict.iteritems():
-#         if key not in seq_edge_reps:
-#             adj_cc_dict[key] = cc
-
-#         else:
-#             adjval = round(cc/min_over_cut)
-#             adj_cc_dict[key] = max(min_left,adjval) if cc >= cutoff else cc
-
-#     return adj_cc_dict
-
 #graph to cytoscape js dict
 def graphs_to_cytoscapejs_dict(G):
     graph = {}
@@ -672,30 +649,6 @@ def filter_paths_by_cc(G,all_paths,edge_cc):
     for path in all_paths:
         if check_path_cc(G,path,edge_cc):
             cc_valid_paths.append(path)
-        # failed = False
-        # curr_path_edge_counts = defaultdict(int)
-        # #iterate and count:
-        # p_seg_id = None
-        # p_contig_id = None
-
-        # for i in path:
-        #     curr_node = G.node_id_lookup[i[0]]
-        #     if curr_node.aa_e:
-        #         cn_repr = curr_node.aa_e.__repr__()
-        #         if cn_repr in edge_cc:
-        #             curr_seg_id = curr_node.seg_id
-        #             if not (curr_seg_id == p_seg_id and curr_node.contig_id != p_contig_id):
-        #                 curr_path_edge_counts[cn_repr]+=1
-        #                 #if some edge too many copies return false:
-        #                 if curr_path_edge_counts[cn_repr] > edge_cc[cn_repr]:
-        #                     failed = True
-        #                     break
-
-        #     p_seg_id = curr_seg_id
-        #     p_contig_id = curr_node.contig_id
-
-        # if not failed:
-        #     cc_valid_paths.append(path)
 
     return cc_valid_paths
 
@@ -773,9 +726,9 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
         all_paths.extend(paths)
 
     dump_paths_sorted = sorted(all_paths,reverse=True,key=lambda x: get_path_weight(G,x))
-    with open("dump.txt",'w') as outfile:
-        for i in dump_paths_sorted:
-            outfile.write(path_to_string(G,i,True) + "\n")
+    # with open("dump.txt",'w') as outfile:
+    #     for i in dump_paths_sorted:
+    #         outfile.write(path_to_string(G,i,True) + "\n")
     # for i in all_paths:
     #     print i
 

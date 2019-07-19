@@ -33,23 +33,6 @@ def parse_cmap(cmapf,keep_length = False):
 
     return cmaps
 
-def parse_bnx(bnxF,keep_length=False):
-    moleculeD = {}
-    with open(bnxF) as infile:
-        for line in infile:
-            if not line.startswith('#'):
-                fields = line.rstrip().rsplit("\t")
-                if line.startswith('0'):
-                    currKey = fields[1]
-                elif line.startswith('1'):
-                    if keep_length:
-                        moleculeD[currKey] = [float(x) for x in fields[1:]]
-                    else:
-                        moleculeD[currKey] = [float(x) for x in fields[1:-1]] 
-
-    return moleculeD
-
-
 def get_cmap_lens(cmapf):
     cmap_lens = {}
     #contigCovs = {}
@@ -67,6 +50,36 @@ def get_cmap_lens(cmapf):
     #print cmaps
     return cmap_lens
 
+
+def parse_bnx(bnxF,keep_length = False):
+    moleculeD = {}
+    with open(bnxF) as infile:
+        for line in infile:
+            if not line.startswith('#'):
+                fields = line.rstrip().rsplit("\t")
+                if line.startswith('0'):
+                    currKey = fields[1]
+                elif line.startswith('1'):
+                    if keep_length:
+                        moleculeD[currKey] = [float(x) for x in fields[1:]]
+                    else:
+                        moleculeD[currKey] = [float(x) for x in fields[1:-1]] 
+
+    return moleculeD
+
+def get_mol_lens(bnxF):
+    moleculeLenD = {}
+    with open(bnxF) as infile:
+        for line in infile:
+            if not line.startswith('#'):
+                fields = line.rstrip().rsplit("\t")
+                if line.startswith('0'):
+                    currKey = fields[1]
+                elif line.startswith('1'):
+                    #gets the length of the molecule, note the position of the last label
+                    moleculeLenD[currKey] = float(fields[-1])
+
+    return moleculeLenD
 
 #parse xmap
 def parse_xmap(xmapf):
