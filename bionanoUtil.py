@@ -103,7 +103,7 @@ def parse_xmap(xmapf):
     return xmapPair
 
 #can handle poorly formatted .xmap files, such as those from OMBlast.
-def parse_generic_xmap(xmapf,molLenD,ref_vects):
+def parse_generic_xmap(xmapf,qryLenD,ref_vects):
     detailFields = ["XmapEntryID","QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
     "QryStartPos","QryEndPos","RefStartPos","RefEndPos","HitEnum"]
     xmapPair = {}
@@ -117,17 +117,18 @@ def parse_generic_xmap(xmapf,molLenD,ref_vects):
                 fD = dict(zip(head,fields))
                 
                 #handle mis-capitalizations
-                for i in fD:
+                for i in fD.keys():
                     for dname in detailFields:
                         if i.lower() == dname.lower():
                             fD[dname] = fD[i]
 
                 fD["Confidence"] = float(fD["Confidence"])
 
+                #refactor to eliminate,reduce, or simplify need for extra parameters
                 try:
                     fD["QryLen"],fD["RefLen"] = float(fD["QryLen"]),float(fD["RefLen"])
                 except KeyError:
-                    fD["QryLen"] = molLenD[fD["QryContigID"]]
+                    fD["QryLen"] = qryLenD[fD["QryContigID"]]
                     fD["RefLen"] = ref_vects[fD["RefContigID"]][-1]
 
                 fD["QryStartPos"],fD["QryEndPos"] = sorted([float(fD["QryStartPos"]),float(fD["QryEndPos"])])
