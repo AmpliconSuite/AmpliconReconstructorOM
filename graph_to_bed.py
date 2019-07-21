@@ -2,11 +2,18 @@
 
 import sys
 import os
+import argparse
 from collections import defaultdict
 
-graph_file = sys.argv[1]
-padding = int(sys.argv[2])
-basename = os.path.splitext(sys.argv[1])[0]
+parser = argparse.ArgumentParser(description="Corrects and extends alignment paths to produce BioNano contig/AA segment scaffolds")
+parser.add_argument("-g","--graph",help="AA-formatted graph file",required=True)
+parser.add_argument("--padding",type=int,
+	help="padding to add on either side of graph regions, in bp. Used in creation of padded_sorted file",required=True, default=20000)
+args = parser.parse_args()
+
+graph_file = args.graph
+padding = args.padding
+basename = os.path.splitext(args.graph)[0]
 bed_dict = defaultdict(list)
 with open(graph_file) as infile, open(basename + ".bed", 'w') as outfile:
 	for line in infile:
