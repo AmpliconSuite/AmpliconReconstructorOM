@@ -180,7 +180,7 @@ def parse_bed(bedfile):
         for line in infile:
             if not line.startswith("#"):
                 fields = line.rstrip().rsplit()
-                bed_list.append(fields)
+                bed_list.append([fields[0],int(fields[1]),int(fields[2])])
         
     return bed_list
 
