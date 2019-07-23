@@ -147,9 +147,7 @@ def parse_generic_xmap(xmapf,qryLenD,ref_vects):
                     #xmap does not have Alignment field
                      xmapPair[fD["XmapEntryID"]]["Alignment"] = []
                 
-
     return xmapPair
-
 
 #read in key file 
 def parse_keyfile(keyF_name):

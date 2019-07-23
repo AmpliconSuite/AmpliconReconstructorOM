@@ -24,7 +24,7 @@ from collections import defaultdict
 inter_contig_label_overlap = 6
 long_gap_length = 400000 #long gap threshold between alignments
 long_gap_cost = 0
-max_search_depth = 100
+max_search_depth = 64
 max_impute_paths = 1023
 max_paths_to_keep = 500
 max_impute_edge_cc = 20
