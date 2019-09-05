@@ -1056,6 +1056,12 @@ if __name__ == '__main__':
         a_c_id,a_list = parse_seg_alignment_file(adir + i)
         seg_aln_obj = SA_Obj(a_c_id,a_list)
         c_id = seg_aln_obj.contig_id
+        seg_id = seg_aln_obj.seg_id
+        if seg_id not in cmap_id_to_edge:
+            sys.stderr.write("Found segment id in alignments but not in breakpoint graph cmap. seg_id: " + str(seg_id) + "\n")
+            sys.stderr.write("This a non-fatal warning that the alignment files do not entirely match the breakpoint graph. Are you using the correct graph file?\n")
+            continue
+
         if "_rg_" in i:
             seg_aln_obj.is_RG_aln = True
 

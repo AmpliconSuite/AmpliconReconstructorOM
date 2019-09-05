@@ -281,7 +281,7 @@ def make_score_plots(scores_file,fpath):
 
 #main
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Banded DP alignment with scoring optimizations for BioNano data")
+    parser = argparse.ArgumentParser(description="Wrap scaffolding process for breakpoint graph and OM data or long reads, includes wrapping SegAligner OM alignment.")
     parser.add_argument("-s", "--segs", help="reference genome cmap file. Key file must be present in same directory and be named [CMAP]_key.txt", required=True)
     parser.add_argument("-c", "--contigs", help="contigs cmap file", required=True)
     parser.add_argument("-g", help="AA breakpoint graph file",required=True)
@@ -294,6 +294,12 @@ if __name__ == "__main__":
     parser.add_argument("--min_map_len",help="minimum number of labels on map contig when aligning (default 10). Slightly larger values (~12) better for Saphyr data.",type=int, default=10)
     parser.add_argument("--no_ref_search",help="Do not search unaligned regions against reference genome",action='store_true')
     parser.add_argument("-i","--instrument",choices=["Irys","Saphyr"],required=True)
+    parser.add_argument("--xmap",help="Supply your own alignments (do not use SegAligner for initial alignments. Must be xmap formatted. Xmap alignments will be converted and re-written SegAligner format.")
+    parser.add_argument("--swap_xmap_RQ",help="When AS converts to its alignment format, set this argument if reference segments are aligned to contigs/reads (i.e. reference and query have been swapped)",default=False)
+
+    if args.swap_xmap_RQ and not args.xmap:
+        parser.error("--swap_xmap_RQ requires --xmap [your_xmap_file.xmap]. Are you supplying your own alignments?")
+
 
     args = parser.parse_args()
 
@@ -304,6 +310,7 @@ if __name__ == "__main__":
     if not args.output_prefix.endswith("/"): args.output_prefix+="/"
 
 
+    #
     a_dir = args.output_prefix + "alignments/"
     if not os.path.exists(a_dir): os.makedirs(a_dir)
 
@@ -316,18 +323,27 @@ if __name__ == "__main__":
     contig_lens = get_cmap_lens(args.contigs)
     ref_genome_file = os.environ['AR_SRC'] + "/ref_genomes/hg19_" + args.enzyme + ".cmap"
 
-    print "Doing full segment alignments"
-    arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_segs", "-gen=" + gen]
-    # #CONTIG SEG ALIGNMENTS
-    run_SegAligner(args.contigs,args.segs,arg_list)
+    #DO ONLY IF NOT USING ALIGNMENTS
+    if not args.xmap:
+        print "Doing segment alignments with SegAligner"
+        arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_segs", "-gen=" + gen]
+        # #CONTIG SEG ALIGNMENTS
+        run_SegAligner(args.contigs,args.segs,arg_list)
 
-    #get the scoring thresholds.
-    if args.plot_scores:
-        print "Plotting score distributions"
-        make_score_plots(a_dir + "SA_segs_all_scores.txt",args.output_prefix)
+        #get the scoring thresholds.
+        if args.plot_scores:
+            print "Plotting score distributions"
+            make_score_plots(a_dir + "SA_segs_all_scores.txt",args.output_prefix)
+
+    #if xmap supplied, read it and re-write the alignments into the alignments/ directory
+    else:
+        xmapD = parse_generic_xmap(args.xmap)
+        xmap_to_SA_aln(xmapD,a_dir,"SA_segs",seg_cmaps,contig_cmaps)
 
 
-    #SCORING OF UNALIGNED REGIONS
+    #SCORING OF UNALIGNED REGIONS - this will always use SegAligner. 
+    #Use no_ref_search if you do not wish to detect additional segments on the set of contigs 
+    #with alignments to your breakpoint graph segments.
     if args.no_ref_search:
         print "REF SEARCH OFF, SKIPPING REF SEARCH STEP"
 

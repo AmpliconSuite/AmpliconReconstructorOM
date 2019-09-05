@@ -67,6 +67,7 @@ def parse_bnx(bnxF,keep_length = False):
 
     return moleculeD
 
+#parse a bnx file and store map of mol_id -> mol_length
 def get_mol_lens(bnxF):
     moleculeLenD = {}
     with open(bnxF) as infile:
@@ -80,6 +81,21 @@ def get_mol_lens(bnxF):
                     moleculeLenD[currKey] = float(fields[-1])
 
     return moleculeLenD
+
+#read in key file 
+def parse_keyfile(keyF_name):
+    keyCompD = {}
+    with open(keyF_name) as infile:
+        for line in infile:
+            if not line.startswith("#"):
+                if line.startswith("CompntId"):
+                    head = line.rstrip().split()
+                else:
+                    fields = line.rstrip().split()
+                    keyCompD[fields[0]] = (fields[1],float(fields[2]))
+                    
+    return keyCompD
+
 
 #parse xmap
 def parse_xmap(xmapf):
@@ -102,8 +118,19 @@ def parse_xmap(xmapf):
 
     return xmapPair
 
+#Swap reference and query for a given xmap
+def swap_xmap_RQ(xmapD):
+    for xmap_id,fD in xmapD.iteritems():
+        fD["QryLen"],fD["RefLen"] = fD["RefLen"],fD["QryLen"]
+        fD["QryStartPos"],fD["RefStartPos"] = fD["RefStartPos"],fD["QryStartPos"]
+        fD["QryEndPos"],fD["RefEndPos"] = fD["RefEndPos"],fD["QryEndPos"]
+        fD["QryContigID"],fD["RefContigID"] = fD["RefContigID"],fD["QryContigID"]
+        aln_pairs = fD["Alignment"] 
+        fD["Alignment"] = [(y,x) for x,y in aln_pairs]
+
+
 #can handle poorly formatted .xmap files, such as those from OMBlast.
-def parse_generic_xmap(xmapf,qryLenD,ref_vects):
+def parse_generic_xmap(xmapf,qryLenD,refLenD,swap_Ref_Qry = False):
     detailFields = ["XmapEntryID","QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
     "QryStartPos","QryEndPos","RefStartPos","RefEndPos","HitEnum"]
     xmapPair = {}
@@ -124,12 +151,12 @@ def parse_generic_xmap(xmapf,qryLenD,ref_vects):
 
                 fD["Confidence"] = float(fD["Confidence"])
 
-                #refactor to eliminate,reduce, or simplify need for extra parameters
+                #refactor to eliminate,reduce, or simplify need for extra checks
                 try:
                     fD["QryLen"],fD["RefLen"] = float(fD["QryLen"]),float(fD["RefLen"])
                 except KeyError:
                     fD["QryLen"] = qryLenD[fD["QryContigID"]]
-                    fD["RefLen"] = ref_vects[fD["RefContigID"]][-1]
+                    fD["RefLen"] = refLenD[fD["RefContigID"]]
 
                 fD["QryStartPos"],fD["QryEndPos"] = sorted([float(fD["QryStartPos"]),float(fD["QryEndPos"])])
                 if fD["Orientation"] == "+":
@@ -146,22 +173,12 @@ def parse_generic_xmap(xmapf,qryLenD,ref_vects):
                 except KeyError:
                     #xmap does not have Alignment field
                      xmapPair[fD["XmapEntryID"]]["Alignment"] = []
-                
-    return xmapPair
 
-#read in key file 
-def parse_keyfile(keyF_name):
-    keyCompD = {}
-    with open(keyF_name) as infile:
-        for line in infile:
-            if not line.startswith("#"):
-                if line.startswith("CompntId"):
-                    head = line.rstrip().split()
-                else:
-                    fields = line.rstrip().split()
-                    keyCompD[fields[0]] = (fields[1],float(fields[2]))
-                    
-    return keyCompD
+
+    #handle the case where the user wants to swap the reference and qry (e.g. segments aligned to contigs)
+    if swap_Ref_Qry: swap_xmap_RQ(xmapPair)
+
+    return xmapPair
 
 #make cmap dictionary into 0-indexed vector
 def vectorize_cmaps(cmap_d):
@@ -220,6 +237,63 @@ def add_full_reverse_cmaps(cmaps,key_dict):
         
         cmaps[new_ID][tot_labs+1] = cmap_len
 
+#binary search find the label corresponding to some position in a cmap dict.
+#return the RIGHT index of bisect (cmap is 1 based)
+def pos_to_label(x, item_cmap):
+    import bisect
+    arr = [item_cmap[k] for k in range(1,max(item_cmap.keys())+1)]
+    return bisect.bisect(arr,x)
+
+def xmap_to_SA_aln(xmapD,outdir,fname_prefix,ref_cmaps,contig_cmaps):
+    seg_contig_count = {}
+    for xmap_id,fD in xmapD.iteritems():
+        contig_id = fD["QryContigID"]
+        seg_id = fD["RefContigID"]
+        score = fD["Confidence"]
+        orientation = fD["Orientation"]
+        #update number of times segment has been aligned to this contig in a particular direction
+        cso_key = (contig_id,seg_id,orientation)
+        if cso_key not in seg_contig_count:
+            seg_contig_count[cso_key] = 0
+
+        seg_contig_count[cso_key]+=1
+
+        outname = outdir + "/" + fname_prefix + "_" + contig_id + "_" + seg_id + "_"
+        if orientation == "-":
+            outname+="r_"
+
+        outname+=(str(seg_contig_count[cso_key]) + "_aln.txt")
+
+        with open(outname,'w') as outfile:
+            outfile.write("#seg_seq\ttotal_score\tcircular\n")
+            outfile.write("#" + seg_id + orientation + "\t" + str(score) + "\tFalse\n")
+            outfile.write("#contig_id\tseg_id\tcontig_label\tseg_label\tcontig_dir\tseg_dir\tseg_aln_number\tscore\tscore_delta\n")
+            
+            #handle orientation
+            if fD["Alignment"]:
+                alist = fD["Alignment"]
+                if orientation == "-":
+                    alist = alist[::-1]
+
+            #if no alignment string given (incomplete XMAP), make a dummy alignment
+            else: 
+                ref_start_label = pos_to_label(fD["RefStartPos"],ref_cmaps[seg_id])
+                contig_start_label = pos_to_label(fD["QryStartPos"],contig_cmaps[contig_id])
+                ref_end_label = pos_to_label(fD["RefEndPos"],ref_cmaps[seg_id])
+                contig_end_label = pos_to_label(fD["QryEndPos"],contig_cmaps[contig_id])
+                alist= [(ref_start_label,contig_start_label),(ref_end_label,contig_end_label)]
+
+            #write converted alignment
+            for i in alist[:-1]:
+                outlist = [contig_id,seg_id,str(i[1]),str(i[0]),"+",orientation,"0","0","0"]
+                outfile.write("\t".join(outlist) + "\n")
+
+            #write the last one and include total score
+            i = alist[-1]
+            outlist = [contig_id,seg_id,str(i[1]),str(i[0]),"+",orientation,"0",str(score),"0"]
+            outfile.write("\t".join(outlist)+"\n")
+
+            
 #takes vector of cmap vector of positions, including the length of the map
 def write_cmap_from_vector(cmap_vector,fname):
     header_lines = "# hostname=BioNanoUtil\n"
