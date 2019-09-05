@@ -289,13 +289,13 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_prefix", help="output filename prefix (assumes working directory & ref/segs name unless otherwise specified")
     parser.add_argument("-t", "--threads", help="number of threads to use (default 4)", type=int, default=4)
     parser.add_argument("-e", "--enzyme", help="labeling enzyme", choices=["BspQI","DLE1"],required=True)
-    parser.add_argument("--plot_scores", help="Save plots of the distributions of segment scores",action='store_true')
+    parser.add_argument("--plot_scores", help="Save plots of the distributions of segment scores",action='store_true',default=False)
     parser.add_argument("--no_tip_aln",help="Disable tip alignment step",action='store_true')
     parser.add_argument("--min_map_len",help="minimum number of labels on map contig when aligning (default 10). Slightly larger values (~12) better for Saphyr data.",type=int, default=10)
     parser.add_argument("--no_ref_search",help="Do not search unaligned regions against reference genome",action='store_true')
     parser.add_argument("-i","--instrument",choices=["Irys","Saphyr"],required=True)
     parser.add_argument("--xmap",help="Supply your own alignments (do not use SegAligner for initial alignments. Must be xmap formatted. Xmap alignments will be converted and re-written SegAligner format.")
-    parser.add_argument("--swap_xmap_RQ",help="When AS converts to its alignment format, set this argument if reference segments are aligned to contigs/reads (i.e. reference and query have been swapped)",default=False)
+    parser.add_argument("--swap_xmap_RQ",help="When AS converts to its alignment format, set this argument if reference segments are aligned to contigs/reads (i.e. reference and query have been swapped)",action='store_true',default=False)
 
     args = parser.parse_args()
     if args.swap_xmap_RQ and not args.xmap:
@@ -337,7 +337,9 @@ if __name__ == "__main__":
 
     #if xmap supplied, read it and re-write the alignments into the alignments/ directory
     else:
-        xmapD = parse_generic_xmap(args.xmap)
+        refLenD = get_cmap_lens(args.segs)
+        qryLenD = get_cmap_lens(args.contigs)
+        xmapD = parse_generic_xmap(args.xmap,qryLenD,refLenD,args.swap_xmap_RQ)
         xmap_to_SA_aln(xmapD,a_dir,"SA_segs",seg_cmaps,contig_cmaps)
 
 
