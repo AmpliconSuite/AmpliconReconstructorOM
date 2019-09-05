@@ -297,11 +297,11 @@ if __name__ == "__main__":
     parser.add_argument("--xmap",help="Supply your own alignments (do not use SegAligner for initial alignments. Must be xmap formatted. Xmap alignments will be converted and re-written SegAligner format.")
     parser.add_argument("--swap_xmap_RQ",help="When AS converts to its alignment format, set this argument if reference segments are aligned to contigs/reads (i.e. reference and query have been swapped)",default=False)
 
+    args = parser.parse_args()
     if args.swap_xmap_RQ and not args.xmap:
         parser.error("--swap_xmap_RQ requires --xmap [your_xmap_file.xmap]. Are you supplying your own alignments?")
 
 
-    args = parser.parse_args()
 
     if not args.output_prefix:
         args.output_prefix = os.path.splitext(args.segs)[0]
