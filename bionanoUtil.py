@@ -158,7 +158,7 @@ def parse_generic_xmap(xmapf,qryLenD,refLenD,swap_Ref_Qry = False):
                     if not swap_Ref_Qry:
                         fD["QryLen"],fD["RefLen"] = qryLenD[fD["QryContigID"]], refLenD[fD["RefContigID"]]
                     else:
-                        fD["QryLen"],fD["RefLen"] = refLenD[fD["RefContigID"]], qryLenD[fD["QryContigID"]]
+                        fD["QryLen"],fD["RefLen"] = qryLenD[fD["RefContigID"]], refLenD[fD["QryContigID"]]
 
 
                 fD["QryStartPos"],fD["QryEndPos"] = sorted([float(fD["QryStartPos"]),float(fD["QryEndPos"])])
