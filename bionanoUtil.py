@@ -121,7 +121,7 @@ def parse_xmap(xmapf):
 #Swap reference and query for a given xmap
 def swap_xmap_RQ(xmapD):
     for xmap_id,fD in xmapD.iteritems():
-        fD["QryLen"],fD["RefLen"] = fD["RefLen"],fD["QryLen"]
+        # fD["QryLen"],fD["RefLen"] = fD["RefLen"],fD["QryLen"] #do this in the parsing itself
         fD["QryStartPos"],fD["RefStartPos"] = fD["RefStartPos"],fD["QryStartPos"]
         fD["QryEndPos"],fD["RefEndPos"] = fD["RefEndPos"],fD["QryEndPos"]
         fD["QryContigID"],fD["RefContigID"] = fD["RefContigID"],fD["QryContigID"]
@@ -155,8 +155,11 @@ def parse_generic_xmap(xmapf,qryLenD,refLenD,swap_Ref_Qry = False):
                 try:
                     fD["QryLen"],fD["RefLen"] = float(fD["QryLen"]),float(fD["RefLen"])
                 except KeyError:
-                    fD["QryLen"] = qryLenD[fD["QryContigID"]]
-                    fD["RefLen"] = refLenD[fD["RefContigID"]]
+                    if not swap_Ref_Qry:
+                        fD["QryLen"],fD["RefLen"] = qryLenD[fD["QryContigID"]], refLenD[fD["RefContigID"]]
+                    else:
+                        fD["QryLen"],fD["RefLen"] = refLenD[fD["RefContigID"]], qryLenD[fD["QryContigID"]]
+
 
                 fD["QryStartPos"],fD["QryEndPos"] = sorted([float(fD["QryStartPos"]),float(fD["QryEndPos"])])
                 if fD["Orientation"] == "+":
