@@ -275,8 +275,6 @@ def xmap_to_SA_aln(xmapD,outdir,fname_prefix,ref_cmaps,contig_cmaps):
             #handle orientation
             if fD["Alignment"]:
                 alist = fD["Alignment"]
-                if orientation == "-":
-                    alist = alist[::-1]
 
             #if no alignment string given (incomplete XMAP), make a dummy alignment
             else: 
@@ -285,6 +283,9 @@ def xmap_to_SA_aln(xmapD,outdir,fname_prefix,ref_cmaps,contig_cmaps):
                 ref_end_label = pos_to_label(fD["RefEndPos"],ref_cmaps[seg_id])
                 contig_end_label = pos_to_label(fD["QryEndPos"],contig_cmaps[contig_id])
                 alist= [(ref_start_label,contig_start_label),(ref_end_label,contig_end_label)]
+
+            if orientation == "-":
+                    alist = alist[::-1]
 
             #write converted alignment
             for i in alist[:-1]:
