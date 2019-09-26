@@ -163,11 +163,6 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         else:
             s = v2
             s_overhang = vectorized_segs[i.seg_id][-1] - s_last_aln_pos
-        
-        v1,v2 = j.aa_e.v1,j.aa_e.v2
-        if v1.pos > v2.pos:
-            v1 = j.aa_e.v2
-            v2 = j.aa_e.v1
             
         t_id = j.seg_id
         if j.direction == "-":
@@ -984,14 +979,14 @@ def add_alternate_paths(contig_graphs,scaffold_heaviest_paths):
 ### MAIN ###
 if __name__ == '__main__':
     # Parses the command line arguments
-    parser = argparse.ArgumentParser(description="Corrects and extends alignment paths to produce BioNano contig/AA segment scaffolds")
+    parser = argparse.ArgumentParser(description="Corrects and extends alignment paths to produce OM contig/AA segment scaffolds")
     parser.add_argument("--adir", dest="adir",help="Directory where SegAligner alignments for the sample are located", required=True)
     parser.add_argument("-c", "--contigs", help="contig cmap", required=True)
     parser.add_argument("-s", "--segs", help="segments cmap file. Key file must be present in same directory and be named [CMAP]_key.txt", required=True)
     parser.add_argument("-g", "--graph", help="AA graph file",required=True)
     parser.add_argument("--noImpute",help="Do not impute the paths", action='store_true',default=False)
     parser.add_argument("--outdir", type=str, help="Destination for output files. Will create folder if it does not already exist",required=True)
-    parser.add_argument("--prefix",dest="samp_name", type=str, help="Filename prefix for output files.",default="BNPF_out")
+    parser.add_argument("--prefix",dest="samp_name", type=str, help="Filename prefix for output files.",default="OMPF_out")
     parser.add_argument("--noConnect",action='store_true',help="Do not perform intercontig connection step")
     parser.add_argument("-i","--instrument",choices=["Irys","Saphyr"],required=True)
     args = parser.parse_args()
@@ -1033,9 +1028,10 @@ if __name__ == '__main__':
     print("Reconstituting breakpoint graph")
     breakpoint_file = args.graph
     breakpointG = breakpoint_graph(breakpoint_file)
-    #get max copy count
     
-    edge_cc,seq_edge_reps = get_edge_copy_counts(breakpoint_file)    # unadj_edge_cc,seq_edge_reps = get_edge_copy_counts(breakpoint_file)
+    #get max copy count
+    edge_cc,seq_edge_reps = get_edge_copy_counts(breakpoint_file)    
+    # unadj_edge_cc,seq_edge_reps = get_edge_copy_counts(breakpoint_file)
     # edge_cc = adjust_cc(unadj_edge_cc,seq_edge_reps)
 
     #match cmap to AA edges

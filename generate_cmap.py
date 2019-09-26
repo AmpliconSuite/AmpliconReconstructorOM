@@ -10,7 +10,6 @@ import sys
 import os
 import re
 import argparse
-#from heapq import merge
 from itertools import groupby
 from collections import defaultdict
 

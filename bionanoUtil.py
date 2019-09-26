@@ -1,3 +1,10 @@
+"""
+Jens Luebeck
+UC San Diego, Bioinformatics & Systems Biology
+jluebeck@ucsd.edu
+"""
+
+#compute the median
 def median(L):
     if L:
         L = sorted(L)
@@ -7,7 +14,8 @@ def median(L):
 
     return None
 
-#parse cmap
+#parse cmap into a dictionary, to maintain the 1-indexing used in this format. 
+#specify keep_length to keep the length field of the cmap entry.
 def parse_cmap(cmapf,keep_length = False):
     cmaps = {}
     #contigCovs = {}
@@ -35,7 +43,6 @@ def parse_cmap(cmapf,keep_length = False):
 
 def get_cmap_lens(cmapf):
     cmap_lens = {}
-    #contigCovs = {}
     with open(cmapf) as infile:
         for line in infile:
             if line.startswith("#h"):
@@ -47,10 +54,10 @@ def get_cmap_lens(cmapf):
                 if fD["CMapId"] not in cmap_lens:
                     cmap_lens[fD["CMapId"]] = float(fD["ContigLength"])
 
-    #print cmaps
     return cmap_lens
 
 
+#parse a bnx file into a vector. Can specify keep_length to keep the length value.
 def parse_bnx(bnxF,keep_length = False):
     moleculeD = {}
     with open(bnxF) as infile:
@@ -129,7 +136,7 @@ def swap_xmap_RQ(xmapD):
         fD["Alignment"] = [(y,x) for x,y in aln_pairs]
 
 
-#can handle poorly formatted .xmap files, such as those from OMBlast.
+#can handle poorly formatted .xmap files, such as those from OMBlast. Requires more inputs than parse_xmap.
 def parse_generic_xmap(xmapf,qryLenD,refLenD,swap_Ref_Qry = False):
     detailFields = ["XmapEntryID","QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
     "QryStartPos","QryEndPos","RefStartPos","RefEndPos","HitEnum"]
@@ -247,6 +254,7 @@ def pos_to_label(x, item_cmap):
     arr = [item_cmap[k] for k in range(1,max(item_cmap.keys())+1)]
     return bisect.bisect(arr,x)
 
+#convert XMAP format to SegAligner alignment format. OMPathFinder requires alignments in SA format.
 def xmap_to_SA_aln(xmapD,outdir,fname_prefix,ref_cmaps,contig_cmaps):
     seg_contig_count = {}
     for xmap_id,fD in xmapD.iteritems():

@@ -1,3 +1,9 @@
+"""
+Jens Luebeck
+UC San Diego, Bioinformatics & Systems Biology
+jluebeck@ucsd.edu
+"""
+
 import sys
 from collections import defaultdict
 
@@ -236,6 +242,7 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
     intercontig_edges = set()
     added_edges = set()
 
+    #iterate over the suffix prefix sets and check if there are valid overlaps
     param_list = [(s_p_intersect_keys,False,False,-1,suffix_f,prefix_f),(s_s_intersect_keys,True,True,-1,suffix_f,suffix_r),
     (p_p_intersect_keys,True,True,0,prefix_r,prefix_f)]
     for intersect_keys,disallow_self,orientation_flip,s_ind,source_d,dest_d in param_list:

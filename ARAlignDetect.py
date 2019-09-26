@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+
+"""
+Jens Luebeck
+UC San Diego, Bioinformatics & Systems Biology
+jluebeck@ucsd.edu
+"""
+
 import os
 import sys
 import time
@@ -6,19 +13,15 @@ import bisect
 import argparse
 import subprocess
 import numpy as np
-from bionanoUtil import *
-from ContigAlignmentGraph import *
 import matplotlib
 matplotlib.use('Agg')
+from bionanoUtil import *
 import matplotlib.pyplot as plt
+from ContigAlignmentGraph import *
 from collections import defaultdict
-
-
-#development version
 
 unaligned_label_cutoff = 20
 search_upper_cutoff_labels = 500
-#unaligned_size_cutoff = 150000
 unaligned_size_lower_cutoff = 200000
 unaligned_size_upper_cutoff = 5000000
 
@@ -95,8 +98,6 @@ def write_unaligned_cmaps(contig_unaligned_regions,output_prefix,enzyme):
                     map_end_pos = contig_lens[c_id]
 
                 pos_l = [contig_cmaps[c_id][x+1] for x in l]
-                #must be int
-                # curr_id = c_id + "_" + str(l[0]+1) + "_" + str(l[-1]+1)
                 curr_id = str(max_contig_id+total_unaligned_segs)
                 unaligned_region_contig_dict[curr_id] = {str(ind+1):str(x+1) for ind,x in enumerate(l)}
                 unaligned_contig_id_dict[curr_id] = c_id
@@ -121,6 +122,7 @@ def detections_to_graph(outfile,bpg_list):
         outfile.write(i[0] + ":" + i[2] + "+\t")
         outfile.write("2.0\t0\t" + str(seg_size) + "\t0\n")
 
+#deprecated and unused function
 def detections_to_key(outfile,keyfile_info):
     for i in keyfile_info:
         outfile.write(i[0] + "\t" + i[1] + ":" + i[2] + "-|" + i[1] + ":" + i[3] + "+\t0\n")
@@ -147,14 +149,15 @@ def write_aligned_labels(a_dir, aln_flist, w_dir):
     return outfile_name
 
 #write a new AA graph file and a new CMAP reflecting the added segments
-def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme):
+def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme,outdir):
     #read graph
     graphfile_lines = []
     with open(graphfile) as infile:
         for line in infile:
             graphfile_lines.append(line)
 
-    new_graphfile = os.path.splitext(graphfile)[0] + "_includes_detected.txt"
+    gbase = os.path.splitext(os.path.basename(graphfile))[0]
+    new_graphfile = outdir + gbase + "_includes_detected.txt"
     with open(new_graphfile, 'w') as outfile:
         for line in graphfile_lines:
             if line.startswith("BreakpointEdge:"):
@@ -163,8 +166,10 @@ def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme):
             outfile.write(line)
 
     print "Creating new CMAP"
-    seg_outname = os.path.splitext(segs_fname)[0] + "_includes_detected"
-    cmd = "python2 {}/subsect_cmap.py -g {} -r {}/hg19/hg19full.fa -e {} -o {}".format(os.environ['AR_SRC'],new_graphfile,os.environ['AA_DATA_REPO'],enzyme,seg_outname)
+    #seg_outname = os.path.splitext(segs_fname)[0] + "_includes_detected"
+    sbase = os.path.splitext(os.path.basename(segs_fname))[0]
+    seg_outname = sbase + "_includes_detected"
+    cmd = "python2 {}/generate_cmap.py -g {} -r {}/hg19/hg19full.fa -e {} -o {}".format(os.environ['AR_SRC'],new_graphfile,os.environ['AA_DATA_REPO'],enzyme,seg_outname)
     subprocess.call(cmd,shell=True)
 
 def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unaligned_label_trans,id_start):
@@ -210,8 +215,8 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
             p2 = p1
             p1 = temp
 
-        #padding with 10 to see if it helps
-        if (chromID,str(p1-10),str(p2+10)) not in bpg_list:
+  
+        if (chromID,str(p1-10),str(p2+10)) not in bpg_list: #use 10bp padding on aligned segment
             bpg_list.append((chromID,str(p1-10),str(p2+10)))
             aln_num+=1
             unique_id = str(id_start + aln_num)
@@ -284,9 +289,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Wrap scaffolding process for breakpoint graph and OM data or long reads, includes wrapping SegAligner OM alignment.")
     parser.add_argument("-s", "--segs", help="reference genome cmap file. Key file must be present in same directory and be named [CMAP]_key.txt", required=True)
     parser.add_argument("-c", "--contigs", help="contigs cmap file", required=True)
-    parser.add_argument("-g", help="AA breakpoint graph file",required=True)
-    # parser.add_argument("-p", "--p_value", help="p-value threshold for alignments", type=float, default=0.05)
-    parser.add_argument("-o", "--output_prefix", help="output filename prefix (assumes working directory & ref/segs name unless otherwise specified")
+    parser.add_argument("-g", help="AA-formatted breakpoint graph file",required=True)
+    parser.add_argument("-o", "--output_prefix", help="output filename prefix (assumes CWD & ref/segs name unless otherwise specified")
+    parser.add_argument("-d","--output_directory",help="Path to directory where new files are created. Default is CWD.")
     parser.add_argument("-t", "--threads", help="number of threads to use (default 4)", type=int, default=4)
     parser.add_argument("-e", "--enzyme", help="labeling enzyme", choices=["BspQI","DLE1"],required=True)
     parser.add_argument("--plot_scores", help="Save plots of the distributions of segment scores",action='store_true',default=False)
@@ -301,16 +306,14 @@ if __name__ == "__main__":
     if args.swap_xmap_RQ and not args.xmap:
         parser.error("--swap_xmap_RQ requires --xmap [your_xmap_file.xmap]. Are you supplying your own alignments?")
 
-
-
     if not args.output_prefix:
         args.output_prefix = os.path.splitext(args.segs)[0]
         print "results will be stored in " + args.output_prefix
 
+    if not args.output_directory.endswith("/"): args.output_directory+="/"
+    args.output_prefix = args.output_directory + args.output_prefix
     if not args.output_prefix.endswith("/"): args.output_prefix+="/"
 
-
-    #
     a_dir = args.output_prefix + "alignments/"
     if not os.path.exists(a_dir): os.makedirs(a_dir)
 
@@ -323,7 +326,7 @@ if __name__ == "__main__":
     contig_lens = get_cmap_lens(args.contigs)
     ref_genome_file = os.environ['AR_SRC'] + "/ref_genomes/hg19_" + args.enzyme + ".cmap"
 
-    #DO ONLY IF NOT USING ALIGNMENTS
+    #Do alignment with SegAligner if not using own XMAP
     if not args.xmap:
         print "Doing segment alignments with SegAligner"
         arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_segs", "-gen=" + gen]
@@ -345,7 +348,7 @@ if __name__ == "__main__":
 
     #SCORING OF UNALIGNED REGIONS - this will always use SegAligner. 
     #Use no_ref_search if you do not wish to detect additional segments on the set of contigs 
-    #with alignments to your breakpoint graph segments.
+    # with alignments to your breakpoint graph segments.
     if args.no_ref_search:
         print "REF SEARCH OFF, SKIPPING REF SEARCH STEP"
 
@@ -371,7 +374,7 @@ if __name__ == "__main__":
             if aln_flist:
                 print "Found new segments, re-writing graph and CMAP"
                 bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start)
-                rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme)
+                rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme,args.output_directory)
                 #remove "SA_ref_" files (temporary alignments)
                 subprocess.call("rm " + a_dir + "SA_ref_*_aln.txt 2>/dev/null", shell=True)
 
