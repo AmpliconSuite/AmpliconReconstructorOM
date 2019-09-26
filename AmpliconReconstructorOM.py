@@ -65,6 +65,7 @@ if not args.run_name.endswith("/"): args.run_name+="/"
 run_path = args.outdir + args.run_name
 if not os.path.exists(run_path): os.mkdir(run_path) 
 logging.basicConfig(filename=run_path + "run.log",level=logging.INFO)
+logging.info("Starting logging")
 
 noImpute = args.noImpute
 noConnect = args.noConnect
@@ -89,7 +90,7 @@ logging.debug(str(samples_to_run))
 #Run the specificed samples
 for i in samples_to_run:
 	if i not in sample_data:
-		logging.warning(i + " not found in YAML file, skipping")
+		logging.error(i + " not found in YAML file, skipping")
 		continue
 
 	logging.info("Processing " + i)
@@ -108,21 +109,22 @@ for i in samples_to_run:
 	except KeyError:
 		em = "YAML file does not contain all required properties for " + i + ", skipping."
 		sys.stderr.write(em + "\n")
-		logging.warning(em)
+		logging.error(em)
 		continue
 
 	if any([sample_path,seg_path,contig_path,graph_path,inst,enzyme,min_map_len]) == None:
 		em = "Empty property in YAML file for " + i + ", skipping."
 		sys.stderr.write(em + "\n")
-		logging.warning(em)
+		logging.error(em)
 		continue
 
 	#make output directories
-	alignments_dir = run_path + i + "/alignments/" 
-	reconstruction_dir = run_path + i + "/reconstructions/" 
-	visualizations_dir = run_path + i + "/visualizations/" 
+	rpi = run_path + i + "/"
+	alignments_dir = rpi + "alignments/" 
+	reconstruction_dir = rpi + "reconstructions/" 
+	visualizations_dir = rpi + "visualizations/" 
 	logging.info("Making directories")
-	for curr_dir in [alignments_dir,reconstruction_dir,visualizations_dir]:
+	for curr_dir in [rpi,alignments_dir,reconstruction_dir,visualizations_dir]:
 		if not os.path.exists(curr_dir): os.mkdir(curr_dir) 
 		if not args.no_clear:
 			logging.info("Clearing old results")
@@ -130,7 +132,7 @@ for i in samples_to_run:
 
 
 	#remove old "includes detected file"
-	idg_basename = os.path.splitext(run_path + i + "/" + sample_dict["graph"])[0]
+	idg_basename = os.path.splitext(rpi + sample_dict["graph"])[0]
 	#idgf stands for includes_detected graph file
 	idgf = graph_basename + "_includes_detected.txt" 
 	if os.path.exists(idgf):
@@ -140,7 +142,7 @@ for i in samples_to_run:
 
 	start_time = time.time()
 	if not args.noAlign:
-		run_ARAD(samp_aln_dir, segs_path, contig_path, graph_path, enzyme, inst, i, run_path + i + "/")
+		run_ARAD(samp_aln_dir, segs_path, contig_path, graph_path, enzyme, inst, i, rpi)
 	else:
 		logging.info("Skipped alignment stage.")
 	
@@ -149,7 +151,7 @@ for i in samples_to_run:
 
 	#check if output has includes_detected graph file.
 	if os.path.exists(idgf):
-		idsf = run_path + i + "/" + os.path.splitext(os.path.basename(seg_path))[0] + "_includes_detected.cmap"
+		idsf = rpi + os.path.splitext(os.path.basename(seg_path))[0] + "_includes_detected.cmap"
 
 	# print segs_path,graph_path
 	graph_path,segs_path = idgf,idsf
@@ -168,4 +170,5 @@ for i in samples_to_run:
 
 	# print("Finished sample " + i)
 
+logging.shutdown()
 sys.exit()
