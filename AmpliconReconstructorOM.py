@@ -128,13 +128,12 @@ for i in samples_to_run:
 		if not os.path.exists(curr_dir): os.mkdir(curr_dir) 
 		if not args.no_clear:
 			logging.info("Clearing old results")
-			subprocess.call("rm " + curr_dir + "*",shell=True)
+			subprocess.call("rm " + curr_dir + "* 2>/dev/null",shell=True)
 
 
 	#remove old "includes detected file"
-	idg_basename = os.path.splitext(rpi + sample_dict["graph"])[0]
 	#idgf stands for includes_detected graph file
-	idgf = graph_basename + "_includes_detected.txt" 
+	idgf = os.path.splitext(rpi + sample_dict["graph"])[0] + "_includes_detected.txt"
 	if os.path.exists(idgf):
 		if not args.no_clear:
 			logging.warning("Removing old *includes_detected.txt graph file: " + idgf)
