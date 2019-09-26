@@ -40,7 +40,6 @@ def run_OMPF(outdir,segs,contigs,graph,aln_dir,sname,inst,noImpute=False):
 # 	subprocess.call(cmd,shell=True)
 
 ###"MAIN"###
-# args are which samples to run in this instance
 parser = argparse.ArgumentParser(description="AmpliconReconstructorOM. Wraps methods for alignment and scaffolding.")
 parser.add_argument("-i","--yaml_file",type=str, help="Path YAML samples file in AR-OM format")
 parser.add_argument("-s",nargs='+', help="Space separated list of samples from YAML dict. If not supplied, all samples are run")
@@ -57,8 +56,8 @@ parser.add_argument("--no_ref_search",default=False,action='store_true',help="Do
 parser.add_argument("--no_clear",default=False,action='store_true',help="Do not remove files from previous runs..")
 args = parser.parse_args()
 
- if not args.output_directory:
- 	args.output_directory = os.getcwd()
+if not args.output_directory:
+	args.output_directory = os.getcwd()
 
 if not args.outdir.endswith("/"): args.outdir+="/" 
 if not args.run_name.endswith("/"): args.run_name+="/" 
