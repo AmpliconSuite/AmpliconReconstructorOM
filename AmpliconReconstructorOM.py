@@ -56,8 +56,8 @@ parser.add_argument("--no_ref_search",default=False,action='store_true',help="Do
 parser.add_argument("--no_clear",default=False,action='store_true',help="Do not remove files from previous runs..")
 args = parser.parse_args()
 
-if not args.output_directory:
-	args.output_directory = os.getcwd()
+if not args.outdir:
+	args.outdir = os.getcwd()
 
 if not args.outdir.endswith("/"): args.outdir+="/" 
 if not args.run_name.endswith("/"): args.run_name+="/" 
