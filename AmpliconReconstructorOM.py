@@ -44,7 +44,7 @@ parser = argparse.ArgumentParser(description="AmpliconReconstructorOM. Wraps met
 parser.add_argument("-i","--yaml_file",type=str, help="Path YAML samples file in AR-OM format")
 parser.add_argument("-s",nargs='+', help="Space separated list of samples from YAML dict. If not supplied, all samples are run")
 parser.add_argument("--outdir",type=str, help="Directory to store results and associated sub-directories")
-parser.add_argument("--run_name",type=str, help="Optional name for this set of runs (will create a directory in outdir of this name)")
+parser.add_argument("--run_name",type=str, default="", help="Optional name for this set of runs (will create a directory in outdir of this name)")
 parser.add_argument("--nthreads",default=24, type=int, help="number of threads to use")
 parser.add_argument("--noAlign",default=False, action='store_true', help="skip alignment step (assume re-using old alignments)")
 parser.add_argument("--noImpute",default=False, action='store_true', help="Do not perform path imputation")
