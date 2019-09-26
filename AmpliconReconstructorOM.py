@@ -122,7 +122,7 @@ for i in samples_to_run:
 	visualizations_dir = run_path + i + "/visualizations/" 
 	logging.info("Making directories")
 	for curr_dir in [alignments_dir,reconstruction_dir,visualizations_dir]:
-		os.mkdir(curr_dir) if not path.exists(curr_dir)
+		if not path.exists(curr_dir): os.mkdir(curr_dir) 
 		if not args.no_clear:
 			logging.info("Clearing old results")
 			subprocess.call("rm " + curr_dir + "*",shell=True)
