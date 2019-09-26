@@ -23,7 +23,7 @@ except KeyError:
 	sys.stderr.write("SA_SRC or AR_SRC bash variable not found. AmpliconReconstructor may not be properly installed.\n")
 	sys.exit(1)
 
-def run_ARAD(outdir,segs,contigs,graph,enzyme,inst,min_map_len,sname,outdir):
+def run_ARAD(segs,contigs,graph,enzyme,inst,min_map_len,sname,outdir):
 	cmd = "python {}/ARAlignDetect.py -s {} -c {} -g {} -t {} -e {} --min_map_len {} -i {} -o {} -d {}".format(AR_SRC,segs,contigs,graph,nthreads,enzyme,min_map_len,inst,sname,outdir)
 	logging.info("CMD:")
 	logging.info(cmd)
