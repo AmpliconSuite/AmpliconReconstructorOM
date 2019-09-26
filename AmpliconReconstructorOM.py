@@ -50,7 +50,7 @@ parser.add_argument("--noAlign",default=False, action='store_true', help="skip a
 parser.add_argument("--noImpute",default=False, action='store_true', help="Do not perform path imputation")
 parser.add_argument("--noConnect",default=False, action='store_true', help="Do not perform scaffold-linking")
 parser.add_argument("--noViz",default=False, action='store_true', help="skip visualizations step (assume re-using old alignments)")
-parser.add_argument("--plot_scores",default=False,help="Save plots of the distributions of segment scores")
+parser.add_argument("--plot_scores",default=False,action='store_true',help="Save plots of the distributions of segment scores")
 parser.add_argument("--no_tip_aln",default=False,action='store_true',help="Disable tip alignment step")
 parser.add_argument("--no_ref_search",default=False,action='store_true',help="Do not search unaligned regions against reference genome")
 parser.add_argument("--no_clear",default=False,action='store_true',help="Do not remove files from previous runs..")
