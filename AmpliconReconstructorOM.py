@@ -62,7 +62,7 @@ if not args.output_directory:
 if not args.outdir.endswith("/"): args.outdir+="/" 
 if not args.run_name.endswith("/"): args.run_name+="/" 
 run_path = args.outdir + args.run_name
-os.mkdir(run_path) if not os.path.exists(run_path)
+if not os.path.exists(run_path): os.mkdir(run_path) 
 logging.basicConfig(filename=run_path + "run.log",level=logging.INFO)
 
 noImpute = args.noImpute
@@ -81,8 +81,7 @@ with open(args.yaml_file) as f:
 #read samples and figure out what to run (all if no subset specified)
 samples_to_run = args.samples if args.samples else [str(x) for x in sample_dict.keys()]
 
-if not args.samples:
-	print("running on all samples in " + args.yaml_file)
+if not args.samples: print("running on all samples in " + args.yaml_file)
 
 logging.debug(str(samples_to_run))
 
