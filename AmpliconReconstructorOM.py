@@ -42,7 +42,8 @@ def run_OMPF(outdir,segs,contigs,graph,aln_dir,sname,inst,noImpute=False):
 ###"MAIN"###
 parser = argparse.ArgumentParser(description="AmpliconReconstructorOM. Wraps methods for alignment and scaffolding.")
 parser.add_argument("-i","--yaml_file",type=str, help="Path YAML samples file in AR-OM format",required=True)
-parser.add_argument("-s",nargs='+', help="Space separated list of samples from YAML dict. If not supplied, all samples are run")
+parser.add_argument("-s","--samples",nargs='+', help="If only running a subset, -s followed by space separated list of samples names from YAML \
+					dict. If not supplied, all samples are run")
 parser.add_argument("--outdir",type=str, help="Directory to store results and associated sub-directories",required=True)
 parser.add_argument("--run_name",type=str, default="", help="Optional name for this set of runs (will create a directory in outdir of this name)")
 parser.add_argument("--nthreads",default=24, type=int, help="number of threads to use")
