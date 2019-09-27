@@ -148,7 +148,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         s_last_aln_pos = vectorized_segs[i.seg_id][s_end-1]
         t_first_aln_pos = vectorized_segs[j.seg_id][t_start-1]
         
-        #ensure order the vertices by position
+        #ensure order the vertices by position  (handle reverse)
         v1,v2 = i.aa_e.v1,i.aa_e.v2
         if v1.pos > v2.pos:
             v1 = i.aa_e.v2
@@ -165,7 +165,13 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
         else:
             s = v2
             s_overhang = vectorized_segs[i.seg_id][-1] - s_last_aln_pos
-            
+        
+        #order the j vertices by position (handle reverse)
+        v1,v2 = j.aa_e.v1,j.aa_e.v2 
+        if v1.pos > v2.pos:
+            v1 = j.aa_e.v2
+            v2 = j.aa_e.v1
+
         t_id = j.seg_id
         if j.direction == "-":
             t_id+="_r"
