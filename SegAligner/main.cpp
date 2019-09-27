@@ -74,9 +74,13 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
     for (auto i: seg_scores) {
         int seg_id = i.first;
         int n = cmaps_segs[seg_id].size()-1;
-        vector<float>::const_iterator first;
-        first = i.second.begin() + (i.second.size() - (right_cutoff + left_cuttoff_from_right));
+        vector<float>::const_iterator first = i.second.begin() + (i.second.size() -
+                (right_cutoff + left_cuttoff_from_right));
         vector<float>::const_iterator last = i.second.begin() + (i.second.size() - 1 - right_cutoff);
+        if (n < 12) { //Handle case where super-short segments have lower complexity, and thus more HSPs.
+            last-=25;
+        }
+
         vector<float> relevant_scores(first,last);
         vector<int> e_vals(relevant_scores.size());
         iota(e_vals.begin(),e_vals.end(), 1);
