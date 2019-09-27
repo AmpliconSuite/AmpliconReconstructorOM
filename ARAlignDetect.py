@@ -258,9 +258,12 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
 
     return bpg_list
 
-def run_SegAligner(contig_file,ref_file,arg_list):
-    argstring = " ".join(arg_list)
-    subprocess.call(" ".join([os.environ['SA_SRC'] + "/SegAligner",ref_file,contig_file,argstring]), shell=True)
+def run_SegAligner(contig_file,ref_file,arg_list,a_dir):
+    #argstring = " ".join(arg_list)
+    cmd_vect = [os.environ['SA_SRC'] + "/SegAligner", ref_file, contig_file] + arg_list
+    with open(a_dir + "SA_run.out",'w') as saout:
+        subprocess.call(cmd_vect,stdout=saout)
+        #subprocess.call(" ".join([os.environ['SA_SRC'] + "/SegAligner",ref_file,contig_file,argstring]), stdout=outfile)
 
 def make_score_plots(scores_file,fpath):
     scoring_dict = defaultdict(list)
@@ -290,9 +293,9 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--segs", help="reference genome cmap file. Key file must be present in same directory and be named [CMAP]_key.txt", required=True)
     parser.add_argument("-c", "--contigs", help="contigs cmap file", required=True)
     parser.add_argument("-g", help="AA-formatted breakpoint graph file",required=True)
-    parser.add_argument("-o", "--output_prefix", help="output filename prefix (assumes CWD & ref/segs name unless otherwise specified")
-    parser.add_argument("-d","--output_directory",help="Path to directory where new files are created. Default is CWD.")
-    parser.add_argument("-t", "--threads", help="number of threads to use (default 4)", type=int, default=4)
+    parser.add_argument("-o", "--output_prefix", type=str, default="SA_segs", help="output alignment filename prefix")
+    parser.add_argument("-d","--output_directory", help="Path to directory where new files are created. Default is CWD.")
+    parser.add_argument("-t", "--threads", help="number of threads to use (default 8), recommend 16+", type=int, default=8)
     parser.add_argument("-e", "--enzyme", help="labeling enzyme", choices=["BspQI","DLE1"],required=True)
     parser.add_argument("--plot_scores", help="Save plots of the distributions of segment scores",action='store_true',default=False)
     parser.add_argument("--no_tip_aln",help="Disable tip alignment step",action='store_true')
@@ -306,15 +309,12 @@ if __name__ == "__main__":
     if args.swap_xmap_RQ and not args.xmap:
         parser.error("--swap_xmap_RQ requires --xmap [your_xmap_file.xmap]. Are you supplying your own alignments?")
 
-    if not args.output_prefix:
-        args.output_prefix = os.path.splitext(args.segs)[0]
-        print "results will be stored in " + args.output_prefix
+   
+    print "results will be stored in " + args.output_directory
 
     if not args.output_directory.endswith("/"): args.output_directory+="/"
-    args.output_prefix = args.output_directory + args.output_prefix
-    if not args.output_prefix.endswith("/"): args.output_prefix+="/"
-
-    a_dir = args.output_prefix + "alignments/"
+    
+    a_dir = args.output_directory + "alignments/"
     if not os.path.exists(a_dir): os.makedirs(a_dir)
 
     min_map_len = args.min_map_len #the default
@@ -329,14 +329,15 @@ if __name__ == "__main__":
     #Do alignment with SegAligner if not using own XMAP
     if not args.xmap:
         print "Doing segment alignments with SegAligner"
-        arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_segs", "-gen=" + gen]
+        arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + args.output_prefix, "-gen=" + gen]
         # #CONTIG SEG ALIGNMENTS
-        run_SegAligner(args.contigs,args.segs,arg_list)
+        # print arg_list
+        run_SegAligner(args.contigs,args.segs,arg_list,a_dir)
 
         #get the scoring thresholds.
         if args.plot_scores:
             print "Plotting score distributions"
-            make_score_plots(a_dir + "SA_segs_all_scores.txt",args.output_prefix)
+            make_score_plots(a_dir + args.output_prefix + "_all_scores.txt",args.output_directory)
 
     #if xmap supplied, read it and re-write the alignments into the alignments/ directory
     else:
@@ -362,11 +363,10 @@ if __name__ == "__main__":
             print "No large unaligned regions found on segment-aligned contigs"
 
         else:
-            unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_prefix,args.enzyme)
-            arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + "SA_ref","-detection","-gen=" + gen]
+            unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_directory,args.enzyme)
+            arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + args.output_prefix,"-detection","-gen=" + gen]
             #CONTIG UNALIGNED REGION ALIGNMENTS
-            print unaligned_region_filename + " is the file to open"
-            run_SegAligner(ref_genome_file,unaligned_region_filename,arg_list)
+            run_SegAligner(ref_genome_file,unaligned_region_filename,arg_list,a_dir)
             with open(args.g) as infile:
                 index_start = sum(1 for _ in infile if _.startswith("sequence"))
 

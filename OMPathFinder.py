@@ -8,13 +8,15 @@ jluebeck@ucsd.edu
 
 import sys
 import os
+import copy
 import json
 import math
-import copy
+import logging
 import argparse
+import datetime
 from Queue import Queue
-from subprocess import call
 from bionanoUtil import *
+from subprocess import call
 from abstract_graph import *
 from breakpoint_graph import *
 from ContigAlignmentGraph import *
@@ -111,7 +113,7 @@ def bfs_path_find(s,t,exp_length,seg_overhang_sum):
                 path_queue.put((curr_path + [u], copy.copy(c_count_d), curr_length+edge_len, edge.edge_type))
 
         elif len(p_paths) > max_impute_paths:
-            print("BFS too large, stopped at " + str(curr_pop_count))
+            logging.warning("BFS too large, stopped at " + str(curr_pop_count))
             break
 
         curr_pop_count+=1
@@ -136,7 +138,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
             continue
 
         if i.aln_obj.contig_endpoints[1] >= j.aln_obj.contig_endpoints[0]:
-            print "Tight junction at " + e.edge_to_string()
+            logging.info("Tight junction at " + e.edge_to_string())
             e.junction_score = 1
             continue
 
@@ -187,24 +189,24 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
 
         #don't look if there's a oversized gap or imputation is off
         if impute and not e.gap:
-            print "Searching for paths on edge " + s.__repr__() + " " + t.__repr__()
+            logging.info("Searching for paths on edge " + s.__repr__() + " " + t.__repr__())
             dfs_path_find(t,curr_path,contig_distance,seg_overhang_sum,possible_paths,c_count_d,"sequence")
         
         elif e.gap:
-            print "[gap] Not searching for paths on edge " + s.__repr__() + " " + t.__repr__()
+            logging.info("[gap] Not searching for paths on edge " + s.__repr__() + " " + t.__repr__())
 
         if len(possible_paths) > max_impute_paths:
-            print("Too many paths from DFS, attempting limited BFS")
+            logging.warning("Too many paths from DFS, attempting limited BFS")
             bfs_possible_paths = bfs_path_find(s,t,contig_distance,seg_overhang_sum)
             if len(bfs_possible_paths) <= max_impute_paths:
                 possible_paths = bfs_possible_paths
-                print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
+                logging.info("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
             else:
                 possible_paths = []
-                print("Too many BFS paths")
+                logging.warning("Too many BFS paths")
 
         else:
-            print("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
+            logging.info("Found " + str(len(possible_paths)) + " path(s) for " + s.__repr__() + " " + t.__repr__())
 
 
         if [s,t] not in possible_paths:
@@ -251,7 +253,7 @@ def path_alignment_correction(G,c_id,contig_cmap,impute=True):
     # for e in G.edges:
     #     print e.edge_to_string()
 
-    print ""
+    logging.info("Finished imputation")
 
 #makes CMAP from imputed path
 #returns combined & partial cmaps
@@ -421,7 +423,7 @@ def get_edge_copy_counts(breakpoint_file):
                 
                 elif fields[0] in ["concordant","discordant"]:
                     if fields[1] in cc_dict:
-                        print "Edge name collision. Using larger weight"
+                        logging.error("Edge name collision. Using larger weight")
                         cc_dict[fields[1]] = max(cc_dict[fields[1]],math.ceil(float(fields[2])))
 
                     else:
@@ -679,17 +681,17 @@ def check_rotations(G,kept,i,rev_i):
 def filter_subsequence_paths(G,paths):
     kept = []
     contig_to_paths = defaultdict(list)
-    print "Sorting paths by weight"
+    logging.info("Sorting paths by weight")
     paths_sorted = sorted(paths,reverse=True,key=lambda x: get_path_weight(G,x))
     downsample = True if len(paths_sorted) > 35000 else False
 
     if downsample:
-        print "Limiting search to top 35000 paths from " + str(len(paths_sorted)) + " original paths"
+        logging.warning("Limiting search to top 35000 paths from " + str(len(paths_sorted)) + " original paths")
         paths_sorted = paths_sorted[:35000]
 
     for ind_i,i in enumerate(paths_sorted):
         if ind_i % 1000 == 1 and ind_i > 1:
-            print("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths_sorted)),str(len(kept))))
+            logging.info("Checked {}/{} paths, {} are still kept.".format(str(ind_i-1),str(len(paths_sorted)),str(len(kept))))
 
         rev_i = [(x[0],-1*x[1]) for x in i][::-1]
         if not check_rotations(G,kept,i,rev_i):
@@ -727,12 +729,12 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
     # for i in all_paths:
     #     print i
 
-    print "Total intial paths discovered: " + str(len(all_paths))
+    logging.info("Total intial paths discovered: " + str(len(all_paths)))
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
-    print "Total CC filtered paths: " + str(len(cc_paths))
+    logging.info("Total CC filtered paths: " + str(len(cc_paths)))
     ss_paths = filter_subsequence_paths(G,cc_paths)
 
-    print ("Total final paths: " + str(len(ss_paths)))
+    logging.info("Total final paths: " + str(len(ss_paths)))
     return ss_paths
     
 #calculate the weight of a path
@@ -742,7 +744,7 @@ def get_path_weight(G,path):
         try:
             weight+=G.weights[(s[0],t[0])]
         except KeyError:
-            print "BAD EDGE ON PATH " + path_to_string(G,path,True)
+            logging.error("BAD EDGE ON PATH " + path_to_string(G,path,True))
 
     if (path[-1][0],path[0][-1]) in G.edge_lookup:
         weight+=G.edge_lookup[(path[-1][0],path[0][-1])].junction_score
@@ -885,7 +887,7 @@ def get_scaffold_heaviest_paths(contig_alignment_dict,impute,contig_cmaps):
     contig_graphs = {}
     scaffold_heaviest_paths = {}
     for ind,c_id in enumerate(contig_alignment_dict.keys()):
-        print "Path imputation, contig id: ",c_id
+        logging.info("Path imputation, contig id: " + str(c_id))
         aln_obj_list = contig_alignment_dict[c_id]
         #put the contig segment alignments into the graph
         contig_graphs[c_id] = make_contig_aln_graph(aln_obj_list,c_id,long_gap_length,cmap_id_to_edge=cmap_id_to_edge,contig_cmap=contig_cmaps[c_id])
@@ -916,19 +918,18 @@ def get_scaffold_heaviest_paths(contig_alignment_dict,impute,contig_cmaps):
         unkept_rg_edges = set()
         for edge in G_contig.edges:
             if edge.s.aln_obj.is_detection_aln and edge.s.n_id not in shp_node_set:
-                print edge.s.n_id
+                # print edge.s.n_id
                 unkept_rg_edges.add(edge)
 
             elif edge.t.aln_obj.is_detection_aln and edge.t.n_id not in shp_node_set:
-                print edge.t.n_id
+                # print edge.t.n_id
                 unkept_rg_edges.add(edge)
 
         G_contig.edges-=unkept_rg_edges
 
         #DEBUGGING print
-        print "Heaviest path for contig " + c_id
-        print([G_contig.node_id_lookup[i].seg_id for i in best_path]),best_path_weight
-        print ""
+        logging.info("Heaviest path for contig " + c_id)
+        logging.info(str([G_contig.node_id_lookup[i].seg_id for i in best_path]) + " " + str(best_path_weight) + "\n")
 
     return contig_graphs,scaffold_heaviest_paths
 
@@ -1003,6 +1004,8 @@ if __name__ == '__main__':
 
     samp_name = args.samp_name
     outname = outdir + samp_name
+    logging.basicConfig(filename=outname + "_run.log",level=logging.INFO)
+
 
     #read contig cmaps
     contig_cmaps_file = args.contigs
@@ -1015,7 +1018,7 @@ if __name__ == '__main__':
     #read segs key
     keyfile = os.path.splitext(args.segs)[0] + "_key.txt"
     if not os.path.exists(keyfile):
-        print(keyfile + " not found. Graph CMAP and *_key.txt must in same folder. Exiting.")
+        sys.stderr.write(keyfile + " not found. Graph CMAP and *_key.txt must in same folder. Exiting.\n")
         sys.exit()
     seg_key = parse_keyfile(keyfile)
 
@@ -1025,7 +1028,7 @@ if __name__ == '__main__':
     vectorized_segs = vectorize_cmaps(segs_cmaps)
 
     #reconstitute AA graph
-    print("Reconstituting breakpoint graph")
+    logging.info("Reconstituting breakpoint graph")
     breakpoint_file = args.graph
     breakpointG = breakpoint_graph(breakpoint_file)
     
@@ -1036,7 +1039,7 @@ if __name__ == '__main__':
 
     #match cmap to AA edges
     cmap_id_to_edge = match_cmap_graph_edge(breakpointG)
-    print("Matched ids to AA edges")
+    logging.info("Matched ids to AA edges")
 
     #get aln files
     flist = os.listdir(adir)
@@ -1047,7 +1050,7 @@ if __name__ == '__main__':
 
     contig_alignment_dict = defaultdict(list)
     #parse each aln file
-    print "Parsing alignments"
+    logging.info("Parsing alignments")
     for i in rel_files:
         a_c_id,a_list = parse_seg_alignment_file(adir + i)
         seg_aln_obj = SA_Obj(a_c_id,a_list)
@@ -1071,7 +1074,7 @@ if __name__ == '__main__':
     G = construct_combined_graph(contig_graphs)
 
     if args.noConnect:
-        print "skipping contig connection step"
+        logging.info("skipping contig connection step")
         intercontig_edges = set()
     else:
         intercontig_edges = get_intercontig_edges(alt_paths,contig_graphs,contig_cmaps)
@@ -1084,14 +1087,14 @@ if __name__ == '__main__':
     G.construct_adj_rev_dict()
 
     #connect heaviest paths across contigs
-    print("Finding all non-extendible paths")
+    logging.info("Finding all non-extendible paths")
     all_paths = all_unique_non_extendible_paths(G,edge_cc,alt_paths)
 
     all_paths_weights = [get_path_weight(G,p) for p in all_paths] 
     if args.noImpute: outname+="_noImpute"
     #write aligned path results
     #write discovered paths
-    print("Writing paths")
+    logging.info("Writing paths")
     if all_paths:
         sorted_all_paths,sorted_all_weights = zip(*sorted(zip(all_paths,all_paths_weights),key=lambda x: x[1],reverse=True))
         for ind,i in enumerate(sorted_all_paths):
@@ -1124,4 +1127,6 @@ if __name__ == '__main__':
     with open(fname,'w') as outfile:
         json.dump(graph_dict, outfile)
 
-    print("\nFinished")
+    logging.info("\nFinished")
+    logging.info(str(datetime.datetime.now()) + "\n")
+    logging.shutdown()

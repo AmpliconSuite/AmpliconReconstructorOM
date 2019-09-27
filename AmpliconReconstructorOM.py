@@ -13,6 +13,7 @@ import json
 import yaml
 import logging
 import argparse
+import datetime
 import subprocess
 
 try:
@@ -23,17 +24,21 @@ except KeyError:
 	sys.stderr.write("SA_SRC or AR_SRC bash variable not found. AmpliconReconstructor may not be properly installed.\n")
 	sys.exit(1)
 
-def run_ARAD(segs,contigs,graph,enzyme,inst,min_map_len,sname,outdir):
-	cmd = "python {}/ARAlignDetect.py -s {} -c {} -g {} -t {} -e {} --min_map_len {} -i {} -o {} -d {}".format(AR_SRC,segs,contigs,graph,nthreads,enzyme,min_map_len,inst,sname,outdir)
+def run_ARAD(plot_scores,segs,contigs,graph,enzyme,min_map_len,inst,sname,outdir):
+	psc=""
+	if plot_scores:
+		psc+="--plot_scores "
+	cmd = "python {}/ARAlignDetect.py {}-s {} -c {} -g {} -t {} -e {} --min_map_len {} -i {} -o {} -d {}".format(AR_SRC,psc,segs,contigs,graph,nthreads,enzyme,min_map_len,inst,sname,outdir)
 	logging.info("CMD:")
 	logging.info(cmd)
-	subprocess.call(cmd + " > " + outdir + "AS_stdout.txt", shell=True)
+	subprocess.call(cmd, shell=True)
 
 def run_OMPF(outdir,segs,contigs,graph,aln_dir,sname,inst,noImpute=False):
 	ncs = ""
 	if noImpute: ncs+="--noImpute "
 	cmd = "python {}/OMPathFinder.py {}--adir {} -c {} -s {} -g {} --outdir {} --prefix {} -i {}".format(AR_SRC,ncs,aln_dir,contigs,segs,graph,outdir,sname,inst)
-	subprocess.call(cmd, shell=True)
+	logging.info(cmd)
+	subprocess.call(cmd,shell=True)
 
 # def run_visualization(cycles_file,cycle,contigs,segs,graph,aln_file,sname):
 # 	# cmd = "python ~/bionano/CycleViz/CycleViz_dev.py --om_alignments --cycles_file {} --cycle {} -c {} -s {} -g {} -i {} --sname {} --label_segs --gene_subset_file {}".format(cycles_file,cycle,contigs,segs,graph,aln_file,sname,os.environ['AR_SRC']+"/Bushman_group_allOnco_May2018.tsv")
@@ -65,6 +70,7 @@ if not args.run_name.endswith("/"): args.run_name+="/"
 run_path = args.outdir + args.run_name
 if not os.path.exists(run_path): os.mkdir(run_path) 
 logging.basicConfig(filename=run_path + "run.log",level=logging.INFO)
+logging.info(str(datetime.datetime.now()))
 logging.info("Starting logging")
 
 noImpute = args.noImpute
@@ -93,13 +99,14 @@ for i in samples_to_run:
 		logging.error(i + " not found in YAML file, skipping")
 		continue
 
-	logging.info("Processing " + i)
+	logging.info("\nProcessing " + i)
+	print("\nProcessing " + i)
 
 	#ensure the YAML data is correct
 	sample_dict = sample_data[i]
 	try:
 		sample_path = sample_dict["path"]
-		seg_path = sample_path + sample_dict["cmap"]
+		segs_path = sample_path + sample_dict["cmap"]
 		contig_path = sample_path + sample_dict["contigs"]
 		graph_path = sample_path + sample_dict["graph"]
 		inst = sample_dict["instrument"]
@@ -112,7 +119,7 @@ for i in samples_to_run:
 		logging.error(em)
 		continue
 
-	if any([sample_path,seg_path,contig_path,graph_path,inst,enzyme,min_map_len]) == None:
+	if any([sample_path,segs_path,contig_path,graph_path,inst,enzyme,min_map_len]) == None:
 		em = "Empty property in YAML file for " + i + ", skipping."
 		sys.stderr.write(em + "\n")
 		logging.error(em)
@@ -141,7 +148,10 @@ for i in samples_to_run:
 
 	start_time = time.time()
 	if not args.noAlign:
-		run_ARAD(samp_aln_dir, segs_path, contig_path, graph_path, enzyme, inst, i, rpi)
+		run_ARAD(args.plot_scores, segs_path, contig_path, graph_path, enzyme, min_map_len, inst, i, rpi)
+
+	#elif check xmap status
+	
 	else:
 		logging.info("Skipped alignment stage.")
 	
@@ -150,14 +160,12 @@ for i in samples_to_run:
 
 	#check if output has includes_detected graph file.
 	if os.path.exists(idgf):
-		idsf = rpi + os.path.splitext(os.path.basename(seg_path))[0] + "_includes_detected.cmap"
+		idsf = rpi + os.path.splitext(os.path.basename(segs_path))[0] + "_includes_detected.cmap"
+		graph_path,segs_path = idgf,idsf
+		logging.info("Using _includes_detected files:\n" + idgf + "\n" + idsf)
 
-	# print segs_path,graph_path
-	graph_path,segs_path = idgf,idsf
-	logging.info("Using _includes_detected files:\n" + idgf + "\n" + idsf)
-
-	#UPDATE
-	run_OMPF(samp_recons_dir, segs_path, contig_path, graph_path, samp_aln_dir + "alignments", i, inst, noImpute)
+	print "Reconstructing amplicon " + i
+	run_OMPF(reconstruction_dir, segs_path, contig_path, graph_path, alignments_dir, i, inst, noImpute)
 	e_time2 = (time.time() - start_time) - e_time1
 	logging.info("finished pathfinding stage for " + i + " in " + str(e_time2) + " seconds\n")
 
@@ -169,5 +177,7 @@ for i in samples_to_run:
 
 	# print("Finished sample " + i)
 
+logging.info("Finished")
+logging.info(str(datetime.datetime.now()) + "\n")
 logging.shutdown()
 sys.exit()
