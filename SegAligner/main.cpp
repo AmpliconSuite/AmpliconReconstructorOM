@@ -133,12 +133,8 @@ vector<tuple<int,int,float>> run_SA_score(map<int,vector<float>> cmaps_segs, map
             vector<vector<float>> S(contig_posns.size(),vector<float>(x_posns.size()-1));
             vector<vector<array<int,2>>> previous(contig_posns.size(),vector<array<int,2>>(x_posns.size()-1));
 
-            if (!local_aln) { //handles standard and tip
-                init_semiglobal_aln(S,x_posns.size(),contig_posns.size(),x);
-
-            } else {
-                init_semiglobal_aln(S,x_posns.size(),contig_posns.size(),x);
-            }
+            //handles both cases
+            init_semiglobal_aln(S, x_posns.size(), contig_posns.size(), x);
 
             set<int> temp;
             dp_align(S, previous, contig_posns, x_posns, false, lookback, temp, seg_ncp_vector, contig_ncp_vector, swap_b_x);
@@ -217,10 +213,13 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
 
     int min_aln_labels = 6;
     int min_tip_aln_labels = 5;
+    if (inst_gen == 1) {
+        min_tip_aln_labels = 3;
+    }
     map<int,set<int>> discovered_contig_used_labels;
     map<pair<int,int>,set<int>> curr_aligned_labs;
 
-    for (auto e: cmaps_contigs) {
+    for (auto &e: cmaps_contigs) {
         discovered_contig_used_labels[e.first] = set<int>();
     }
 
@@ -596,7 +595,7 @@ int main (int argc, char *argv[]) {
             //don't make the pair if there weren't any alignments to the contigs. check the used label set
             if (!contig_used_label_map[e.second].empty()) {
 //                for (auto x: pairs_list) {
-                for (auto x: cmaps_segs) {
+                for (auto &x: cmaps_segs) {
                 //adds the seg_id and contig_id so all relevant segs are paired with all relevant contigs
                     tip_pairs_set.insert(make_pair(x.first, e.second));
                     tip_pairs_set.insert(make_pair(-x.first, e.second));
