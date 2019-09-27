@@ -66,7 +66,7 @@ map<int,vector<float>> make_reverse_cmap(map<int,vector<float>> &cmap_map, int m
         //full_cmap_map[map_id] = i->second;
         float map_length = curr_posns.size();
         //to do: check if length of curr_posns > 1
-        if (map_length <= min_map_len) {
+        if (map_length < min_map_len) {
             continue;
         }
         int rev_map_id = -1*map_id;
