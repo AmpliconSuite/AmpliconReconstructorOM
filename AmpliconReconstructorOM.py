@@ -24,19 +24,18 @@ except KeyError:
 	sys.stderr.write("SA_SRC or AR_SRC bash variable not found. AmpliconReconstructor may not be properly installed.\n")
 	sys.exit(1)
 
-def run_ARAD(plot_scores,segs,contigs,graph,enzyme,min_map_len,inst,sname,outdir):
-	psc=""
-	if plot_scores:
-		psc+="--plot_scores "
-	cmd = "python {}/ARAlignDetect.py {}-s {} -c {} -g {} -t {} -e {} --min_map_len {} -i {} -o {} -d {}".format(AR_SRC,psc,segs,contigs,graph,nthreads,enzyme,min_map_len,inst,sname,outdir)
-	logging.info("CMD:")
+def run_ARAD(segs,contigs,graph,enzyme,min_map_len,inst,sname,outdir,optionalFlagString=""):
+	# psc=""
+	# if plot_scores:
+	# 	psc+="--plot_scores "
+	cmd = "python {}/ARAlignDetect.py {}-s {} -c {} -g {} -t {} -e {} --min_map_len {} -i {} -o {} -d {}".format(AR_SRC,optionalFlagString,segs,contigs,graph,nthreads,enzyme,min_map_len,inst,sname,outdir)
+	logging.info("ARAD CMD:")
 	logging.info(cmd)
 	subprocess.call(cmd, shell=True)
 
-def run_OMPF(outdir,segs,contigs,graph,aln_dir,sname,inst,noImpute=False):
-	ncs = ""
-	if noImpute: ncs+="--noImpute "
-	cmd = "python {}/OMPathFinder.py {}--adir {} -c {} -s {} -g {} --outdir {} --prefix {} -i {}".format(AR_SRC,ncs,aln_dir,contigs,segs,graph,outdir,sname,inst)
+def run_OMPF(outdir,segs,contigs,graph,aln_dir,sname,inst,optionalFlagString = ""):
+	cmd = "python {}/OMPathFinder.py {}--adir {} -c {} -s {} -g {} --outdir {} --prefix {} -i {}".format(AR_SRC,optionalFlagString,aln_dir,contigs,segs,graph,outdir,sname,inst)
+	logging.info("OMPF CMD:")
 	logging.info(cmd)
 	subprocess.call(cmd,shell=True)
 
@@ -80,7 +79,7 @@ nthreads = str(args.nthreads)
 logging.info("CMD:")
 logging.info(" ".join(sys.argv))
 logging.info("noImpute is " + str(noImpute))
-logging.info("noConnect is " + str(noImpute))
+logging.info("noConnect is " + str(noConnect))
 logging.info("nthreads: " + str(nthreads))
 
 with open(args.yaml_file) as f:
@@ -146,12 +145,22 @@ for i in samples_to_run:
 			logging.warning("Removing old *includes_detected.txt graph file: " + idgf)
 			call("rm " + idgf,shell=True)
 
-	start_time = time.time()
-	if not args.noAlign:
-		run_ARAD(args.plot_scores, segs_path, contig_path, graph_path, enzyme, min_map_len, inst, i, rpi)
+	#check if we're converting an xmap:
+	use_xmap = False
+	if "xmap" in sample_dict:
+		if sample_dict["xmap"]: use_xmap = True
 
-	#elif check xmap status
-	
+	start_time = time.time()
+	optionalFlagString = ""
+	if not args.noAlign:
+		if args.plot_scores:
+			optionalFlagString+="--plot_scores "
+		run_ARAD(segs_path, contig_path, graph_path, enzyme, min_map_len, inst, i, rpi, optionalFlagString)
+
+	elif use_xmap: #elif check xmap status
+		optionalFlagString+="--xmap " + sample_dict["xmap"] + " "
+		run_ARAD(segs_path, contig_path, graph_path, enzyme, min_map_len, inst, i, rpi, optionalFlagString)
+
 	else:
 		logging.info("Skipped alignment stage.")
 	
@@ -165,12 +174,21 @@ for i in samples_to_run:
 		logging.info("Using _includes_detected files:\n" + idgf + "\n" + idsf)
 
 	print "Reconstructing amplicon " + i
-	run_OMPF(reconstruction_dir, segs_path, contig_path, graph_path, alignments_dir, i, inst, noImpute)
+	optionalFlagString = ""
+	if args.noImpute:
+		optionalFlagString+="--noImpute "
+
+	if args.noConnect:
+		optionalFlagString+="--noConnect "
+
+	run_OMPF(reconstruction_dir, segs_path, contig_path, graph_path, alignments_dir, i, inst, optionalFlagString)
 	e_time2 = (time.time() - start_time) - e_time1
 	logging.info("finished pathfinding stage for " + i + " in " + str(e_time2) + " seconds\n")
 
 	cycles_file = reconstruction_dir + i + "_paths_cycles.txt"
 	#determine number of paths
+
+	#output the length of each path and each scaffold 
 
 	#for path in paths
 		#make linear
