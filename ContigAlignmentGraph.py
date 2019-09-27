@@ -268,7 +268,9 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
                 #disallow connecting if it is an internal node and the destination is off-contig
                 #also disallow if the two nodes are not appropriately ordered in thise case
                 #this is to handle the interior cycle case
-                if not (is_end_aln(Gs,s_nid,contig_cmaps[s_cid]) and is_end_aln(Gt,t_nid,contig_cmaps[t_cid],left=True)):
+                s_is_end = is_end_aln(Gs,s_nid,contig_cmaps[s_cid]) or is_end_aln(Gs,s_nid,contig_cmaps[s_cid],left=True)
+                t_is_end = is_end_aln(Gt,t_nid,contig_cmaps[t_cid]) or is_end_aln(Gt,t_nid,contig_cmaps[t_cid],left=True)
+                if not (s_is_end and t_is_end):
                     if s_cid != t_cid or s.aln_obj.contig_endpoints[0] < t.aln_obj.contig_endpoints[-1]:
                         continue
 

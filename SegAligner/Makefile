@@ -5,6 +5,7 @@ OPTS=-std=c++11 -O3 -pthread
 
 all: main.o SegAligner.o SAHelper.o
 	$(CC) $(OPTS) -lm -o SegAligner main.o SAHelper.o SegAligner.o
+	rm -f *.o
 
 main.o: main.cpp SAHelper.h SegAligner.h
 	$(CC) $(OPTS) -c main.cpp

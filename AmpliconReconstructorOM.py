@@ -169,7 +169,15 @@ for i in samples_to_run:
 	e_time2 = (time.time() - start_time) - e_time1
 	logging.info("finished pathfinding stage for " + i + " in " + str(e_time2) + " seconds\n")
 
-	# cycles_file = reconstruction_dir + i + "/" + i + "_paths_cycles.txt"
+	cycles_file = reconstruction_dir + i + "_paths_cycles.txt"
+	#determine number of paths
+
+	#for path in paths
+		#make linear
+		#make cyclic
+		#get associated _aln.txt file
+		
+
 	# cycle = "1" #Need to be able to modify
 	# aln_file = reconstruction_dir + i + "/" + i + "_path_" + cycle + "_aln.txt"
 	# viz_sname = visualizations_dir + i

@@ -45,7 +45,7 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
 
     //Organize the segment scores
     map<int,vector<float>> seg_scores;
-    for (auto e: cmaps_segs) {
+    for (auto &e: cmaps_segs) {
         seg_scores[e.first] = vector<float>();
     }
 
@@ -67,7 +67,7 @@ map<int,float> compute_score_thresholds(vector<tuple<int,int,float>> &full_scori
     double E_cutoff = -log(1 - pvalue);
 
     int m = 0;
-    for (auto i: cmaps_contigs) {
+    for (auto &i: cmaps_contigs) {
         m+=(i.second.size()-1);
     }
 
@@ -112,12 +112,12 @@ vector<tuple<int,int,float>> run_SA_score(map<int,vector<float>> cmaps_segs, map
     //variables for scoring, etc.
     vector<tuple<int,int,float>>scoring_vector;
     int total_labels = 0;
-    for (auto b: cmaps_contigs) {
+    for (auto &b: cmaps_contigs) {
         total_labels+=b.second.size();
     }
 
     //create variables for the segment and contig iterations
-    for (auto x_map: cmaps_segs) {
+    for (auto &x_map: cmaps_segs) {
         int x = x_map.first;
         vector<float> x_posns = x_map.second;
         vector<float> seg_ncp_vector = non_collapse_prob_map[x];
