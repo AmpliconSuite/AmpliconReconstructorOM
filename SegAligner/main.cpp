@@ -309,7 +309,11 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 float mean = get<2>(aln_list[0])/(aln_list.size()-1);
                 float median = compute_aln_median(aln_list);
 
-                if (mean < mean_thresh || median < med_thresh) {
+                if (aln_list.size() < 5) {
+                    if (mean < 9200 && median < 9200) {
+                        continue;
+                    }
+                } else if (mean < mean_thresh || median < med_thresh) {
                     continue;
                 }
 
