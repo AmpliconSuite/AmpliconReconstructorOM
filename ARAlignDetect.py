@@ -378,4 +378,6 @@ if __name__ == "__main__":
                 #remove "SA_ref_" files (temporary alignments)
                 subprocess.call("rm " + a_dir + "SA_ref_*_aln.txt 2>/dev/null", shell=True)
 
+            subprocess.call("rm " + args.output_directory + "contig_unaligned_regions.cmap", shell=True)
+
     print "Completed " + time.ctime(time.time()) + "\n"
