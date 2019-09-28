@@ -141,7 +141,7 @@ if __name__ == '__main__':
 		sample_data = yaml.safe_load(f)
 
 	#read samples and figure out what to run (all if no subset specified)
-	samples_to_run = args.samples if args.samples else [str(x) for x in sample_dict.keys()]
+	samples_to_run = args.samples if args.samples else [str(x) for x in sample_data.keys()]
 
 	if not args.samples: print("running on all samples in " + args.yaml_file)
 
