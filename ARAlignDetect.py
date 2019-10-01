@@ -168,7 +168,7 @@ def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme,outdir):
     print "Creating new CMAP"
     #seg_outname = os.path.splitext(segs_fname)[0] + "_includes_detected"
     sbase = os.path.splitext(os.path.basename(segs_fname))[0]
-    seg_outname = sbase + "_includes_detected"
+    seg_outname = outdir + sbase + "_includes_detected"
     cmd = "python2 {}/generate_cmap.py -g {} -r {}/hg19/hg19full.fa -e {} -o {}".format(os.environ['AR_SRC'],new_graphfile,os.environ['AA_DATA_REPO'],enzyme,seg_outname)
     subprocess.call(cmd,shell=True)
 
@@ -364,19 +364,20 @@ if __name__ == "__main__":
 
         else:
             unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_directory,args.enzyme)
-            arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + args.output_prefix,"-detection","-gen=" + gen]
+            unaligned_fname_prefix = args.output_prefix + "_ref_search"
+            arg_list = ["-nthreads=" + str(nthreads), "-min_labs=" + str(min_map_len),"-prefix=" + a_dir + unaligned_fname_prefix,"-detection","-gen=" + gen]
             #CONTIG UNALIGNED REGION ALIGNMENTS
             run_SegAligner(ref_genome_file,unaligned_region_filename,arg_list,a_dir)
             with open(args.g) as infile:
                 index_start = sum(1 for _ in infile if _.startswith("sequence"))
 
-            aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "SA_ref" in x]
+            aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and unaligned_fname_prefix in x]
             if aln_flist:
                 print "Found new segments, re-writing graph and CMAP"
                 bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start)
                 rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme,args.output_directory)
                 #remove "SA_ref_" files (temporary alignments)
-                subprocess.call("rm " + a_dir + "SA_ref_*_aln.txt 2>/dev/null", shell=True)
+                # subprocess.call("rm " + a_dir + "SA_ref_*_aln.txt 2>/dev/null", shell=True)
 
             subprocess.call("rm " + args.output_directory + "contig_unaligned_regions.cmap", shell=True)
 

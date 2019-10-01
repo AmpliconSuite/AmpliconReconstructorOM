@@ -187,14 +187,15 @@ if __name__ == '__main__':
 		logging.info("Making directories")
 		for curr_dir in [rpi,alignments_dir,reconstruction_dir,visualizations_dir]:
 			if not os.path.exists(curr_dir): os.mkdir(curr_dir) 
-			if not args.no_clear:
+			if not args.no_clear and not (curr_dir == alignments_dir and args.noAlign):
 				logging.info("Clearing old results")
 				subprocess.call("rm " + curr_dir + "* 2>/dev/null",shell=True)
 
 
 		#remove old "includes detected file"
 		#idgf stands for includes_detected graph file
-		idgf = os.path.splitext(rpi + sample_dict["graph"])[0] + "_includes_detected.txt"
+		idgf = os.path.splitext(rpi + sample_dict["graph"].rsplit("/")[-1])[0] + "_includes_detected.txt"
+		# print idgf,os.path.exists(idgf)
 		if os.path.exists(idgf):
 			if not args.no_clear:
 				print("Removing old *includes_detected.txt graph file: " + idgf)
@@ -270,13 +271,15 @@ if __name__ == '__main__':
 		scaffold_segs, scaffolds = parse_cycles_file(scaffolds_file)
 		scaffold_lens = compute_path_lengths(scaffold_segs, scaffolds)
 
-		with open(reconstruction_dir + i + "_scaffolds_cycles_lenghts.txt", 'w') as outfile:
+		with open(reconstruction_dir + i + "_scaffolds_cycles_lengths.txt", 'w') as outfile:
 			outfile.write("#Path lengths\n")
-			for k in sorted(paths.keys()):
+			for ki in sorted([int(x) for x in paths.keys()]):
+				k = str(ki)
 				outfile.write("\t".join([k,",".join(paths[k]),str(path_lens[k])]) + "\n")
 
 			outfile.write("#Scaffold lengths\n")
-			for k in sorted(scaffolds.keys()):
+			for ki in sorted([int(x) for x in scaffolds.keys()]):
+				k = str(ki)
 				outfile.write("\t".join([k,",".join(scaffolds[k]),str(scaffold_lens[k])]) + "\n")
 
 		if not args.noViz and args.CV_path:
@@ -290,3 +293,4 @@ if __name__ == '__main__':
 	logging.info(str(datetime.datetime.now()) + "\n")
 	logging.shutdown()
 	sys.exit()
+
