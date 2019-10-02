@@ -283,7 +283,7 @@ if __name__ == '__main__':
 				outfile.write("\t".join([k,",".join(scaffolds[k]),str(scaffold_lens[k])]) + "\n")
 
 		if not args.noViz and args.CV_path:
-			for k in sorted(paths.keys()):
+			for k in sorted(paths.keys())[:40]:
 				aln_file = reconstruction_dir + pnum_to_alnfile[k]
 				run_visualization(args.CV_path, paths_cycles_file, k, contigs_path, segs_path, graph_path, aln_file, visualizations_dir + i)
 
