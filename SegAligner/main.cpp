@@ -259,7 +259,13 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
 //        }
 
         //Run the alignment while the score exceeds the threshold
-        while (curr_best_score >= exp_thresh && x_aligned_count < max_seg_contig_alns) {
+        int max_seg_contig_alns_current = max_seg_contig_alns;
+        if (tip_aln && inst_gen == 2) {
+            max_seg_contig_alns_current = 6;
+        }
+
+
+        while (curr_best_score >= exp_thresh && x_aligned_count < max_seg_contig_alns_current) {
             vector<vector<float>> S(contig_posns.size(), vector<float>(x_posns.size() - 1));
             vector<vector<array<int, 2>>> previous(contig_posns.size(), vector<array<int, 2>>(x_posns.size() - 1));
             if (!local_aln) {
@@ -466,6 +472,9 @@ int main (int argc, char *argv[]) {
     if (!limit_lookback) {
         lookback = 9999999;
         cout << "Alignment banding OFF. \n";
+    }
+    if (inst_gen == 2) {
+        max_seg_contig_alns*=2;//handle the haplotype aware assembler input
     }
 
     //make segs cmap

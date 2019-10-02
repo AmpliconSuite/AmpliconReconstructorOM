@@ -172,7 +172,7 @@ def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme,outdir):
     cmd = "python2 {}/generate_cmap.py -g {} -r {}/hg19/hg19full.fa -e {} -o {}".format(os.environ['AR_SRC'],new_graphfile,os.environ['AA_DATA_REPO'],enzyme,seg_outname)
     subprocess.call(cmd,shell=True)
 
-def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unaligned_label_trans,id_start):
+def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unaligned_label_trans,id_start,prefix):
     #must indicate that the reference genome used (field in the head)
     ref_genome_cmaps = parse_cmap(ref_file)
     ref_genome_key_file = os.path.splitext(ref_file)[0] + "_key.txt"
@@ -238,7 +238,7 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
         # reverse the reference sequence if "-"
         isRev = "_r" if contig_dir == "-" else ""
 
-        outname = "SA_segs_" + trans_contig_id + "_" + unique_id + "_rg" + isRev + "_aln.txt"
+        outname = prefix + "_" + trans_contig_id + "_" + unique_id + "_rg" + isRev + "_aln.txt"
         with open(w_dir + outname,'w') as outfile:
             outfile.write(head_list[0])
             outfile.write(meta_string)
@@ -374,7 +374,7 @@ if __name__ == "__main__":
             aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and unaligned_fname_prefix in x]
             if aln_flist:
                 print "Found new segments, re-writing graph and CMAP"
-                bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start)
+                bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start,args.output_prefix)
                 rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme,args.output_directory)
                 #remove "SA_ref_" files (temporary alignments)
                 # subprocess.call("rm " + a_dir + "SA_ref_*_aln.txt 2>/dev/null", shell=True)
