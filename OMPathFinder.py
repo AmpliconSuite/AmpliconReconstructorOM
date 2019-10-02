@@ -469,12 +469,14 @@ def check_path_cc(G,path,cc_dict):
         else:
             continue
 
-        # print path_edge_counts
+        # print i,max(singletons.values()),max_singleton
+
         #anything with > 1 path count, that is larger than the rounded scaled counts causes a fail.
         for seg_rep,value in path_edge_counts.iteritems():
             # print seg_rep,value
             value-=1
             scaled_cc = max(scale_val,round(cc_dict[seg_rep]/max_singleton)) 
+            # print cc_dict[seg_rep]
             # print scaled_cc
             if scaled_cc < value and value >= i:
                 return False
@@ -732,11 +734,16 @@ def all_unique_non_extendible_paths(G,edge_cc,scaffold_alt_paths):
     # with open("dump.txt",'w') as outfile:
     #     for i in dump_paths_sorted:
     #         outfile.write(path_to_string(G,i,True) + "\n")
-    # for i in all_paths:
+    # # for i in all_paths:
     #     print i
 
     logging.info("Total intial paths discovered: " + str(len(all_paths)))
     cc_paths = filter_paths_by_cc(G,all_paths,edge_cc)
+
+    # with open("ccdump.txt",'w') as outfile:
+    #     for i in cc_paths:
+    #         outfile.write(path_to_string(G,i,True) + "\n")
+
     logging.info("Total CC filtered paths: " + str(len(cc_paths)))
     ss_paths = filter_subsequence_paths(G,cc_paths)
 

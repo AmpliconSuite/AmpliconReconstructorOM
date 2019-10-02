@@ -247,12 +247,16 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
     (p_p_intersect_keys,True,True,0,prefix_r,prefix_f)]
     for intersect_keys,disallow_self,orientation_flip,s_ind,source_d,dest_d in param_list:
         for i in intersect_keys:
+            # print i
             source_list, dest_list = source_d[i],dest_d[i]
             pairings = [(s,t) for s in source_list for t in dest_list]
+            # print pairings
             for source_tup,dest_tup in pairings:
                 s_cid,_,s_path_ind = source_tup
                 t_cid,t_ind,t_path_ind = dest_tup
+                # print s_cid,t_cid
                 if disallow_self and s_cid == t_cid:
+                    # print "DS"
                     continue
 
 
@@ -264,6 +268,7 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
                 t_nid = hp_ids_t[t_ind]
                 s = Gs.node_id_lookup[s_nid]
                 t = Gt.node_id_lookup[t_nid]
+                # print s_nid,t_nid
 
                 #disallow connecting if it is an internal node and the destination is off-contig
                 #also disallow if the two nodes are not appropriately ordered in thise case
@@ -271,8 +276,12 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
                 s_is_end = is_end_aln(Gs,s_nid,contig_cmaps[s_cid]) or is_end_aln(Gs,s_nid,contig_cmaps[s_cid],left=True)
                 t_is_end = is_end_aln(Gt,t_nid,contig_cmaps[t_cid]) or is_end_aln(Gt,t_nid,contig_cmaps[t_cid],left=True)
                 if not (s_is_end and t_is_end):
-                    if s_cid != t_cid or s.aln_obj.contig_endpoints[0] < t.aln_obj.contig_endpoints[-1]:
-                        continue
+                    if s_cid == t_cid:
+                        if s.aln_obj.contig_endpoints[0] < t.aln_obj.contig_endpoints[-1]:
+                            continue
+
+                    elif not s_is_end and not t_is_end:
+                            continue
 
                 if (s.n_id,t.n_id) in added_edges:
                     continue
