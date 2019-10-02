@@ -308,9 +308,10 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
                 //mean and median checks
                 float mean = get<2>(aln_list[0])/(aln_list.size()-1);
                 float median = compute_aln_median(aln_list);
+                float min_score = compute_aln_min(aln_list);
 
                 if (aln_list.size() < 5) {
-                    if (mean < 9200 && median < 9200) {
+                    if (mean < 9400 || median < 9400 || min_score < 9200) {
                         continue;
                     }
                 } else if (mean < mean_thresh || median < med_thresh) {

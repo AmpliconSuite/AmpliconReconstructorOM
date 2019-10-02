@@ -41,3 +41,5 @@ void init_fitting_aln(vector<vector<float>> &S, int x_size, int b_size, int x);
 pair<double,double> linreg(vector<float> &x, vector<int> &y);
 
 float compute_aln_median(vector<tuple<int, int, float>> aln_list);
+
+float compute_aln_min(vector<tuple<int, int, float>> aln_list);

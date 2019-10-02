@@ -341,3 +341,14 @@ float compute_aln_median(vector<tuple<int, int, float>> aln_list) {
 
     return score_median;
 }
+
+float compute_aln_min(vector<tuple<int, int, float>> aln_list) {
+    vector<float> score_deltas;
+    float prev = 0.0;
+    for (int i = aln_list.size()-2; i > -1; i--) {
+        float diff = get<2>(aln_list[i]) - prev;
+        score_deltas.push_back(diff);
+        prev = get<2>(aln_list[i]);
+    }
+    return *min_element(score_deltas.begin(), score_deltas.end());
+}
