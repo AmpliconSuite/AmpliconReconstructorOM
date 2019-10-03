@@ -344,7 +344,7 @@ if __name__ == "__main__":
         refLenD = get_cmap_lens(args.segs)
         qryLenD = get_cmap_lens(args.contigs)
         xmapD = parse_generic_xmap(args.xmap,qryLenD,refLenD,args.swap_xmap_RQ)
-        xmap_to_SA_aln(xmapD,a_dir,"SA_segs",seg_cmaps,contig_cmaps)
+        xmap_to_SA_aln(xmapD,a_dir,"XMAP_segs",seg_cmaps,contig_cmaps)
 
 
     #SCORING OF UNALIGNED REGIONS - this will always use SegAligner. 
