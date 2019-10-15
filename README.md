@@ -1,7 +1,7 @@
 ## AmpliconReconstructor (AR)
 Reconstructs complex variation using BioNano optical mapping data
 
-###Prerequisites
+### Prerequisites
 AR uses Python 2.7 and C++11 (with g++ as the C++ compiler) and a Unix-based OS. AR has been tested on Ubuntu 16.04 and Ubuntu 18.04.
 
 Generally a version of Python including commonly used scientific libraries (such as Anaconda) will be sufficient as the only Python dependencies are Matplotlib 2.0.0 (or higher) and numpy.
@@ -10,7 +10,7 @@ AR accepts breakpoint graphs formatted in the AmpliconArchitect (AA) format. AR 
 
 AR can produce visualizations of the reconstructed amplicons, this requires the CycleViz utility, which is available at https://github.com/jluebeck/CycleViz.
 
-###Installation
+### Installation
 To install AR, please add the following variables to your .bashrc file (located in your home directory). We provide some bash commands to automate this process.
 
 After cloning/downloading the AR source, **enter the AmpliconReconstructor directory**, `cd AmpliconReconstructor/`, and execute the following.
@@ -33,7 +33,7 @@ echo "export SA_SRC=$PWD/SegAligner" >> ~/.bashrc`
 `echo $SA_SRC`
 
 
-###Usage
+### Usage
 AR requires a number of inputs. To simplify running AR, we use a wrapper script `AmpliconReconstructorOM.py`, and we use a YAML file to specify the sample-specific files and paths AR will use. Information about creating the YAML file with your inputs (including a template) is located in the section "Preparing your files".
 
 An example invokation of AR is as follows
@@ -42,7 +42,7 @@ An example invokation of AR is as follows
 
 A descripton of other command line arguments can produced by running AR with the `--help` flag.
 
-###Preparing your files
+### Preparing your files
 Once AA has been run on your NGS data, please convert the resulting "\_graph.txt" file to CMAP form, using the script `generate_cmap.py`.
 
 A sample .yaml template is included in the AR source directory.
