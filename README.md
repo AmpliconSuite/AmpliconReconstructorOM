@@ -17,19 +17,25 @@ After cloning/downloading the AR source, **enter the AmpliconReconstructor direc
 
 - Add AmpliconReconstructor and SegAligner to path
 
-`echo "export AR_SRC=$PWD" >> ~/.bashrc
-echo "export SA_SRC=$PWD/SegAligner" >> ~/.bashrc`
+`echo "export AR_SRC=$PWD" >> ~/.bashrc`
+
+`echo "export SA_SRC=$PWD/SegAligner" >> ~/.bashrc`
 
 - Make the SegAligner binary, run the following
 `cd SegAligner`
+
 `make`
 
 - Add AR python libs to PYTHONPATH variable
+
 `echo "export PYTHONPATH=$PYTHONPATH:$AR_SRC >> ~/.bashrc"`
 
 - Make the changes to .bashrc live for this session
+
 `source ~/.bashrc`
+
 `echo $AR_SRC`
+
 `echo $SA_SRC`
 
 
