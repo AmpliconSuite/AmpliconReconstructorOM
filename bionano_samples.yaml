@@ -1,0 +1,89 @@
+K562_Irys: 
+  path: ./
+  graph: graphs/K562_Irys_amplicon2_graph.txt
+  contigs: contigs/K562_BSPQI_EXP_REFINEFINAL1.cmap
+  cmap: graph_cmaps/K562_Irys_amplicon2_graph_BSPQI.cmap
+  instrument: Irys
+  enzyme: BspQI
+  min_map_len: 10
+  xmaps: ~
+
+GBM39:
+  path: ./
+  graph: graphs/GBM39_amplicon1_graph.txt
+  contigs: contigs/GBM39_BSPQI_EXP_REFINEFINAL1.cmap
+  cmap: graph_cmaps/GBM39_amplicon1_graph_BSPQI.cmap
+  instrument: Irys
+  enzyme: BspQI
+  min_map_len: 10
+  xmaps: ~
+
+HK301: 
+  path: ./
+  graph: graphs/HK301_amplicon1_graph.txt
+  contigs: contigs/HK301_BSPQI_EXP_REFINEFINAL1.cmap
+  cmap: graph_cmaps/HK301_amplicon1_graph_BSPQI.cmap
+  instrument: Irys
+  enzyme: BspQI
+  min_map_len: 10
+  xmaps: ~
+
+K562_Saphyr:
+  path: ./
+  graph: graphs/K562_Saphyr_amplicon2_graph.txt
+  contigs: contigs/K562_DLE1_EXP_REFINEFINAL1.cmap
+  cmap: graph_cmaps/K562_Saphyr_amplicon2_graph_DLE1.cmap
+  instrument: Saphyr
+  enzyme: DLE1
+  min_map_len: 12
+  xmaps: ~
+
+HCC827_FF21A1:
+  path: ./
+  graph: graphs/HCC827_FF21A1_amplicon1_graph.txt
+  contigs: contigs/HCC827_DLE1_EXP_REFINEFINAL1.cmap
+  cmap: graph_cmaps/HCC827_FF21A1_amplicon1_graph_DLE1.cmap
+  instrument: Saphyr
+  enzyme: DLE1
+  min_map_len: 12
+  xmaps: ~
+
+HCC827_FF21A2-6:
+  path: ./
+  graph: graphs/HCC827_FF21A2-6_graph.txt
+  contigs: contigs/HCC827_DLE1_EXP_REFINEFINAL1.cmap
+  cmap: graph_cmaps/HCC827_FF21A2-6_graph_DLE1.cmap
+  instrument: Saphyr
+  enzyme: DLE1
+  min_map_len: 12
+  xmaps: ~
+
+H460:
+  path: ./
+  graph: graphs/H460_amplicon1_graph.txt
+  contigs: contigs/H460_DLE1_EXP_REFINEFINAL1.cmap
+  cmap: graph_cmaps/H460_amplicon1_graph_DLE1.cmap
+  instrument: Saphyr
+  enzyme: DLE1
+  min_map_len: 12
+  xmaps: ~
+
+T47D:
+  path: ./
+  graph: graphs/T47D_amplicon1_graph.txt
+  contigs: contigs/T47D_DLE1_EXP_REFINEFINAL1.cmap
+  cmap: graph_cmaps/T47D_amplicon1_graph_DLE1.cmap
+  instrument: Saphyr
+  enzyme: DLE1
+  min_map_len: 12
+  xmaps: ~
+
+CAKI2: 
+  path: ./
+  graph: graphs/CAKI2_amplicon1_graph.txt
+  contigs: contigs/CAKI2_DLE1_EXP_REFINEFINAL1.cmap
+  cmap: graph_cmaps/CAKI2_amplicon1_graph_DLE1.cmap
+  instrument: Saphyr
+  enzyme: DLE1
+  min_map_len: 12
+  xmaps: ~

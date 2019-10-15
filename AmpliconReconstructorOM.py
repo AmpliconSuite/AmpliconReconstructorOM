@@ -287,7 +287,7 @@ if __name__ == '__main__':
 				aln_file = reconstruction_dir + pnum_to_alnfile[k]
 				run_visualization(args.CV_path, paths_cycles_file, k, contigs_path, segs_path, graph_path, aln_file, visualizations_dir + i)
 
-		logging.info("finished visualization stage for " + i + "\n")
+			logging.info("finished visualization stage for " + i + "\n")
 
 	logging.info("Finished")
 	logging.info(str(datetime.datetime.now()) + "\n")
