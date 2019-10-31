@@ -23,11 +23,10 @@ from ContigAlignmentGraph import *
 from collections import defaultdict
 
 #threshholds for linking contigs
-inter_contig_label_overlap = 6
 long_gap_length = 400000 #long gap threshold between alignments
 long_gap_cost = 0
 max_search_depth = 64
-max_impute_paths = 1023
+max_impute_paths = 1024
 max_paths_to_keep = 500
 max_impute_edge_cc = 20
 
@@ -35,7 +34,7 @@ max_impute_edge_cc = 20
 def dfs_path_find(t,curr_path,exp_length,curr_length,p_paths,c_count_d,last_edge):
     s = curr_path[-1]
     #check if path exceeds size difference constraints
-    if not (curr_length - exp_length > min(10000*(len(curr_path)),40000)):  
+    if not (curr_length - exp_length > min(10000*(len(curr_path)),25000)):  
         if s.vid == t.vid:
             #check that is not too short
             if not (exp_length - curr_length > min(10000*(len(curr_path)), 25000)):
@@ -82,7 +81,7 @@ def bfs_path_find(s,t,exp_length,seg_overhang_sum):
         curr_path,c_count_d,curr_length,last_edge = path_queue.get()
         curr_last_node = curr_path[-1]
         #check that it is not too long
-        path_too_long = (curr_length - exp_length > min(10000*(len(curr_path)),40000))
+        path_too_long = (curr_length - exp_length > min(10000*(len(curr_path)),25000))
         path_too_short = (exp_length - curr_length > min(10000*(len(curr_path)),25000))
         if not path_too_long and not path_too_short:
             if curr_last_node.vid == t.vid and len(curr_path) % 2 == 0:
