@@ -1,0 +1,27 @@
+SequenceEdge: StartPosition, EndPosition, PredictedCopyCount, AverageCoverage, Size, NumberReadsMapped
+sequence        chr7:54729701-  chr7:54830974+  4.38859661513   0.880278488659  101273  1783
+sequence        chr7:54830975-  chr7:55194961+  149.255707466   39.4188285517   363986  286961
+sequence        chr7:55194962-  chr7:55222713+  3.85833020073   0.963887181472  27751   535
+sequence        chr7:55222714-  chr7:55234799+  149.255707466   38.6477293008   12085   9342
+sequence        chr7:55234800-  chr7:55676816+  154.462646409   38.5487904999   442016  340787
+sequence        chr7:55676817-  chr7:55677804+  18.8466882201   4.2509798953    987     84
+sequence        chr7:55677805-  chr7:55722799+  154.462646409   39.1885014483   44994   35266
+sequence        chr7:55722800-  chr7:56117062+  148.291909656   35.1831005278   394262  277430
+sequence        chr7:56117063-  chr7:56219300+  3.4247988059    0.995219273364  102237  2035
+BreakpointEdge: StartPosition->EndPosition, PredictedCopyCount, NumberOfReadPairs, HomologySizeIfAvailable(<0ForInsertions), Homology/InsertionSequence
+source  chr7:-1-->chr7:54729701-        4.38859661513   2       None    None
+concordant      chr7:54830974+->chr7:54830975-  4.38859661513   0       None    None
+concordant      chr7:55194961+->chr7:55194962-  3.85833020073   3       None    None
+concordant      chr7:55222713+->chr7:55222714-  3.85833020073   3       None    None
+source  chr7:-1-->chr7:55234800-        5.20693894383   15      None    None
+concordant      chr7:55234799+->chr7:55234800-  149.255707466   55      None    None
+concordant      chr7:55676816+->chr7:55676817-  18.8466882201   16      None    None
+concordant      chr7:55677804+->chr7:55677805-  18.8466882201   18      None    None
+source  chr7:-1-->chr7:55722799+        6.17073675306   2       None    None
+concordant      chr7:55722799+->chr7:55722800-  148.291909656   66      None    None
+concordant      chr7:56117062+->chr7:56117063-  3.4247988059    66      None    None
+source  chr7:-1-->chr7:56219300+        3.4247988059    0.0001  None    None
+discordant      chr7:55222714-->chr7:55194961+  145.397377265   71      None    None
+discordant      chr7:55677805-->chr7:55676816+  135.615958189   14      None    None
+discordant      chr7:56117062+->chr7:54830975-  144.86711085    9       None    None
+

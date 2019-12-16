@@ -282,6 +282,12 @@ if __name__ == '__main__':
 				k = str(ki)
 				outfile.write("\t".join([k,",".join(scaffolds[k]),str(scaffold_lens[k])]) + "\n")
 
+		if not args.CV_path:
+			try:
+				args.CV_path = os.environ['CV_SRC']
+			except KeyError:
+				pass
+
 		if not args.noViz and args.CV_path:
 			for k in sorted(paths.keys())[:40]:
 				aln_file = reconstruction_dir + pnum_to_alnfile[k]

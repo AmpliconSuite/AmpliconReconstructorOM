@@ -1,0 +1,9 @@
+GBM39:
+  path: ./
+  graph: GBM39_amplicon1_graph.txt
+  contigs: GBM39_BSPQI_EXP_REFINEFINAL1.cmap
+  cmap: GBM39_amplicon1_graph_BSPQI.cmap
+  instrument: Irys
+  enzyme: BspQI
+  min_map_len: 10
+  xmaps: ~

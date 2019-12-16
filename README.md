@@ -1,7 +1,7 @@
 ## AmpliconReconstructor (AR)
 Reconstructs complex variation using BioNano optical mapping data
 
-### Prerequisites
+#### Prerequisites
 AR uses Python 2.7 and C++11 (with g++ as the C++ compiler) and a Unix-based OS. AR has been tested on Ubuntu 16.04 and Ubuntu 18.04.
 
 Generally a version of Python including commonly used scientific libraries (such as Anaconda) will be sufficient as the only Python dependencies are Matplotlib 2.0.0 (or higher) and numpy.
@@ -10,7 +10,7 @@ AR accepts breakpoint graphs formatted in the AmpliconArchitect (AA) format. AR 
 
 AR can produce visualizations of the reconstructed amplicons, this requires the CycleViz utility, which is available at https://github.com/jluebeck/CycleViz.
 
-### Installation
+#### Installation
 To install AR, please add the following variables to your .bashrc file (located in your home directory). We provide some bash commands to automate this process.
 
 After cloning/downloading the AR source, **enter the AmpliconReconstructor directory**, `cd AmpliconReconstructor/`, and execute the following.
@@ -22,6 +22,7 @@ After cloning/downloading the AR source, **enter the AmpliconReconstructor direc
 `echo "export SA_SRC=$PWD/SegAligner" >> ~/.bashrc`
 
 - Make the SegAligner binary, run the following
+
 `cd SegAligner`
 
 `make`
@@ -39,16 +40,50 @@ After cloning/downloading the AR source, **enter the AmpliconReconstructor direc
 `echo $SA_SRC`
 
 
-### Usage
+#### Usage
 AR requires a number of inputs. To simplify running AR, we use a wrapper script `AmpliconReconstructorOM.py`, and we use a YAML file to specify the sample-specific files and paths AR will use. Information about creating the YAML file with your inputs (including a template) is located in the section "Preparing your files".
 
 An example invokation of AR is as follows
 
-`python AmpliconReconstructor.py -i samples.yaml --outdir your_directory --run_name your_runname --threads 24 `
+`python AmpliconReconstructorOM.py -i samples.yaml --outdir your_directory --run_name your_runname --threads 24 `
 
 A descripton of other command line arguments can produced by running AR with the `--help` flag.
 
-### Preparing your files
+#### Preparing your files
 Once AA has been run on your NGS data, please convert the resulting "\_graph.txt" file to CMAP form, using the script `generate_cmap.py`.
 
 A sample .yaml template is included in the AR source directory.
+
+The .yaml file should specify the following properties for each entry (sample name)
+
+```
+sample_name:
+	path: /some/path/to/your/samples/ #A path prefix which will be applied to all other input filenames
+	graph: sample_graph.txt #AA-formatted breakpoint graph file. Assumes "graph" is located under "path".
+	contigs: sample_EXP_REFINEFINAL1.cmap #assembled OM contigs. Assumes "contigs" is located under "path".
+	cmap: sample_graph_DLE1.cmap #in-silico CMAP generated from AA-formatted graph file
+	instrument: [Irys/Saphyr]
+	enzyme: [BspQI/DLE1]
+	min_map_len: ~ #set a custom minimum number of labels for SegAligner alignment [advanced option]
+	xmaps: ~ #provide a .xmap-formatted file of alignments between "cmap" and reference genome. Disables SegAligner alignment [advanced option]
+```
+
+#### Running an AR test
+You can test AR on using previously published data. The GBM39 cell line has been previously characterized by AR in [Wu, et al., <em>Nature</em>](https://www.nature.com/articles/s41586-019-1763-5). We have made WGS data and OM data publicly available:
+
+- [GBM39 WGS data](https://www.ncbi.nlm.nih.gov/sra/SRX2006441[accn])
+
+
+- [GBM39 OM data](https://submit.ncbi.nlm.nih.gov/subs/supfiles/SUB6698144/overview) (.cmap file)
+
+You may either generate an AA breakpoint graph from the WGS data yourself (see [PrepareAA](https://github.com/jluebeck/PrepareAA) for details) or we also provide the pre-generated GBM39 AA breakpoint graph file in the AR data repo (AmpliconReconstructor/test_files/ if you do not want to try running AA yourself.
+
+An example .yaml file is provided in the test_files directory. By default AR will not produce CycleViz images unless either the `CV_SRC` bash variable is set (CycleViz installation) or `--CV_path /path/to/CycleViz/` is specified.
+
+To run the test, do 
+
+`cd test_files`
+`python AmpliconReconstructorOM.py -i gbm39_test.yaml --outdir GBM39_AR_output --run_name GBM39_test --threads [num threads]`
+
+### SegAligner
+Documentation coming soon.
