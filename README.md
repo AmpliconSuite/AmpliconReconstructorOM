@@ -56,25 +56,25 @@ A sample .yaml template is included in the AR source directory.
 
 The .yaml file should specify the following properties for each entry (sample name)
 
+
 ```
 sample_name:
+	path: /some/path/to/your/samples/      - Path prefix which will be applied to all other input filenames
+
+	graph: sample_graph.txt                - AA-formatted breakpoint graph file. Assumes "graph" is located under "path".
+
+	contigs: sample_EXP_REFINEFINAL1.cmap  - assembled OM contigs. Assumes "contigs" is located under "path".
+
+	cmap: sample_graph_DLE1.cmap           - in-silico CMAP generated from AA-formatted graph file
+
+	instrument: [Irys/Saphyr]
+
+	enzyme: [BspQI/DLE1]
+
+	min_map_len: ~                         - set a custom minimum number of labels for SegAligner alignment [advanced option]
+
+	xmaps: ~                               - provide a .xmap-formatted file of alignments between "cmap" and reference genome. Disables SegAligner alignment [advanced option]
 ```
-	`path: /some/path/to/your/samples/ ` - Path prefix which will be applied to all other input filenames
-
-	`graph: sample_graph.txt ` - AA-formatted breakpoint graph file. Assumes "graph" is located under "path".
-
-	`contigs: sample_EXP_REFINEFINAL1.cmap ` - assembled OM contigs. Assumes "contigs" is located under "path".
-
-	`cmap: sample_graph_DLE1.cmap ` - in-silico CMAP generated from AA-formatted graph file
-
-	`instrument: [Irys/Saphyr]`
-
-	`enzyme: [BspQI/DLE1]`
-
-	`min_map_len: ~ ` - set a custom minimum number of labels for SegAligner alignment [advanced option]
-
-	`xmaps: ~ ` - provide a .xmap-formatted file of alignments between "cmap" and reference genome. Disables SegAligner alignment [advanced option]
-
 
 #### Running an AR test
 You can test AR on using previously published data. The GBM39 cell line has been previously characterized by AR in [Wu, et al., <em>Nature</em>](https://www.nature.com/articles/s41586-019-1763-5). We have made WGS data and OM data publicly available:
