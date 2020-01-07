@@ -360,7 +360,7 @@ if __name__ == "__main__":
         #extract the unaligned regions given the alignments
         contig_unaligned_regions = get_unaligned_segs(a_dir,aln_flist)
         if not contig_unaligned_regions:
-            print "No large unaligned regions found on segment-aligned contigs"
+            print "No extra-large unaligned regions found after aligning segments to contigs. Skipping reference genome search."
 
         else:
             unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_directory,args.enzyme)

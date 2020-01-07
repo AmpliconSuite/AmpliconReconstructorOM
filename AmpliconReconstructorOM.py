@@ -101,7 +101,7 @@ if __name__ == '__main__':
 	parser.add_argument("-i","--yaml_file",type=str, help="Path YAML samples file in AR-OM format",required=True)
 	parser.add_argument("-s","--samples",nargs='+', help="If only running a subset, -s followed by space separated list of samples names from YAML \
 						dict. If not supplied, all samples are run")
-	parser.add_argument("--outdir",type=str, help="Directory to store results and associated sub-directories",required=True)
+	parser.add_argument("--outdir",type=str, help="Directory to store results and create associated sub-directories",required=True)
 	parser.add_argument("--run_name",type=str, default="", help="Optional name for this set of runs (will create a directory in outdir of this name)")
 	parser.add_argument("--nthreads",default=24, type=int, help="number of threads to use")
 	parser.add_argument("--noAlign",default=False, action='store_true', help="skip alignment step (assume re-using old alignments)")
@@ -118,6 +118,9 @@ if __name__ == '__main__':
 
 	if not args.outdir:
 		args.outdir = os.getcwd()
+
+	elif not os.path.exists(args.outdir):
+		os.mkdir(args.outdir)
 
 	if not args.outdir.endswith("/"): args.outdir+="/" 
 	if not args.run_name.endswith("/"): args.run_name+="/" 

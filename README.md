@@ -1,5 +1,5 @@
 ## AmpliconReconstructor (AR)
-Reconstructs complex variation using BioNano optical mapping data
+Reconstructs complex variation using BioNano optical mapping data. We are currently in the process of publishing this work.
 
 #### Prerequisites
 AR uses Python 2.7 and C++11 (with g++ as the C++ compiler) and a Unix-based OS. AR has been tested on Ubuntu 16.04 and Ubuntu 18.04.
@@ -92,7 +92,39 @@ To run the test, do
 
 `cd test_files`
 
-`python AmpliconReconstructorOM.py -i gbm39_test.yaml --outdir GBM39_AR_output --run_name GBM39_test --threads [num threads]`
+`python $AR_SRC/AmpliconReconstructorOM.py -i gbm39_test.yaml --outdir GBM39_AR_output --run_name GBM39_test --nthreads [num threads]`
 
 ### SegAligner
-Documentation coming soon.
+SegAligner is a multi-threaded C++ aligner for BioNano optical map contigs and in-silico digested genomic reference segments. It additionally supports alignment of contigs to the full reference genome to identify the location of candidate regions of the contigs belonging to regions of the reference. 
+
+
+SegAligner is wrapped inside AmpliconReconstructorOM, but can be invoked on its own. For installation please see the instructions for AR installation above.
+
+
+Command line arguments for SegAligner are as follows - the first two arguments are positional and are paths to (1) the in-silico reference genome CMAP (full or collection of extracted segments) and (2) the BioNano contig CMAP. The most simple command would be:
+
+`SegAligner your_reference_segs.CMAP EXP_REFINEFINAL1.cmap`
+
+However, there are other arguments you will probably want to consider: 
+
+- `-nthreads=1` Sets the number of threads to use (default 1, HIGHLY recommend at least 8 for typical datasets).
+
+- `-prefix=SA_output` Sets the filename output prefix (default "SA_output")).
+
+- `-min_labs=10` Sets the minimum number of labels on a cmap entry in order to attempt alignment (default 10. For Saphyr DLE1 data, recommend 12).
+
+- `-n_detect_scores=500` Set the number of in the E-value distribution (default 500).
+
+- `-gen=2` Set the "generation" of BioNano instrument. "1" = Irys, "2" = Saphyr (default 2).
+
+- `-local` Perform local alignment (default semi-global).
+
+- `-fitting_aln` Performs fitting alignment (conflicts with `-local`). Not recommended for large datasets.
+
+- `-no_tip_aln` Turns off sensitive search for overlapping alignments. 
+
+- `-nl` Turns off banded alignment. Not recommended for large datasets (memory + speed issues).
+
+- `-detection` Used for detection of contig locations in reference genome. Sets `-local_aln`, `-no_tip_aln`, and other internal variables.
+
+

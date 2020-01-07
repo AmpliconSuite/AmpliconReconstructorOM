@@ -394,6 +394,7 @@ map<int,set<int>> run_SA_aln(map<int,vector<float>> cmaps_segs, map<int,vector<f
          } else if (string(argv[i]).rfind("-prefix=", 0) == 0) {
              sample_prefix = string(argv[i]).substr(string(argv[i]).find('=') + 1);
 
+         // unused arg
          } else if (string(argv[i]).rfind("-contig_list=", 0) == 0) {
              contig_list_file = string(argv[i]).substr(string(argv[i]).find('=') + 1);
 
@@ -461,6 +462,8 @@ int main (int argc, char *argv[]) {
     clock_t end;
 
     //positional arguments
+    //#1 - the reference genome cmap file
+    //#2- the cmap file of contigs
     string ref_cmap_file = argv[1];
     string contig_cmap_file = argv[2];
 
