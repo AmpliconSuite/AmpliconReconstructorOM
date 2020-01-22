@@ -11,7 +11,7 @@ AR accepts breakpoint graphs formatted in the AmpliconArchitect (AA) format. AR 
 AR can produce visualizations of the reconstructed amplicons, this requires the CycleViz utility, which is available at https://github.com/jluebeck/CycleViz.
 
 #### Installation
-To install AR, please add the following variables to your .bashrc file (located in your home directory). We provide some bash commands to automate this process.
+To install AR, please add the following variables to your .bashrc file (located in your home directory). We provide some bash commands to automate this process. Typically this installation process can be completed in 5 or less minutes.
 
 After cloning/downloading the AR source, **enter the AmpliconReconstructor directory**, `cd AmpliconReconstructor/`, and execute the following.
 
@@ -84,7 +84,7 @@ You can test AR on using previously published data. The GBM39 cell line has been
 
 - [GBM39 OM data](https://submit.ncbi.nlm.nih.gov/subs/supfiles/SUB6698144/overview) (.cmap file)
 
-You may either generate an AA breakpoint graph from the WGS data yourself (see [PrepareAA](https://github.com/jluebeck/PrepareAA) for details) or we also provide the pre-generated GBM39 AA breakpoint graph file in the AR data repo (AmpliconReconstructor/test_files/ if you do not want to try running AA yourself.
+You may either generate an AA breakpoint graph from the WGS data yourself (see [PrepareAA](https://github.com/jluebeck/PrepareAA) for details) or we also provide the pre-generated GBM39 AA breakpoint graph file in the AR data repo (AmpliconReconstructor/test_files/ if you do not want to try running AA yourself. The following example below, starting from the pre-generated input data should run on a standard desktop in less than 10-15 minutes.
 
 An example .yaml file is provided in the test_files directory. By default AR will not produce CycleViz images unless either the `CV_SRC` bash variable is set (CycleViz installation) or `--CV_path /path/to/CycleViz/` is specified.
 
@@ -93,6 +93,8 @@ To run the test, do
 `cd test_files`
 
 `python $AR_SRC/AmpliconReconstructorOM.py -i gbm39_test.yaml --outdir GBM39_AR_output --run_name GBM39_test --nthreads [num threads]`
+
+In the resulting folder you will see AR output files, including reconstructed cycles, and (if CycleViz specified) visualization plots. Furthermore, the SegAligner and combined alignment for the entire amplicon will be present. The SegAligner files end with `*_aln.txt`. 
 
 ### SegAligner
 SegAligner is a multi-threaded C++ aligner for BioNano optical map contigs and in-silico digested genomic reference segments. It additionally supports alignment of contigs to the full reference genome to identify the location of candidate regions of the contigs belonging to regions of the reference. 
