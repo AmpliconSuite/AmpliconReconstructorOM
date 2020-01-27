@@ -1,5 +1,7 @@
 ## AmpliconReconstructor (AR)
-Reconstructs complex variation using BioNano optical mapping data. We are currently in the process of publishing this work.
+Reconstructs complex variation using BioNano optical mapping data. We are currently in the process of publishing this work. A preprint is available on bioRxiv:
+
+["AmpliconReconstructor: Integrated analysis of NGS and optical mapping resolves the complex structures of focal amplifications in cancer"](https://www.biorxiv.org/content/10.1101/2020.01.22.916031v1)
 
 #### Prerequisites
 AR uses Python 2.7 and C++11 (with g++ as the C++ compiler) and a Unix-based OS. AR has been tested on Ubuntu 16.04 and Ubuntu 18.04.
