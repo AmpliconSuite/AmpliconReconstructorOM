@@ -120,7 +120,7 @@ def parse_xmap(xmapf):
                 fD = dict(zip(head,fields))
                 alnstring = ")" + fD["Alignment"] + "("
                 alnvect = alnstring.rsplit(")(")[1:-1]
-                align_pairs = [(int(x.rsplit(",")[0]),int(x.rsplit(",")[1])) for x in alnvect.rsplit(",")]
+                align_pairs = [(int(x.rsplit(",")[0]),int(x.rsplit(",")[1])) for x in alnvect]
                 for x in ["Confidence","QryLen","RefLen","QryStartPos","QryEndPos","RefStartPos","RefEndPos"]:
                     fD[x] = float(fD[x])
 
