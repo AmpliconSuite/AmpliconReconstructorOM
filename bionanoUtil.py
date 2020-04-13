@@ -107,7 +107,7 @@ def parse_keyfile(keyF_name):
 #parse xmap
 def parse_xmap(xmapf):
     detailFields = ["XmapEntryID","QryContigID","RefContigID","Orientation","Confidence","QryLen","RefLen",
-    "QryStartPos","QryEndPos","RefStartPos","RefEndPos","Alignment"]
+    "QryStartPos","QryEndPos","RefStartPos","RefEndPos"]
     
     xmapPair = {}
     with open(xmapf) as infile:
@@ -119,9 +119,15 @@ def parse_xmap(xmapf):
                 fields = line.rstrip().rsplit()
                 fD = dict(zip(head,fields))
                 alnstring = ")" + fD["Alignment"] + "("
-                #xmapAln[fD["XmapEntryID"]] = alnstring.rsplit(")(")[1:-1]
+                alnvect = alnstring.rsplit(")(")[1:-1]
+                align_pairs = [(int(x),int(y)) for x,y in alnvect.rsplit(",")]
+                for x in ["Confidence","QryLen","RefLen","QryStartPos","QryEndPos","RefStartPos","RefEndPos"]:
+                    fD[x] = float(fD[x])
+
 
                 xmapPair[fD["XmapEntryID"]] = {x:fD[x] for x in detailFields}
+                xmapPair[fD["XmapEntryID"]]["Alignment"] = align_pairs
+
 
     return xmapPair
 
