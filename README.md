@@ -6,7 +6,7 @@ Reconstructs complex variation using BioNano optical mapping data and an NGS-der
 ## Contents:
 1. [Dependencies](#dependencies)
 2. [Installation](#installation)
-3. [Inputs & Outputs](#inputs---outputs)
+3. [Inputs & Outputs](#inputs--outputs)
 4. [Running AR](#usage)
 5. [SegAligner documentation](#segaligner)
 
