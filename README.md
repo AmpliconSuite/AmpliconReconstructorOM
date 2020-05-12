@@ -6,9 +6,9 @@ Reconstructs complex variation using BioNano optical mapping data and an NGS-der
 ## Contents:
 1. [Dependencies](#dependencies)
 2. [Installation](#installation)
-3. [Inputs & Outputs](#inputs-&-outputs)
+3. [Inputs & Outputs](#inputs-outputs)
 4. [Running AR](#usage)
-5. [SegAligner documentation](#segaligner-documentation)
+5. [SegAligner documentation](#segaligner)
 
 ## Dependencies
 AR uses Python 2.7 and C++11 (with g++ as the compiler) and a Unix-based OS. Both of these are standard in any modern version of Linux. AR has been tested on Ubuntu 16.04 and Ubuntu 18.04.
