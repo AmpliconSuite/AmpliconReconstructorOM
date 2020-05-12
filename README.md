@@ -132,8 +132,7 @@ e) `[sample_name]_data.json` - A `json` representation of the unresolved reconst
 
 f)  `[sample_name]_run.log` - Verbose output about reconstruction process.
 
-  
-
+The `visualizations/` folder will contain CycleViz visulazations of the reconstructed genomic paths specified in `[sample_name]_paths_cycles.txt`. By default AR will not produce CycleViz images unless either the `$CV_SRC` bash variable is set ([CycleViz installation](#installation)) or `--CV_path /path/to/CycleViz/` is manually  specified.
 ## Usage
 AR requires a number of inputs. To simplify running AR, we use a wrapper script `AmpliconReconstructorOM.py`, and we use a YAML file to specify the sample-specific files and paths AR will use. Information about creating the YAML file with your inputs (including a template) is located in the section "Preparing your files".
 
@@ -164,7 +163,7 @@ This will output a file `GBM39_amplicon1_graph.txt` which can be used in the nex
 
 Starting from the pre-generated input data should run on a standard desktop in less than 10-15 minutes.
 
-An example .yaml file is provided in the test_files directory. By default AR will not produce CycleViz images unless either the `CV_SRC` bash variable is set (CycleViz installation) or `--CV_path /path/to/CycleViz/` is specified.
+An example .yaml file is provided in the test_files directory.
 
 To run the test, do 
 
