@@ -52,6 +52,7 @@ import heapq
 import copy
 import os
 import logging
+import global_names
 
 try:
     DATA_REPO = os.environ["AA_DATA_REPO"]
@@ -62,11 +63,7 @@ if DATA_REPO == '.' or DATA_REPO == '':
     logging.warning("#TIME " + '%.3f\t'%clock() + " AA_DATA_REPO not set or empy. Setting to working directory")
     DATA_REPO = '.'
 
-try:
-    REF = [l.strip().split()[0] for l in open(DATA_REPO + "/reference.txt")][0]
-except:
-    logging.warning("#TIME " + '%.3f\t'%clock() + " Unable to find reference in $AA_DATA_REPO/reference.txt. Setting to working directory.")
-    REF = ''
+REF = global_names.REF
 
 REF_files = defaultdict(lambda: '', {})
 try:
