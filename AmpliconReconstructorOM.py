@@ -90,18 +90,22 @@ def compute_path_lengths(segs,paths):
 # 	subprocess.call(cmd,shell=True)
 
 def run_visualization(CV_path, cycles_file, cycleNum, contigs, segs, graph, aln, sname, label_segs=True, subset_genes=True):
-	optionalFlagString = ""
+	optionalFlagStringCV = ""
+	optionalFlagStringLV = ""
 	if label_segs:
-		optionalFlagString+="--label_segs "
+		optionalFlagStringCV+="--label_segs "
+		optionalFlagStringLV+="--label_segs id "
 
 	if subset_genes:
 		gspath = "--gene_subset_file " + CV_path + "/Bushman_group_allOnco_May2018.tsv "
-		optionalFlagString+=gspath
+		optionalFlagStringCV+=gspath
+		optionalFlagStringLV+=gspath
+
 	
-	cmd = "python {}/CycleViz.py --om_alignments {}--cycles_file {} --cycle {} -c {} -s {} -g {} -i {} --sname {}".format(CV_path,optionalFlagString,cycles_file,cycleNum,contigs,segs,graph,aln,sname) 
+	cmd = "python {}/CycleViz.py --om_alignments {}--cycles_file {} --cycle {} -c {} -s {} -g {} -i {} --sname {}".format(CV_path,optionalFlagStringCV,cycles_file,cycleNum,contigs,segs,graph,aln,sname)
 	subprocess.call(cmd,shell=True)
 
-	cmd = "python {}/LinearViz.py --om_alignments {}--cycles_file {} --path {} -c {} -s {} -g {} -i {} --sname {}".format(CV_path,optionalFlagString,cycles_file,cycleNum,contigs,segs,graph,aln,sname) 
+	cmd = "python {}/LinearViz.py --om_alignments {}--cycles_file {} --path {} -c {} -s {} -g {} -i {} --sname {}".format(CV_path,optionalFlagStringLV,cycles_file,cycleNum,contigs,segs,graph,aln,sname)
 	subprocess.call(cmd,shell=True)
 
 ###"MAIN"###
@@ -135,7 +139,7 @@ if __name__ == '__main__':
 	if not args.run_name.endswith("/"): args.run_name+="/" 
 	run_path = args.outdir + args.run_name
 	if not os.path.exists(run_path): os.mkdir(run_path) 
-	logging.basicConfig(filename=run_path + "run.log",level=logging.INFO)
+	logging.basicConfig(filename=run_path + "run.log",level=logging.INFO, filemode = 'w')
 	logging.info(str(datetime.datetime.now()))
 	logging.info("Starting logging")
 
@@ -181,13 +185,13 @@ if __name__ == '__main__':
 			min_map_len = sample_dict["min_map_len"]
 
 		except KeyError:
-			em = "YAML file does not contain all required properties for " + i + ", skipping."
+			em = "YAML file does not contain properties for " + i + ". Skipping sample."
 			sys.stderr.write(em + "\n")
 			logging.error(em)
 			continue
 
-		if any([sample_path,segs_path,contigs_path,graph_path,inst,enzyme,min_map_len]) == None:
-			em = "Empty property in YAML file for " + i + ", skipping."
+		if any([sample_path,segs_path,contigs_path,graph_path,inst,enzyme]) == None:
+			em = "None-type in required property in YAML file for " + i + ". Skipping sample."
 			sys.stderr.write(em + "\n")
 			logging.error(em)
 			continue
@@ -212,7 +216,7 @@ if __name__ == '__main__':
 		if os.path.exists(idgf):
 			if not args.no_clear:
 				print("Removing old *includes_detected.txt graph file: " + idgf)
-				call("rm " + idgf,shell=True)
+				subprocess.call("rm " + idgf,shell=True)
 
 		#check if we're converting an xmap:
 		use_xmap = False

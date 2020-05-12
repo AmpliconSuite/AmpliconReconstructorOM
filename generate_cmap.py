@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """
 Jens Luebeck
@@ -35,7 +35,7 @@ def fasta_reader(fasta_file,chroms_to_get,getAll = False):
 	return fasta_dict
 
 def rev_complement(seq):
-    return ''.join([complementary_nucleotide[a] for a in seq[::-1]])
+	return ''.join([complementary_nucleotide[a] for a in seq[::-1]])
 
 def read_graph(graphF):
 	with open(graphF) as infile:
@@ -60,23 +60,23 @@ def read_graph(graphF):
 	return segSeqL,chroms_to_get
 
 def read_bed(bedfile):
-    bed_dict = defaultdict(list)
-    with open(bedfile) as infile:
-        for line in infile:
-            if not line.startswith("#"):
-                fields = line.rstrip().rsplit()
-                bed_dict[fields[0]].append((int(fields[1]),int(fields[2])))
+	bed_dict = defaultdict(list)
+	with open(bedfile) as infile:
+		for line in infile:
+			if not line.startswith("#"):
+				fields = line.rstrip().rsplit()
+				bed_dict[fields[0]].append((int(fields[1]),int(fields[2])))
     
 
-    chroms_to_get = bed_dict.keys()
-    segSeqL = []
-    for chrom,region_list in bed_dict.iteritems():
-    	for p in region_list:
-    		pstring = str(p[0])+ "-|" + str(p[1]) + "+"
-    		segSeqL.append((pstring,chrom,p[0]-1,p[1]-1))
+	chroms_to_get = bed_dict.keys()
+	segSeqL = []
+	for chrom,region_list in bed_dict.iteritems():
+		for p in region_list:
+			pstring = str(p[0])+ "-|" + str(p[1]) + "+"
+			segSeqL.append((pstring,chrom,p[0]-1,p[1]-1))
 
     
-    return segSeqL,chroms_to_get
+	return segSeqL,chroms_to_get
 
 def segsToSeq(segSeqL,seqD):
 	segSeqD = {}
@@ -86,7 +86,7 @@ def segsToSeq(segSeqL,seqD):
 	return segSeqD
 
 def makeCMAP(outprefix, segSeqL, segSeqD, enzyme, regExpEnzTup, minLabel, minSize):
-	print "Generating CMAP for enzyme " + enzyme
+	print("Generating CMAP for enzyme " + enzyme)
 	cmap_header = "# CMAP File Version:	0.1\n# Label Channels:	1\n# Nickase Recognition Site 1:	" + enzyme + "\n# Enzyme1:	" + enzyme + "\n# Number of Consensus Nanomaps:	" + str(len(segSeqD)) +"\n#h CMapId	ContigLength	NumSites	SiteID	LabelChannel	Position	StdDev	Coverage	Occurrence\n#f int	float	int	int	int	float	float	int	int\n"
 	key_header = "# CMAP = " + args.output + "_key.txt\n# filter: Minimum Labels = " + str(minLabel) + "\n# filter: Minimum Size (Kb) = " + str(minSize/1000.0) + "\n"
 	regExpEnz,offset = regExpEnzTup
@@ -171,7 +171,7 @@ if not args.output:
 		args.output = ".".join(args.ref.rsplit(".")[:-1])
 
 outprefix = args.output
-if not args.enzyme in args.output:
+if args.enzyme not in args.output:
 	outprefix = outprefix + "_" + args.enzyme
 
 regExpEnzTup = enzymeSequences[args.enzyme]

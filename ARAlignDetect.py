@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """
 Jens Luebeck
@@ -165,7 +165,7 @@ def rewrite_graph_and_CMAP(segs_fname,graphfile,bpg_list,enzyme,outdir):
 
             outfile.write(line)
 
-    print "Creating new CMAP"
+    print("Creating new CMAP")
     #seg_outname = os.path.splitext(segs_fname)[0] + "_includes_detected"
     sbase = os.path.splitext(os.path.basename(segs_fname))[0]
     seg_outname = outdir + sbase + "_includes_detected"
@@ -182,7 +182,7 @@ def detections_to_seg_alignments(w_dir,aln_files,ref_file,unaligned_cid_d,unalig
     bpg_list = []
     aln_num = 0
     u_id_lookup = {}
-    print "aln_files len",len(aln_files)
+    print("aln_files len",len(aln_files))
     for f in aln_files:
         f_fields = os.path.splitext(f)
         f_fields = os.path.splitext(f)
@@ -310,7 +310,7 @@ if __name__ == "__main__":
         parser.error("--swap_xmap_RQ requires --xmap [your_xmap_file.xmap]. Are you supplying your own alignments?")
 
    
-    print "results will be stored in " + args.output_directory
+    print("results will be stored in " + args.output_directory)
 
     if not args.output_directory.endswith("/"): args.output_directory+="/"
     
@@ -328,7 +328,7 @@ if __name__ == "__main__":
 
     #Do alignment with SegAligner if not using own XMAP
     if not args.xmap:
-        print "Doing segment alignments with SegAligner"
+        print("Doing segment alignments with SegAligner")
         arg_list = ["-nthreads=" + str(nthreads),"-min_labs=" + str(min_map_len),"-prefix=" + a_dir + args.output_prefix, "-gen=" + gen]
         # #CONTIG SEG ALIGNMENTS
         # print arg_list
@@ -336,7 +336,7 @@ if __name__ == "__main__":
 
         #get the scoring thresholds.
         if args.plot_scores:
-            print "Plotting score distributions"
+            print("Plotting score distributions")
             make_score_plots(a_dir + args.output_prefix + "_all_scores.txt",args.output_directory)
 
     #if xmap supplied, read it and re-write the alignments into the alignments/ directory
@@ -351,16 +351,16 @@ if __name__ == "__main__":
     #Use no_ref_search if you do not wish to detect additional segments on the set of contigs 
     # with alignments to your breakpoint graph segments.
     if args.no_ref_search:
-        print "REF SEARCH OFF, SKIPPING REF SEARCH STEP"
+        print("REF SEARCH OFF, SKIPPING REF SEARCH STEP")
 
     else:
-        print "Doing unaligned region detection"
+        print("Doing unaligned region detection")
          #extract aligned regions
         aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and "flipped" not in x and "_ref_" not in x and "rg" not in x]
         #extract the unaligned regions given the alignments
         contig_unaligned_regions = get_unaligned_segs(a_dir,aln_flist)
         if not contig_unaligned_regions:
-            print "No extra-large unaligned regions found after aligning segments to contigs. Skipping reference genome search."
+            print("No extra-large unaligned regions found after aligning segments to contigs. Skipping reference genome search.")
 
         else:
             unaligned_label_trans,unaligned_region_filename,unaligned_cid_d = write_unaligned_cmaps(contig_unaligned_regions,args.output_directory,args.enzyme)
@@ -373,7 +373,7 @@ if __name__ == "__main__":
 
             aln_flist = [x for x in os.listdir(a_dir) if "_aln.txt" in x and unaligned_fname_prefix in x]
             if aln_flist:
-                print "Found new segments, re-writing graph and CMAP"
+                print("Found new segments, re-writing graph and CMAP")
                 bpg_list = detections_to_seg_alignments(a_dir,aln_flist,ref_genome_file,unaligned_cid_d,unaligned_label_trans,index_start,args.output_prefix)
                 rewrite_graph_and_CMAP(args.segs,args.g,bpg_list,args.enzyme,args.output_directory)
                 #remove "SA_ref_" files (temporary alignments)
@@ -381,4 +381,4 @@ if __name__ == "__main__":
 
             subprocess.call("rm " + args.output_directory + "contig_unaligned_regions.cmap", shell=True)
 
-    print "Completed " + time.ctime(time.time()) + "\n"
+    print("Completed " + time.ctime(time.time()) + "\n")

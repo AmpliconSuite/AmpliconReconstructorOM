@@ -21,6 +21,8 @@ A version of Python including commonly used scientific libraries (such as Anacon
  - PyYAML
     * `pip install PyYAML`
 
+AR requires that the [AmpliconArchitect (AA)](https://github.com/jluebeck/AmpliconArchitect) data repo be downloaded and the `$AA_DATA_REPO` bash variable must be set. If you already have AA installed, no action is required. Otherwise, instructions on setting the data repo are available [here](https://github.com/jluebeck/AmpliconArchitect#data-repositories).
+
 AR can produce optional visualizations of the reconstructed amplicons, this requires the 
 [CycleViz](https://github.com/jluebeck/CycleViz). Instructions for installing CycleViz are included below, but you may want to satisfy the dependencies now.
  
