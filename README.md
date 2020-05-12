@@ -18,6 +18,8 @@ A version of Python including commonly used scientific libraries (such as Anacon
     * To ensure you meet the version dependency for Matplotlib, do
 `pip install --upgrade matplotlib`.
  - numpy
+ - PyYAML
+    * `pip install PyYAML`
 
 AR can produce optional visualizations of the reconstructed amplicons, this requires the 
 [CycleViz](https://github.com/jluebeck/CycleViz). Instructions for installing CycleViz are included below, but you may want to satisfy the dependencies now.
