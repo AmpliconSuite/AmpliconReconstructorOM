@@ -148,10 +148,21 @@ You can test AR on using previously published data. The GBM39 cell line has been
 
 - [GBM39 WGS data](https://www.ncbi.nlm.nih.gov/sra/SRX2006441[accn])
 
-
 - [GBM39 OM data](https://submit.ncbi.nlm.nih.gov/subs/supfiles/SUB6698144/overview) (.cmap file)
 
-You may either generate an AA breakpoint graph from the WGS data yourself (see [PrepareAA](https://github.com/jluebeck/PrepareAA) for details) or we also provide the pre-generated GBM39 AA breakpoint graph file in the AR data repo (AmpliconReconstructor/test_files/ if you do not want to try running AA yourself. The following example below, starting from the pre-generated input data should run on a standard desktop in less than 10-15 minutes.
+You may either generate an AA breakpoint graph from the WGS data yourself (see [PrepareAA](https://github.com/jluebeck/PrepareAA) for details) or we also provide the pre-generated GBM39 AA breakpoint graph file in the AR data repo (`AmpliconReconstructor/test_files/`). 
+
+- **If starting from BAM file:** 
+
+If you wish to generate the AA breakpoint graph from scratch, you can use PrepareAA on the downloaded BAM file from SRA. An example command is below. This may take 1-2 hours on a standard desktop.
+
+`/path/to/PrepareAA/PrepareAA.py -s GBM39  -t 8 --cnvkit_dir /path/to/cnvkit.py --rscript_path /path/to/Rscript --sorted_bam FF18.cs.bam --run_AA`
+
+This will output a file `GBM39_amplicon1_graph.txt` which can be used in the next step.
+
+- **If starting from OM data + pre-generated graph:** 
+
+Starting from the pre-generated input data should run on a standard desktop in less than 10-15 minutes.
 
 An example .yaml file is provided in the test_files directory. By default AR will not produce CycleViz images unless either the `CV_SRC` bash variable is set (CycleViz installation) or `--CV_path /path/to/CycleViz/` is specified.
 
