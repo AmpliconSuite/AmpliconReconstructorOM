@@ -1,10 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """
 Jens Luebeck
 UC San Diego, Bioinformatics & Systems Biology
 jluebeck@ucsd.edu
 """
+
+__author__ = "Jens Luebeck"
+__version__ = "1.0"
 
 import os
 import sys
@@ -28,7 +31,13 @@ def run_ARAD(segs,contigs,graph,enzyme,min_map_len,inst,sname,outdir,optionalFla
 	# psc=""
 	# if plot_scores:
 	# 	psc+="--plot_scores "
-	cmd = "python {}/ARAlignDetect.py {}-s {} -c {} -g {} -t {} -e {} --min_map_len {} -i {} -o {} -d {}".format(AR_SRC,optionalFlagString,segs,contigs,graph,nthreads,enzyme,min_map_len,inst,sname,outdir)
+	if min_map_len == None:
+		cmd = "python {}/ARAlignDetect.py {}-s {} -c {} -g {} -t {} -e {} -i {} -o {} -d {}".format(
+			AR_SRC, optionalFlagString, segs, contigs, graph, nthreads, enzyme, inst, sname, outdir)
+
+	else:
+		cmd = "python {}/ARAlignDetect.py {}-s {} -c {} -g {} -t {} -e {} --min_map_len {} -i {} -o {} -d {}".format(AR_SRC,optionalFlagString,segs,contigs,graph,nthreads,enzyme,min_map_len,inst,sname,outdir)
+
 	logging.info("ARAD CMD:")
 	logging.info(cmd)
 	subprocess.call(cmd, shell=True)
@@ -163,6 +172,7 @@ if __name__ == '__main__':
 		sample_dict = sample_data[i]
 		try:
 			sample_path = sample_dict["path"]
+			if not sample_path.endswith("/"): sample_path+="/"
 			segs_path = sample_path + sample_dict["cmap"]
 			contigs_path = sample_path + sample_dict["contigs"]
 			graph_path = sample_path + sample_dict["graph"]
@@ -190,7 +200,7 @@ if __name__ == '__main__':
 		logging.info("Making directories")
 		for curr_dir in [rpi,alignments_dir,reconstruction_dir,visualizations_dir]:
 			if not os.path.exists(curr_dir): os.mkdir(curr_dir) 
-			if not args.no_clear and not (curr_dir == alignments_dir and args.noAlign):
+			if not args.no_clear and not (curr_dir == alignments_dir and args.noAlign) and not curr_dir == rpi:
 				logging.info("Clearing old results")
 				subprocess.call("rm " + curr_dir + "* 2>/dev/null",shell=True)
 
@@ -242,7 +252,7 @@ if __name__ == '__main__':
 			logging.info("Using _includes_detected files:\n" + idgf + "\n" + idsf)
 
 		#RUN OMPF
-		print "Reconstructing amplicon " + i
+		print("Reconstructing amplicon " + i)
 		optionalFlagString = ""
 		if args.noImpute:
 			optionalFlagString+="--noImpute "
