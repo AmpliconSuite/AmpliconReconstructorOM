@@ -13,21 +13,21 @@ Reconstructs complex variation using BioNano optical mapping data and an NGS-der
 ## Dependencies
 AR uses Python 2.7 and C++11 (with g++ as the compiler) and a Unix-based OS. Both of these are standard in any modern version of Linux. AR has been tested on Ubuntu 16.04 and Ubuntu 18.04.
 
-A version of Python including commonly used scientific libraries (such as Anaconda) will be sufficient as the only Python dependencies are
+AR has the following Python library dependencies:
  - Matplotlib 2.0.0 (or higher)
     * To ensure you meet the version dependency for Matplotlib, do
 `pip install --upgrade matplotlib`.
- - numpy
- - PyYAML
+- numpy
+- PyYAML
     * `pip install PyYAML`
+- intervaltree
+    * `pip install intervaltree`     
 
 AR requires that the [AmpliconArchitect (AA)](https://github.com/jluebeck/AmpliconArchitect) data repo be downloaded and the `$AA_DATA_REPO` bash variable must be set. If you already have AA installed, no action is required. Otherwise, instructions on setting the data repo are available [here](https://github.com/jluebeck/AmpliconArchitect#data-repositories).
 
 AR can produce optional visualizations of the reconstructed amplicons, this requires the 
-[CycleViz](https://github.com/jluebeck/CycleViz). Instructions for installing CycleViz are included below, but you may want to satisfy the dependencies now.
- 
-- Python `intervaltree` library
-    * `pip install intervaltree`     
+[CycleViz](https://github.com/jluebeck/CycleViz). Instructions for installing CycleViz are included below, but you may want to satisfy the optional font installation now.
+
 - ttf-mscorefonts library (optional, but recommened)
     * `sudo apt-get install ttf-mscorefonts-installer`
 

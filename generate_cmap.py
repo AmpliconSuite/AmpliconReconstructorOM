@@ -131,9 +131,9 @@ parser.add_argument("-e", "--enzyme", help="restriction enzyme: BspQI, BbvCI, Bs
 parser.add_argument("-l", "--labels", type=int, help="minimum number of labels in reported CMAP, default 0",default=0)
 parser.add_argument("-s", "--size", type=float, help="minimum map size in reported CMAP, default 0",default=0)
 group = parser.add_mutually_exclusive_group(required=True)
-group.add_argument("-g", "--graph", help="breakpoint graph .txt file, if not supplied, --make_ref or --bed must be supplied")
+group.add_argument("-g", "--graph", help="breakpoint graph .txt file, if not supplied, --makeRef or --bed must be supplied")
 group.add_argument("--makeRef", help="Make CMAP from entire reference fasta",action='store_true')
-group.add_argument("-b", "--bed", help="breakpoint graph bed file, it not supplied, --make_ref or --graph must be supplied")
+group.add_argument("-b", "--bed", help="breakpoint graph bed file, it not supplied, --makeRef or --graph must be supplied")
 
 args = parser.parse_args()
 
@@ -168,7 +168,7 @@ if not args.output:
 		args.output = ".".join(args.bed.rsplit(".")[:-1])
 
 	else:
-		args.output = ".".join(args.ref.rsplit(".")[:-1])
+		args.output = ".".join(args.ref.rsplit("/")[-1].rsplit(".")[:-1])
 
 outprefix = args.output
 if args.enzyme not in args.output:

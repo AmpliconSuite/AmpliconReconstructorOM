@@ -2,3 +2,4 @@ SegAligner/.idea/*
 SegAligner/cmake-build-debug/*
 *.pyc
 SegAligner/*.o
+.idea/

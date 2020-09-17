@@ -6,6 +6,7 @@ K562_Irys:
   instrument: Irys
   enzyme: BspQI
   min_map_len: 10
+  reference_build: hg19
   xmaps: ~
 
 GBM39:
@@ -16,6 +17,7 @@ GBM39:
   instrument: Irys
   enzyme: BspQI
   min_map_len: 10
+  reference_build: hg19
   xmaps: ~
 
 HK301: 
@@ -26,6 +28,7 @@ HK301:
   instrument: Irys
   enzyme: BspQI
   min_map_len: 10
+  reference_build: hg19
   xmaps: ~
 
 K562_Saphyr:
@@ -36,6 +39,7 @@ K562_Saphyr:
   instrument: Saphyr
   enzyme: DLE1
   min_map_len: 12
+  reference_build: hg19
   xmaps: ~
 
 HCC827_FF21A1:
@@ -46,6 +50,7 @@ HCC827_FF21A1:
   instrument: Saphyr
   enzyme: DLE1
   min_map_len: 12
+  reference_build: hg19
   xmaps: ~
 
 HCC827_FF21A2-6:
@@ -56,6 +61,7 @@ HCC827_FF21A2-6:
   instrument: Saphyr
   enzyme: DLE1
   min_map_len: 12
+  reference_build: hg19
   xmaps: ~
 
 H460:
@@ -66,6 +72,7 @@ H460:
   instrument: Saphyr
   enzyme: DLE1
   min_map_len: 12
+  reference_build: hg19
   xmaps: ~
 
 T47D:
@@ -76,6 +83,7 @@ T47D:
   instrument: Saphyr
   enzyme: DLE1
   min_map_len: 12
+  reference_build: hg19
   xmaps: ~
 
 CAKI2: 
@@ -86,4 +94,5 @@ CAKI2:
   instrument: Saphyr
   enzyme: DLE1
   min_map_len: 12
+  reference_build: hg19
   xmaps: ~

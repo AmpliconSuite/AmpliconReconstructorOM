@@ -6,4 +6,5 @@ GBM39:
   instrument: Irys
   enzyme: BspQI
   min_map_len: 10
+  reference_build: hg19
   xmaps: ~

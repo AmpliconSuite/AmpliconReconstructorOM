@@ -44,10 +44,10 @@
 ##This is a suite to load hg19 genome, genes, exons, repeat content and perform operations on this genome, compare variants
 
 from bisect import bisect_left
-from sets import Set
+#from sets import Set
 from collections import defaultdict
 from time import clock
-import pysam
+# import pysam
 import heapq
 import copy
 import os
@@ -74,13 +74,14 @@ except:
 
 
 class fake_fasta(object):
-    def fetch(self, a=None, b=0, c=0):
-        return ''.join(['N' for i in range(c - b + 1)])
-try:
-    fa_file = pysam.Fastafile(DATA_REPO + '/' + REF + '/' + REF_files['fa_file'])
-except:
-    logging.warning("#TIME " + '%.3f\t'%clock() + " Unable to open fasta file: \"" + DATA_REPO + '/' + REF + '/' + REF_files['fa_file'] + "\". Reference sequences will be set to N.")
-    fa_file = fake_fasta()
+    pass
+#     def fetch(self, a=None, b=0, c=0):
+#         return ''.join(['N' for i in range(c - b + 1)])
+# try:
+#     fa_file = pysam.Fastafile(DATA_REPO + '/' + REF + '/' + REF_files['fa_file'])
+# except:
+#     logging.warning("#TIME " + '%.3f\t'%clock() + " Unable to open fasta file: \"" + DATA_REPO + '/' + REF + '/' + REF_files['fa_file'] + "\". Reference sequences will be set to N.")
+#     fa_file = fake_fasta()
 
 chrLen_filename = DATA_REPO + '/' + REF + '/' + REF_files['chrLen_file']
 duke35_filename = DATA_REPO + '/' + REF + '/' + REF_files['duke35_filename']
@@ -161,9 +162,9 @@ class interval(object):
         file_format='', bamfile=None, info=''):
         self.info = ""
         self.file_format = file_format
-        if type(line) == pysam.AlignedRead or type(line) == pysam.AlignedSegment:
-            self.load_pysamread(line, bamfile)
-        elif start == -1:
+        # if type(line) == pysam.AlignedRead or type(line) == pysam.AlignedSegment:
+        #     self.load_pysamread(line, bamfile)
+        if start == -1:
             self.load_line(line, file_format)
         elif end == -1:
             self.load_pos(line, start, start, strand)
@@ -220,7 +221,7 @@ class interval(object):
 
     def load_pysamread(self, line, bamfile):
         if bamfile is None:
-            raise "Interval of pysam AlignedRead without bamfile"
+            raise("Interval of pysam AlignedRead without bamfile")
         self.chrom = line.reference_name
         self.start = line.reference_start
         self.end = line.reference_end
@@ -251,7 +252,8 @@ class interval(object):
             return '\t'.join(map(str, [self.chrom, self.start, self.end, self.info]))
 
     def gc_content(self):
-        seq = fa_file.fetch(self.chrom, self.start, self.end)
+        # seq = fa_file.fetch(self.chrom, self.start, self.end)
+        seq = ""
         # if 'G' in seq:
         #     print seq, seq.count('G'), seq.count('C'), float(seq.count('G') + seq.count('C')) / len(seq)
         #     exit()
@@ -263,7 +265,8 @@ class interval(object):
         if new_fa_file is not None:
             seq = new_fa_file.fetch(self.chrom, self.start, self.end)
         else:
-            seq = fa_file.fetch(self.chrom, self.start, self.end)
+            #seq = fa_file.fetch(self.chrom, self.start, self.end)
+            seq = ""
         if self.strand == 1:
             return seq
         else:
@@ -396,9 +399,10 @@ class interval(object):
             return 1.0
 
     def num_unmasked(self):
-        if self.chrom not in fa_file.references:
-            return self.size()
-        seq = fa_file.fetch(self.chrom, self.start, self.end)
+        seq = ""
+        # if self.chrom not in fa_file.references:
+        #     return self.size()
+        # seq = fa_file.fetch(self.chrom, self.start, self.end)
         return len([c for c in seq if c in 'ACGT'])
 
     def segdup_uniqueness(self):
@@ -448,7 +452,7 @@ class interval_list(list, object):
                 ci = a
                 cl = []
                 if ai != sum([len(m[1]) for m in ml]) + 1:
-                    print "divergent", ai, str(a)
+                    print("divergent", ai, str(a))
                     exit()
             ci = ci.merge(a, extend)
             cl.append(a)
@@ -459,7 +463,6 @@ class interval_list(list, object):
     def repeats(self, count=1):
         activeq = []
         if activeq is None:
-            print "h1"
             exit()
         jinterval = None
         ilist = []
@@ -467,12 +470,10 @@ class interval_list(list, object):
             while len(activeq) > 0 and not a.intersects(activeq[0][1]):
                 heapq.heappop(activeq)
                 if activeq is None:
-                    print "h2"
                     exit()
             if len(activeq) < count and jinterval is not None:
                 ilist.append((jinterval, copy.copy(aq)))
                 if activeq is None:
-                    print "h3"
                     exit()
                 jinterval = None
             heapq.heappush(activeq, (-1 * a.start, a))
@@ -563,7 +564,7 @@ class interval_list(list, object):
     def get_repeat_content(self):
         try:
             duke35_file = open(duke35_filename)
-            print "counting repeats", clock()
+            print("counting repeats", clock())
             self.sort()
             sum_duke = [0.0 for i in self]
             len_duke = [0.0 for i in self]
@@ -674,7 +675,7 @@ class interval_list(list, object):
                 continue
             if i in hlist and iprev.chrom == i.chrom:
                 breaks.append((offset[i][0] - hscale * hgap / 2, ':', i.chrom))
-                print str(i), str(iprev), i in hlist, iprev.chrom == i.chrom
+                print(str(i), str(iprev), i in hlist, iprev.chrom == i.chrom)
             elif i in hlist and iprev.chrom != i.chrom:
                 breaks.append((offset[i][0] - hscale * hgap / 2, '--', i.chrom))
             elif i in vlist and iprev in hlist:
