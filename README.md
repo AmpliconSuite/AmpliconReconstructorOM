@@ -1,7 +1,9 @@
 # AmpliconReconstructor (AR)
-Reconstructs complex variation using BioNano optical mapping data and an NGS-derived breakpoint graph. A preprint of the publication associated with this work is available on bioRxiv:
+Reconstructs complex variation using BioNano optical mapping data and an NGS-derived breakpoint graph. The publication related to this work has been published in *Nature Communications*. If using this tool please cite the following: 
 
-["AmpliconReconstructor: Integrated analysis of NGS and optical mapping resolves the complex structures of focal amplifications in cancer"](https://www.biorxiv.org/content/10.1101/2020.01.22.916031v1)
+Luebeck et al., ["AmpliconReconstructor integrates NGS and optical mapping to resolve the complex structures of focal amplifications"](https://www.nature.com/articles/s41467-020-18099-z), *Nature Communications*, 2020.
+
+**September, 2020 Update:** Version 1.01 is now available, which adds support for GRCh38-based analysis.
 
 ## Contents:
 1. [Dependencies](#dependencies)
