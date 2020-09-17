@@ -94,21 +94,23 @@ The .yaml file should specify the following properties for each entry (`sample_n
 
 ```
 sample_name:
-	path: /some/path/to/your/samples/      - Path prefix which will be applied to all other input filenames
+    path: /some/path/to/your/samples/      - Path prefix which will be applied to all other input filenames
 
-	graph: sample_graph.txt                - AA-formatted breakpoint graph file. Assumes "graph" is located under "path".
+    graph: sample_graph.txt                - AA-formatted breakpoint graph file. Assumes "graph" is located under "path".
 
-	contigs: sample_EXP_REFINEFINAL1.cmap  - assembled OM contigs. Assumes "contigs" is located under "path".
+    contigs: sample_EXP_REFINEFINAL1.cmap  - assembled OM contigs. Assumes "contigs" is located under "path".
 
-	cmap: sample_graph_DLE1.cmap           - in-silico CMAP generated from AA-formatted graph file
+    cmap: sample_graph_DLE1.cmap           - in-silico CMAP generated from AA-formatted graph file
+    
+    instrument: [Irys/Saphyr]
 
-	instrument: [Irys/Saphyr]
+    enzyme: [BspQI/DLE1]
 
-	enzyme: [BspQI/DLE1]
+    reference_build: [hg19/GRCh38]         - Specify either hg19 or GRCh38 reference build used.
 
-	min_map_len: ~                         - [Optional] set a custom minimum number of labels for SegAligner alignment (advanced option)
+    min_map_len: ~                         - [Optional] set a custom minimum number of labels for SegAligner alignment (advanced option)
 
-	xmaps: ~                               - [Optional] provide a .xmap-formatted file of alignments between "cmap" and reference genome. Disables SegAligner alignment (advanced option)
+    xmaps: ~                               - [Optional] provide a .xmap-formatted file of alignments between "cmap" and reference genome. Disables SegAligner alignment (advanced option)
 ```
 
 ### Outputs:
