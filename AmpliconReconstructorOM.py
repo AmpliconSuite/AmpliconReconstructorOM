@@ -98,19 +98,19 @@ def run_visualization(CV_path, cycles_file, cycleNum, contigs, segs, graph, aln,
     optionalFlagStringCV = ""
     optionalFlagStringLV = ""
     if label_segs:
-        optionalFlagStringCV += "--label_segs "
+        optionalFlagStringCV += "--label_segs numbers"
         optionalFlagStringLV += "--label_segs id "
 
     if subset_genes:
-        gspath = "--gene_subset_file " + CV_path + "/Bushman_group_allOnco_May2018.tsv "
+        gspath = "--gene_subset_file Bushman"
         optionalFlagStringCV += gspath
         optionalFlagStringLV += gspath
 
-    cmd = "python {}/CycleViz.py --om_alignments {}--cycles_file {} --cycle {} -c {} -om_segs {} -g {} -i {} --sname {}".format(
+    cmd = "python {}/CycleViz.py --om_alignments {}--cycles_file {} --cycle {} -c {} -om_segs {} -g {} -i {} --outname {}".format(
         CV_path, optionalFlagStringCV, cycles_file, cycleNum, contigs, segs, graph, aln, sname)
     subprocess.call(cmd, shell=True)
 
-    cmd = "python {}/LinearViz.py --om_alignments {}--cycles_file {} --path {} -c {} -om_segs {} -g {} -i {} --sname {}".format(
+    cmd = "python {}/LinearViz.py --om_alignments {}--cycles_file {} --path {} -c {} -om_segs {} -g {} -i {} --outname {}".format(
         CV_path, optionalFlagStringLV, cycles_file, cycleNum, contigs, segs, graph, aln, sname)
     subprocess.call(cmd, shell=True)
 
