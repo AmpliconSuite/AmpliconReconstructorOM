@@ -98,11 +98,11 @@ def run_visualization(CV_path, cycles_file, cycleNum, contigs, segs, graph, aln,
     optionalFlagStringCV = ""
     optionalFlagStringLV = ""
     if label_segs:
-        optionalFlagStringCV += "--label_segs numbers"
+        optionalFlagStringCV += "--label_segs numbers "
         optionalFlagStringLV += "--label_segs id "
 
     if subset_genes:
-        gspath = "--gene_subset_file Bushman"
+        gspath = "--gene_subset_file Bushman "
         optionalFlagStringCV += gspath
         optionalFlagStringLV += gspath
 
