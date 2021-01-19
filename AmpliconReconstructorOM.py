@@ -106,11 +106,11 @@ def run_visualization(CV_path, cycles_file, cycleNum, contigs, segs, graph, aln,
         optionalFlagStringCV += gspath
         optionalFlagStringLV += gspath
 
-    cmd = "python {}/CycleViz.py --om_alignments {}--cycles_file {} --cycle {} -c {} -om_segs {} -g {} -i {} --outname {}".format(
+    cmd = "python {}/CycleViz.py --om_alignments {}--cycles_file {} --cycle {} -c {} --om_segs {} -g {} -i {} --outname {}".format(
         CV_path, optionalFlagStringCV, cycles_file, cycleNum, contigs, segs, graph, aln, sname)
     subprocess.call(cmd, shell=True)
 
-    cmd = "python {}/LinearViz.py --om_alignments {}--cycles_file {} --path {} -c {} -om_segs {} -g {} -i {} --outname {}".format(
+    cmd = "python {}/LinearViz.py --om_alignments {}--cycles_file {} --path {} -c {} --om_segs {} -g {} -i {} --outname {}".format(
         CV_path, optionalFlagStringLV, cycles_file, cycleNum, contigs, segs, graph, aln, sname)
     subprocess.call(cmd, shell=True)
 
