@@ -182,8 +182,8 @@ def rewrite_graph_and_CMAP(segs_fname, graphfile, bpg_list, enzyme, outdir):
     elif REF == "hg19":
         fa_name = "hg19full.fa"
 
-    cmd = "python2 {}/generate_cmap.py -g {} -r {}/" + REF + "/" + fa_name + " -e {} -o {}".format(
-        os.environ['AR_SRC'], new_graphfile, os.environ['AA_DATA_REPO'], enzyme, seg_outname)
+    cmd = "python2 {}/generate_cmap.py -g {} -r {}/{}/{} -e {} -o {}".format(
+        os.environ['AR_SRC'], new_graphfile, os.environ['AA_DATA_REPO'], REF, fa_name, enzyme, seg_outname)
 
     subprocess.call(cmd, shell=True)
 

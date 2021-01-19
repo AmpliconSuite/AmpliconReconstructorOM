@@ -200,7 +200,7 @@ if __name__ == '__main__':
             enzyme = sample_dict["enzyme"]
             min_map_len = sample_dict["min_map_len"]
             ref = sample_dict["reference_build"]
-            if ref == "hg38": ref = "GRCh38"
+            if ref.lower() == "hg38": ref = "GRCh38"
 
         except KeyError:
             em = "YAML file does not contain properties for " + i + ". Skipping sample."
