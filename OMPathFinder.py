@@ -733,7 +733,7 @@ def filter_subsequence_paths(G, paths):
 
 
 # get heaviest paths for each of the scaffold graphs
-def all_unique_non_extendible_paths(G, edge_cc, scaffold_alt_paths):
+def all_unique_non_extendible_paths(G, edge_cc, scaffold_alt_paths, disable_CC_check=False):
     # construct all the intermediate nodes not to start at
     # (i.e. they are inside the heaviest path and not an endpoint)
     shp_interior_nodes = set()
@@ -752,21 +752,24 @@ def all_unique_non_extendible_paths(G, edge_cc, scaffold_alt_paths):
         path_recursion(G, i, {i}, [(i, -1)], paths, -1, True)
         all_paths.extend(paths)
 
-    dump_paths_sorted = sorted(all_paths, reverse=True, key=lambda x: get_path_weight(G, x))
+    # dump_paths_sorted = sorted(all_paths, reverse=True, key=lambda x: get_path_weight(G, x))
     # with open("dump.txt",'w') as outfile:
     #     for i in dump_paths_sorted:
     #         outfile.write(path_to_string(G,i,True) + "\n")
-    # # for i in all_paths:
-    #     print i
 
     logging.info("Total intial paths discovered: " + str(len(all_paths)))
-    cc_paths = filter_paths_by_cc(G, all_paths, edge_cc)
+    if not disable_CC_check:
+        cc_paths = filter_paths_by_cc(G, all_paths, edge_cc)
+        logging.info("Total CC filtered paths: " + str(len(cc_paths)))
+
+    else:
+        logging.info("SKIPPING CC CHECK, PER CLI ARGUMENT")
+        cc_paths = all_paths
 
     # with open("ccdump.txt",'w') as outfile:
     #     for i in cc_paths:
     #         outfile.write(path_to_string(G,i,True) + "\n")
 
-    logging.info("Total CC filtered paths: " + str(len(cc_paths)))
     ss_paths = filter_subsequence_paths(G, cc_paths)
 
     logging.info("Total final paths: " + str(len(ss_paths)))
@@ -818,9 +821,13 @@ def path_to_cycle_list(G, path):
 
     # construct final cycle sequence and remove duplicate nodes caused by intercontig
     cycle_list = []
+    contig_list = []
     aug_seg_seq = seg_seq + [seg_seq[0]]
     for ind, i in enumerate(aug_seg_seq[:-1]):
         oriented_segment_id = i[0].seg_id + get_final_direction(i[0].direction, i[1])
+        if i[0].contig_id not in contig_list:
+            contig_list.append(i[0].contig_id)
+
         # check if edge is intercontig, if it is then this thing is duplicated
         try:
             if i[1] < 0:
@@ -846,12 +853,12 @@ def path_to_cycle_list(G, path):
     elif circular and len(cycle_list) > 1 and cycle_list[-1] == cycle_list[0]:
         cycle_list.pop()
 
-    return cycle_list, circular
+    return cycle_list, circular, contig_list
 
 
 # write the path as an alignment file
 def write_path_alignment(G, path, outname, weight):
-    seg_seq, circular = path_to_cycle_list(G, path)
+    seg_seq, circular, _ = path_to_cycle_list(G, path)
     node_seq = [G.node_id_lookup[i[0]] for i in path]
     # print seg_seq,circular
     # print [x.n_id for x in node_seq]
@@ -907,8 +914,9 @@ def write_path_cycles(G, paths, outname):
             outfile.write("\t".join(["Segment", i, chrom, start, end]) + "\n")
 
         for ind, i in enumerate(paths):
-            cycle_list, _ = path_to_cycle_list(G, i)
-            outfile.write("Cycle=%d;Copy_count=1;Segments=%s\n" % (ind + 1, ",".join(cycle_list)))
+            cycle_list, _, contig_list = path_to_cycle_list(G, i)
+            outfile.write("Cycle=%d;Copy_count=1;Contigs=%s;Segments=%s\n" % (ind + 1, ",".join(contig_list),
+                                                                              ",".join(cycle_list)))
 
 
 def path_to_string(G, path, show_contig=False):
@@ -1043,6 +1051,11 @@ if __name__ == '__main__':
                         default="OMPF_out")
     parser.add_argument("--noConnect", action='store_true', help="Do not perform intercontig connection step")
     parser.add_argument("-i", "--instrument", choices=["Irys", "Saphyr"], required=True)
+    parser.add_argument("--contig_subset", help="Use the following contig IDs only when reconstructing (default will "
+                                                "use all contigs).", nargs='+', type=str, default=[])
+    parser.add_argument("--disable_CC_check", help="Disable copy count ratio conforming check.", action='store_true',
+                        default=False)
+
     args = parser.parse_args()
 
     impute = False if args.noImpute else True
@@ -1109,6 +1122,10 @@ if __name__ == '__main__':
         a_c_id, a_list = parse_seg_alignment_file(adir + i)
         seg_aln_obj = SA_Obj(a_c_id, a_list)
         c_id = seg_aln_obj.contig_id
+        if len(args.contig_subset) > 0:
+            if c_id not in args.contig_subset:
+                continue
+
         seg_id = seg_aln_obj.seg_id
         if seg_id not in cmap_id_to_edge:
             sys.stderr.write(
@@ -1144,7 +1161,7 @@ if __name__ == '__main__':
 
     # connect heaviest paths across contigs
     logging.info("Finding all non-extendible paths")
-    all_paths = all_unique_non_extendible_paths(G, edge_cc, alt_paths)
+    all_paths = all_unique_non_extendible_paths(G, edge_cc, alt_paths, args.disable_CC_check)
 
     all_paths_weights = [get_path_weight(G, p) for p in all_paths]
     if args.noImpute: outname += "_noImpute"
