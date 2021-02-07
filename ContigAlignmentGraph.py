@@ -171,7 +171,7 @@ def is_end_aln(G,node_id,contig_cmap,left=False):
         dist_delta = contig_cmap[max(contig_cmap.keys())] - contig_cmap[contig_endpoints[1]]
         lab_delta = max(contig_cmap.keys()) - contig_endpoints[1]
 
-    return (dist_delta < 100000 and lab_delta < 12)
+    return (dist_delta < 125000 and lab_delta < 15)
 
 
 def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):

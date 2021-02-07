@@ -640,7 +640,6 @@ def path_recursion(G, u, visited, curr_path, paths, edge_dir, p_intercontig):
                 new_edge_dir *= -1
 
             if not (curr_edge.intercontig and p_intercontig):
-                hit = True
                 path_recursion(G, v, new_visited, curr_path + [(v, new_edge_dir)], paths, new_edge_dir,
                                curr_edge.intercontig)
 
