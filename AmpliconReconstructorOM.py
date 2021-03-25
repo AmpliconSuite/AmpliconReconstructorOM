@@ -137,7 +137,7 @@ if __name__ == '__main__':
                         help="Save plots of the distributions of segment scores")
     parser.add_argument("--no_tip_aln", default=False, action='store_true', help="Disable tip alignment step")
     parser.add_argument("--ref_search", default=False, action='store_true',
-                        help="Do not search unaligned regions against reference genome")
+                        help="Search unaligned regions against reference genome")
     parser.add_argument("--no_clear", default=False, action='store_true',
                         help="Do not remove files from previous runs..")
     parser.add_argument("--visualize_scaffolds", default=False, action='store_true',
