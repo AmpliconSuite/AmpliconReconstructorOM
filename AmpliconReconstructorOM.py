@@ -93,7 +93,7 @@ def compute_path_lengths(segs, paths):
     return lens
 
 
-def run_visualization(CV_path, cycles_file, cycleNum, contigs, segs, graph, aln, sname, label_segs=True,
+def run_visualization(CV_path, cycles_file, cycleNum, contigs, segs, graph, aln, sname, ref, label_segs=True,
                       subset_genes=True):
     optionalFlagStringCV = ""
     optionalFlagStringLV = ""
@@ -106,8 +106,8 @@ def run_visualization(CV_path, cycles_file, cycleNum, contigs, segs, graph, aln,
         optionalFlagStringCV += gspath
         optionalFlagStringLV += gspath
 
-    cmd = "python {}/CycleViz.py --om_alignments {}--cycles_file {} --cycle {} -c {} --om_segs {} -g {} --AR_path_alignment {} --outname {}".format(
-        CV_path, optionalFlagStringCV, cycles_file, cycleNum, contigs, segs, graph, aln, sname)
+    cmd = "python {}/CycleViz.py --om_alignments {}--cycles_file {} --cycle {} -c {} --om_segs {} -g {} --AR_path_alignment {} --ref {} --outname {}".format(
+        CV_path, optionalFlagStringCV, cycles_file, cycleNum, contigs, segs, graph, aln, ref, sname)
     subprocess.call(cmd, shell=True)
 
     # cmd = "python {}/LinearViz.py --om_alignments {}--cycles_file {} --path {} -c {} --om_segs {} -g {} --AR_path_alignment {} --outname {}".format(
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     parser.add_argument("--plot_scores", default=False, action='store_true',
                         help="Save plots of the distributions of segment scores")
     parser.add_argument("--no_tip_aln", default=False, action='store_true', help="Disable tip alignment step")
-    parser.add_argument("--no_ref_search", default=False, action='store_true',
+    parser.add_argument("--ref_search", default=False, action='store_true',
                         help="Do not search unaligned regions against reference genome")
     parser.add_argument("--no_clear", default=False, action='store_true',
                         help="Do not remove files from previous runs..")
@@ -248,7 +248,7 @@ if __name__ == '__main__':
             if args.plot_scores:
                 optionalFlagString += "--plot_scores "
 
-            if args.no_ref_search:
+            if not args.ref_search:
                 optionalFlagString += "--no_ref_search "
 
             if args.no_tip_aln:
@@ -326,7 +326,7 @@ if __name__ == '__main__':
             for k in sorted(paths.keys())[:40]:
                 aln_file = reconstruction_dir + pnum_to_alnfile[k]
                 run_visualization(args.CV_path, paths_cycles_file, k, contigs_path, segs_path, graph_path, aln_file,
-                                  visualizations_dir + i)
+                                  visualizations_dir + i, ref)
 
             logging.info("finished visualization stage for " + i + "\n")
 
