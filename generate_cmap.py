@@ -25,11 +25,11 @@ def fasta_reader(fasta_file,chroms_to_get,getAll = False):
 		faiter = (x[1] for x in groupby(infile, lambda line: line[0] == ">"))
 		for header in faiter:
 			# drop the ">"
-			seq_name = header.next()[1:].strip()
+			seq_name = next(header[1:]).rstrip().rsplit()[0]
 			if (seq_name in chroms_to_get) or getAll:
 				print("Reading " + seq_name)
 				# join all sequence lines to one.
-				seq = "".join(s.strip() for s in faiter.next())
+				seq = "".join(s.strip() for s in next(faiter))
 				fasta_dict[seq_name] = seq
 
 	return fasta_dict
@@ -41,7 +41,7 @@ def read_graph(graphF):
 	with open(graphF) as infile:
 		segSeqL = []
 		chroms_to_get = set()
-		head = infile.next().rstrip().split()
+		head = next(infile).rstrip().split()
 		segN = 0
 		for line in infile:
 			if line.startswith("sequence"):
@@ -70,7 +70,7 @@ def read_bed(bedfile):
 
 	chroms_to_get = bed_dict.keys()
 	segSeqL = []
-	for chrom,region_list in bed_dict.iteritems():
+	for chrom,region_list in bed_dict.items():
 		for p in region_list:
 			pstring = str(p[0])+ "-|" + str(p[1]) + "+"
 			segSeqL.append((pstring,chrom,p[0]-1,p[1]-1))
