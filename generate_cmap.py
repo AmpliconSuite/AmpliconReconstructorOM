@@ -25,7 +25,7 @@ def fasta_reader(fasta_file,chroms_to_get,getAll = False):
 		faiter = (x[1] for x in groupby(infile, lambda line: line[0] == ">"))
 		for header in faiter:
 			# drop the ">"
-			seq_name = next(header[1:]).rstrip().rsplit()[0]
+			seq_name = next(header)[1:].rstrip().rsplit()[0]
 			if (seq_name in chroms_to_get) or getAll:
 				print("Reading " + seq_name)
 				# join all sequence lines to one.
