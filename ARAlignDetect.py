@@ -181,6 +181,10 @@ def rewrite_graph_and_CMAP(segs_fname, graphfile, bpg_list, enzyme, outdir):
         fa_name = "hg38full.fa"
     elif REF == "hg19":
         fa_name = "hg19full.fa"
+    elif REF == "GRCh37":
+        fa_name = "human_g1k_v37.fasta"
+    else:
+        print("ERROR: Could not locate fasta for " + REF)
 
     cmd = "python2 {}/generate_cmap.py -g {} -r {}/{}/{} -e {} -o {}".format(
         os.environ['AR_SRC'], new_graphfile, os.environ['AA_DATA_REPO'], REF, fa_name, enzyme, seg_outname)
@@ -318,7 +322,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--threads", help="number of threads to use (default 8), recommend 16+", type=int,
                         default=8)
     parser.add_argument("-r", "--ref", help="Reference genome build. Must be same as AA graph",
-                        choices=["hg19", "GRCh38"], required=True)
+                        choices=["hg19", "GRCh38", "GRCh37"], required=True)
     parser.add_argument("-e", "--enzyme", help="labeling enzyme", choices=["BspQI", "DLE1"], required=True)
     parser.add_argument("--plot_scores", help="Save plots of the distributions of segment scores", action='store_true',
                         default=False)

@@ -129,7 +129,7 @@ parser.add_argument("-r", "--ref", help="reference genome fasta",required=True)
 parser.add_argument("-o", "--output", help="output prefix")
 parser.add_argument("-e", "--enzyme", help="restriction enzyme: BspQI, BbvCI, BsmI, BsrDI, DLE1",required=True)
 parser.add_argument("-l", "--labels", type=int, help="minimum number of labels in reported CMAP, default 0",default=0)
-parser.add_argument("-s", "--size", type=float, help="minimum map size in reported CMAP, default 0",default=0)
+parser.add_argument("-s", "--size", type=float, help="minimum map size for reported CMAP (basepairs), default 0",default=0)
 group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument("-g", "--graph", help="breakpoint graph .txt file, if not supplied, --makeRef or --bed must be supplied")
 group.add_argument("--makeRef", help="Make CMAP from entire reference fasta",action='store_true')
@@ -188,8 +188,10 @@ else:
 	chroms_to_get = set()
 	seqD = fasta_reader(args.ref,chroms_to_get,True)
 	segSeqL = []
-	for i in sorted(seqD.keys(),key = lambda x: x[3:]):
-		segSeqL.append((i,i,0,len(seqD[i])))
+	for i in sorted(seqD.keys(),key = lambda x: x.lstrip('chr')):
+		seqLen = len(seqD[i])
+		if seqLen > args.size:
+			segSeqL.append((i,i,0,len(seqD[i])))
 
 
 segSeqD = segsToSeq(segSeqL,seqD)
