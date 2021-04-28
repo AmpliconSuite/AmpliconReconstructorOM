@@ -2,6 +2,7 @@
 import sys
 import os
 import argparse
+from itertools import groupby
 
 """
 Jens Luebeck
@@ -9,11 +10,18 @@ UC San Diego, Bioinformatics & Systems Biology
 jluebeck@ucsd.edu
 """
 
-"""
-Modified method from brentp on BioStars
-given a fasta file. yield dictionary of header, sequence
-"""
+complementary_nucleotide = {"A":"T","C":"G","G":"C","T":"A","N":"N"}
+
+
+def rev_complement(seq):
+	return ''.join([complementary_nucleotide[a] for a in seq[::-1]])
+
+
 def fasta_reader(fasta_file,chroms_to_get,getAll = False):
+	"""
+	Modified method from brentp on BioStars
+	given a fasta file. yield dictionary of header, sequence
+	"""
 	fasta_dict = {}
 	with open(fasta_file) as infile:
 		faiter = (x[1] for x in groupby(infile, lambda line: line[0] == ">"))
@@ -28,29 +36,30 @@ def fasta_reader(fasta_file,chroms_to_get,getAll = False):
 
 	return fasta_dict
 
-def writeCycleFasta(cyclef,outpre):
+
+def writeCycleFasta(cyclef, outpre):
 	with open(outpre + "_cycles.fasta",'w') as cycleFasta, open(cyclef) as infile:
 		for line in infile:
 			if "Cycle=" in line:
 				fields = line.rstrip().rsplit(";")
-				lineD = {x.rsplit("=")[0]:x.rsplit("=")[1] for x in fields}
+				lineD = {x.rsplit("=")[0]: x.rsplit("=")[1] for x in fields}
 				segs = lineD["Segments"].rsplit(",")
 				recSeq = ""
 				for i in segs:
 					seg = i[:-1]
 					if seg != "0":
 						strand = i[-1]
-						segSeq = segSeqD[seg]
+						segSeq = segSeqD[seg].upper()
 						if strand == "-":
-							segSeq = str(Seq(segSeq).reverse_complement())
-						recSeq+=segSeq
+							segSeq = rev_complement(segSeq)
+						recSeq += segSeq
 
-				outname = args.input.rsplit(".")[0]
-				outname = outname + "_cycle_" + lineD["Cycle"]
+				outname = "cycle_" + lineD["Cycle"]
 				cycleFasta.write(">" + outname + "\n")
 				cycleFasta.write(recSeq + "\n")
 
-#get the relevant chromosomes the cycles file
+
+# get the relevant chromosomes the cycles file
 def relChroms(cyclef):
 	chromSet = set()
 	with open(cyclef) as infile:
