@@ -138,8 +138,6 @@ if __name__ == '__main__':
     parser.add_argument("--no_tip_aln", default=False, action='store_true', help="Disable tip alignment step")
     parser.add_argument("--ref_search", default=False, action='store_true',
                         help="Search unaligned regions against reference genome")
-    parser.add_argument("--no_clear", default=False, action='store_true',
-                        help="Do not remove files from previous runs..")
     parser.add_argument("--visualize_scaffolds", default=False, action='store_true',
                         help="Produce visualizations for the single unconnected scaffolds")
     parser.add_argument("--CV_path", help="Path to the CycleViz source directory")
@@ -222,8 +220,12 @@ if __name__ == '__main__':
         logging.info("Making directories")
         for curr_dir in [rpi, alignments_dir, reconstruction_dir, visualizations_dir]:
             if not os.path.exists(curr_dir): os.mkdir(curr_dir)
-            if not args.no_clear and not (curr_dir == alignments_dir and args.noAlign) and not curr_dir == rpi:
-                logging.info("Clearing old results")
+            if curr_dir == alignments_dir and args.noAlign:
+                print("Re-using alignments in " + curr_dir)
+
+            elif curr_dir != rpi:
+                # if not args.no_clear and not (curr_dir == alignments_dir and args.noAlign) and not curr_dir == rpi:
+                logging.info("Clearing old results: " + curr_dir)
                 subprocess.call("rm " + curr_dir + "* 2>/dev/null", shell=True)
 
         # remove old "includes detected file"
