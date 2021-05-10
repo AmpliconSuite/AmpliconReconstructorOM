@@ -71,14 +71,12 @@ def pair_is_adjacent(a_id, b_id, a_dir, b_dir, seqIDD):
 
             else:
                 if a_dir == "+":
-                    #                     print("+", seqIDD[b_id][1] - seqIDD[a_id][2])
                     if seqIDD[b_id][1] - seqIDD[a_id][2] == 1:
                         return True
 
                     return False
 
                 else:
-                    #                     print("-", seqIDD[a_id][1] - seqIDD[b_id][2] == 1)
                     if seqIDD[a_id][1] - seqIDD[b_id][2] == 1:
                         return True
 
@@ -225,6 +223,15 @@ if __name__ == "__main__":
     # retrieve the cycles as an oriented segment list
     recons_paths = read_cycles(args.cycles, elems_to_get)
 
+    print("Path lengths: ")
+    for ind, cp in enumerate(recons_paths):
+        path = cp.rsplit(",")
+        if path[0] == "0+":
+            path = path[1:-1]
+
+        sl = sum([segToSize[int(x[:-1])] for x in path])
+        print(str(ind+1) + ": " + str(sl))
+
     # compute statistics about the amplification of segments
     num_gsegs_exp, prop_gsegs_exp, num_bp_exp, prop_bp_exp = amp_stats(recons_paths, segToSize, amp_glen, amp_nsegs,
                                                                        segToCN, nsegs-1, cutoff=args.amp_thresh)
@@ -233,7 +240,7 @@ if __name__ == "__main__":
     tot_amp_AA_bps, tot_amp_AR_bps, bp_amp_frac, unused_AA_bps = compare_breakpoints(
         recons_paths, bidirectional_edge_dict, seg_end_pos_d, seqIDD, segToCN, cutoff=args.amp_thresh)
 
-    print("Comparison of paths " + str(args.cycle_ids) + " between AA and AR\n")
+    print("\nComparison of paths " + str(args.cycle_ids) + " between AA and AR\n")
     print("Amplified content used in AA graph vs AR reconstructions")
     print("Total AA amped content: " + str(amp_glen) + " basepairs over " + str(amp_nsegs) + " segments")
     print("AA and AR overlap (bases & proportion) " + str(num_bp_exp) + " (" + str(prop_bp_exp) + ") of AA amped material.")
