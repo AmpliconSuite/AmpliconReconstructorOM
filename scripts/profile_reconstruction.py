@@ -265,7 +265,7 @@ if __name__ == "__main__":
         profout.write("Amplified AA graph segments:\t" + str(amp_nsegs) + "\n")
         profout.write("Amplified AA graph breakpoints:\t" + str(tot_amp_AA_bps) + "\n")
 
-        profout.write("Length of reconstructed cycleq (bp):\t" + str(sl) + "\n")
+        profout.write("Length of reconstructed cycle (bp):\t" + str(sl) + "\n")
         profout.write("Number of graph segments used in cycle:\t" + str(len(path_set)) + "\n")
 
         profout.write("Amplified genomic content from graph used in cycle (bp)|(%):\t" + str(num_bp_exp) + "\t" +
