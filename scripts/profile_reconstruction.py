@@ -287,7 +287,7 @@ if __name__ == "__main__":
         cid = int(x[:-1])
         seg2PathMultiplicity[cid]+=1
 
-    with open(oname + "_segment_profile.tsv", 'w') as outfile:
+    with open(oname + "_segments_profile.tsv", 'w') as outfile:
         outfile.write("chrom\tstart\tend\tsegment_id\tCN\tmultiplicity_in_reconstruction\n")
         for cid in range(1, nsegs+1):
             a, b = seg_end_pos_d[str(cid)]
@@ -318,5 +318,5 @@ if __name__ == "__main__":
             s1 = segToCN[int(pos_to_seg[y[0]][0])]
             s2 = segToCN[int(pos_to_seg[y[1]][0])]
             isAmp = s1 >= args.amp_thresh and s2 >= args.amp_thresh
-            olist = y[0].rsplit(":") + y[1].rsplit(":") + bpos + [isAmp, "True", "True"]
+            olist = y[0].rsplit(":") + y[1].rsplit(":") + bpos + [str(isAmp), "True", "True"]
             outfile.write("\t".join(olist) + "\n")
