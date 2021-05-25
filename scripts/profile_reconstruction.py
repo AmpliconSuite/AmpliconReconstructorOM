@@ -254,7 +254,7 @@ if __name__ == "__main__":
     tot_amp_AA_bps, AR_AA_bps, uniq_AR_bps, oriented_AR_bps, bp_amp_frac, AA_bps, amped_AA_bps, unused_AA_bps = \
         compare_breakpoints(cp, bidirectional_edge_dict, seg_end_pos_d, seqIDD, segToCN, cutoff=args.amp_thresh)
 
-    profname = oname + "_profile.tsv"
+    profname = oname + "_amplicon_profile.tsv"
 
     # write amplicon profile table
     with open(profname, 'w') as profout:
