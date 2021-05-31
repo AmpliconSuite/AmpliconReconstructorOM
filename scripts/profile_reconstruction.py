@@ -120,7 +120,7 @@ def read_cycles(cfile, elem_to_get):
     return []
 
 
-def graph_stats(segToSize, segToCN, cutoff=10):
+def graph_stats(segToSize, segToCN, cutoff):
     # full size, amp size, nsegs
     # print(segToCN)
     # print(segToSize)
@@ -131,7 +131,7 @@ def graph_stats(segToSize, segToCN, cutoff=10):
     return nsegs, amp_glen, amp_nsegs
 
 
-def amp_stats(p, sl, amp_glen, amp_nsegs, segToCN, maxInd, cutoff=10):
+def amp_stats(p, sl, amp_glen, amp_nsegs, segToCN, maxInd, cutoff):
     num_gsegs_exp, prop_gsegs_exp, num_bp_exp, prop_bp_exp = 0, 0, 0, 0
     all_filt_ids = set()
     seq = [int(x[:-1]) for x in p.rsplit(",")]
@@ -145,7 +145,7 @@ def amp_stats(p, sl, amp_glen, amp_nsegs, segToCN, maxInd, cutoff=10):
     return num_gsegs_exp, prop_gsegs_exp, num_bp_exp, prop_bp_exp
 
 
-def compare_breakpoints(cp, bpg_dict, seg_end_pos_d, seqIDD, segToCN, cutoff=10):
+def compare_breakpoints(cp, bpg_dict, seg_end_pos_d, seqIDD, segToCN, cutoff):
     tot_amp_AA_bps = 0
     tot_amp_AR_bps = 0
     AA_bps = set()
@@ -228,11 +228,12 @@ if __name__ == "__main__":
     elem_to_get = args.cycle_id
     basename = os.path.splitext(os.path.basename(args.cycles))[0]
     oname = basename + "_cycle_" + str(args.cycle_id)
+    print("Using amp thresh of " + str(args.amp_thresh))
 
     # retrieve a set of used junctions
     bidirectional_edge_dict, seg_end_pos_d, pos_to_seg, segToCN, segToSize, bps_to_os = parse_BPG(args.graph)
     # retrieve a set of segment IDs (mapped to length and CN)
-    nsegs, amp_glen, amp_nsegs = graph_stats(segToSize, segToCN, cutoff=args.amp_thresh)
+    nsegs, amp_glen, amp_nsegs = graph_stats(segToSize, segToCN, args.amp_thresh)
     # create a map of segment ID to segment coordinates
     seqIDD = id_to_loc(args.graph)
     # retrieve the cycles as an oriented segment list
@@ -248,11 +249,11 @@ if __name__ == "__main__":
 
     # compute statistics about the amplification of segments
     num_gsegs_exp, prop_gsegs_exp, num_bp_exp, prop_bp_exp = amp_stats(cp, segToSize, amp_glen, amp_nsegs, segToCN,
-                                                                       nsegs, cutoff=args.amp_thresh)
+                                                                       nsegs, args.amp_thresh)
 
     # compute statistics about the edges used in AR vs AA
     tot_amp_AA_bps, AR_AA_bps, uniq_AR_bps, oriented_AR_bps, bp_amp_frac, AA_bps, amped_AA_bps, unused_AA_bps = \
-        compare_breakpoints(cp, bidirectional_edge_dict, seg_end_pos_d, seqIDD, segToCN, cutoff=args.amp_thresh)
+        compare_breakpoints(cp, bidirectional_edge_dict, seg_end_pos_d, seqIDD, segToCN, args.amp_thresh)
 
     profname = oname + "_amplicon_profile.tsv"
 
@@ -294,7 +295,7 @@ if __name__ == "__main__":
             chrom, p1 = a.rsplit(":")
             _, p2 = b.rsplit(":")
             cn = segToCN[cid]
-            outfile.write("\t".join([str(cid), chrom, p1, p2, str(cid), str(cn), str(seg2PathMultiplicity[cid])]) + "\n")
+            outfile.write("\t".join([chrom, p1, p2, str(cid), str(cn), str(seg2PathMultiplicity[cid])]) + "\n")
 
     # write breakpoint usage table
     with open(oname + "_breakpoint_profile.tsv", 'w') as outfile:
