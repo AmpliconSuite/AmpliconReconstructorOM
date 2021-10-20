@@ -2,6 +2,8 @@
 Jens Luebeck
 UC San Diego, Bioinformatics & Systems Biology
 jluebeck@ucsd.edu
+
+Version 1.0
 """
 
 #compute the median
