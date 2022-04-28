@@ -155,6 +155,17 @@ def write_aligned_labels(a_dir, aln_flist, w_dir):
     return outfile_name
 
 
+def get_ref_fname(aa_dr_path, rname):
+    with open(aa_dr_path + "/" + rname + "/file_list.txt") as infile:
+        for line in infile:
+            fields = line.rstrip().rsplit()
+            if fields[0] == "fa_file":
+                return fields[1]
+
+    sys.stderr.write("ERROR: AA data repo 'file_list.txt' not found!\n")
+    return None
+
+
 # write a new AA graph file and a new CMAP reflecting the added segments
 def rewrite_graph_and_CMAP(segs_fname, graphfile, bpg_list, enzyme, outdir):
     # read graph
@@ -176,19 +187,11 @@ def rewrite_graph_and_CMAP(segs_fname, graphfile, bpg_list, enzyme, outdir):
     # seg_outname = os.path.splitext(segs_fname)[0] + "_includes_detected"
     sbase = os.path.splitext(os.path.basename(segs_fname))[0]
     seg_outname = outdir + sbase + "_includes_detected"
-    fa_name = ""
-    if REF == "GRCh38" or REF == "hg38":
-        fa_name = "hg38full.fa"
-    elif REF == "hg19":
-        fa_name = "hg19full.fa"
-    elif REF == "GRCh37":
-        fa_name = "human_g1k_v37.fasta"
-    else:
-        print("ERROR: Could not locate fasta for " + REF)
+    fa_path = get_ref_fname(os.environ['AA_DATA_REPO'], REF)
+    cmd = "python2 {}/generate_cmap.py -g {} -r {} -e {} -o {}".format(os.environ['AR_SRC'], new_graphfile, fa_path,
+                                                                       enzyme, seg_outname)
 
-    cmd = "python2 {}/generate_cmap.py -g {} -r {}/{}/{} -e {} -o {}".format(
-        os.environ['AR_SRC'], new_graphfile, os.environ['AA_DATA_REPO'], REF, fa_name, enzyme, seg_outname)
-
+    print(cmd)
     subprocess.call(cmd, shell=True)
 
 
