@@ -48,7 +48,7 @@ To install AR, we add some variables to the .bashrc file (located in your home d
 
 3. A SegAligner binary compatible with a Linux x86 64-bit architecture is included. If you want to compile the SegAligner binary yourself, run the following.
 
-    ```
+    ```bash
     cd SegAligner
     make 
     cd ..
@@ -60,7 +60,7 @@ To install AR, we add some variables to the .bashrc file (located in your home d
 
 5. *(Optional, but highly recommended)* Install [CycleViz](https://github.com/jluebeck/CycleViz).
    
-    ```
+    ```bash
    # before running, make sure dependencies for CycleViz (listed in "Dependencies" section) are satisfied
    # now, install CycleViz
    cd .. #or wherever you want to install CycleViz

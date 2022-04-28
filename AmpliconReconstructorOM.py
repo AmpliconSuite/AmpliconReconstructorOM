@@ -233,9 +233,8 @@ if __name__ == '__main__':
         idgf = os.path.splitext(rpi + sample_dict["graph"].rsplit("/")[-1])[0] + "_includes_detected.txt"
         # print idgf,os.path.exists(idgf)
         if os.path.exists(idgf):
-            if not args.no_clear:
-                print("Removing old *includes_detected.txt graph file: " + idgf)
-                subprocess.call("rm " + idgf, shell=True)
+            print("Removing old *includes_detected.txt graph file: " + idgf)
+            subprocess.call("rm " + idgf, shell=True)
 
         # check if we're converting an xmap:
         use_xmap = False
