@@ -1,9 +1,11 @@
 # AmpliconReconstructor (AR)
-Reconstructs complex variation using BioNano optical mapping data and an NGS-derived breakpoint graph. The publication related to this work has been published in *Nature Communications*. If using this tool please cite the following: 
+Reconstructs focal amplifications using Bionano optical mapping data and an NGS-derived breakpoint graph. The publication related to this work has been published in *Nature Communications*. If using this tool please cite the following: 
 
 Luebeck et al., ["AmpliconReconstructor integrates NGS and optical mapping to resolve the complex structures of focal amplifications"](https://www.nature.com/articles/s41467-020-18099-z), *Nature Communications*, 2020.
 
-**September, 2020 Update:** Version 1.01 is now available, which adds support for GRCh38-based analysis.
+**September 2020 Update:** Version 1.01: adds support for GRCh38-based analysis.
+
+**September 2022 Update:** Version 1.02: adds support for python3. 
 
 ## Contents:
 1. [Dependencies](#dependencies)
@@ -13,7 +15,7 @@ Luebeck et al., ["AmpliconReconstructor integrates NGS and optical mapping to re
 5. [SegAligner documentation](#segaligner)
 
 ## Dependencies
-AR uses Python 2.7 and C++11 (with g++ as the compiler) and a Unix-based OS. Both of these are standard in any modern version of Linux. AR has been tested on Ubuntu 16.04 and Ubuntu 18.04.
+AR uses Python 2 (2.7+) or Python 3, and C++ (C++11 or higher with g++ as the compiler) and a Unix-based OS. AR has been tested on Ubuntu 16.04 and Ubuntu 18.04.
 
 AR has the following Python library dependencies:
  - Matplotlib 2.0.0 (or higher)
@@ -28,10 +30,7 @@ AR has the following Python library dependencies:
 AR requires that the [AmpliconArchitect (AA)](https://github.com/jluebeck/AmpliconArchitect) data repo be downloaded and the `$AA_DATA_REPO` bash variable must be set. If you already have AA installed, no action is required. Otherwise, instructions on setting the data repo are available [here](https://github.com/jluebeck/AmpliconArchitect#data-repositories).
 
 AR can produce optional visualizations of the reconstructed amplicons, this requires the 
-[CycleViz](https://github.com/jluebeck/CycleViz). Instructions for installing CycleViz are included below, but you may want to satisfy the optional font installation now.
-
-- ttf-mscorefonts library (optional, but recommened)
-    * `sudo apt-get install ttf-mscorefonts-installer`
+[CycleViz](https://github.com/jluebeck/CycleViz). Instructions for installing CycleViz are included below.
 
 ## Installation
 To install AR, we add some variables to the .bashrc file (located in your home directory). We provide some bash commands to automate this process. Typically this installation process can be completed in 5 or less minutes.
@@ -68,9 +67,14 @@ To install AR, we add some variables to the .bashrc file (located in your home d
    echo "export CV_SRC=$PWD/CycleViz" >> ~/.bashrc
    ```
    
-6. Make the changes to `.bashrc` live for this session.
-
+6. Make the changes to `.bashrc` live for this session:
     `source ~/.bashrc`
+
+7. *(Optional)* Add Microsoft fonts to Ubuntu (e.g. Arial). 
+```bash
+sudo apt-get install ttf-mscorefonts-installer fontconfig
+sudo fc-cache -f  # rebuilds the font cache
+``` 
 
 
 ## Inputs & Outputs
@@ -157,13 +161,13 @@ You can test AR on using previously published data. The GBM39 cell line has been
 
 - [GBM39 OM data](https://submit.ncbi.nlm.nih.gov/subs/supfiles/SUB6698144/overview) (.cmap file)
 
-You may either generate an AA breakpoint graph from the WGS data yourself (see [PrepareAA](https://github.com/jluebeck/PrepareAA) for details) or we also provide the pre-generated GBM39 AA breakpoint graph file in the AR data repo (`AmpliconReconstructor/test_files/`). 
+You may either generate an AA breakpoint graph from the WGS data yourself (see [AmpliconSuite-pipeline](https://github.com/jluebeck/PrepareAA) for details) or we also provide the pre-generated GBM39 AA breakpoint graph file in the AR data repo (`AmpliconReconstructor/test_files/`). 
 
 - **If starting from BAM file:** 
 
-If you wish to generate the AA breakpoint graph from scratch, you can use PrepareAA on the downloaded BAM file from SRA. An example command is below. This may take 1-2 hours on a standard desktop.
+If you wish to generate the AA breakpoint graph from scratch, you can use AmpliconSuite-pipeline on the downloaded BAM file from SRA. An example command is below. This may take 1-2 hours on a standard desktop.
 
-`/path/to/PrepareAA/PrepareAA.py -s GBM39  -t 8 --cnvkit_dir /path/to/cnvkit.py --rscript_path /path/to/Rscript --sorted_bam FF18.cs.bam --run_AA`
+`/path/to/AmpliconSuite-pipeline/PrepareAA.py -s GBM39  -t 8 --cnvkit_dir /path/to/cnvkit.py --rscript_path /path/to/Rscript --sorted_bam FF18.cs.bam --run_AA`
 
 This will output a file `GBM39_amplicon1_graph.txt` which can be used in the next step.
 
@@ -182,7 +186,7 @@ To run the test, do
 In the resulting folder you will see AR output files, including reconstructed cycles, and (if CycleViz specified) visualization plots. Furthermore, the SegAligner and combined alignment for the entire amplicon will be present. The SegAligner files end with `*_aln.txt`. 
 
 ## SegAligner
-SegAligner is a multi-threaded C++ aligner for BioNano optical map contigs and in-silico digested genomic reference segments. It additionally supports alignment of contigs to the full reference genome to identify the location of candidate regions of the contigs belonging to regions of the reference. 
+SegAligner is a multithreaded C++ aligner for BioNano optical map contigs and in-silico digested genomic reference segments. It additionally supports alignment of contigs to the full reference genome to identify the location of candidate regions of the contigs belonging to regions of the reference. 
 
 
 SegAligner is wrapped inside AmpliconReconstructorOM, but can be invoked on its own. For installation please see the instructions for AR installation above.

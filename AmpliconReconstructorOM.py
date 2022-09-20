@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 """
 Jens Luebeck
@@ -7,7 +7,7 @@ jluebeck@ucsd.edu
 """
 
 __author__ = "Jens Luebeck"
-__version__ = "1.01"
+__version__ = "1.02"
 
 import os
 import sys

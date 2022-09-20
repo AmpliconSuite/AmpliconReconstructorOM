@@ -9,10 +9,10 @@ UC San Diego, Bioinformatics & Systems Biology
 jluebeck@ucsd.edu
 """
 
-cmapfile = sys.argv[1] # seg cmap file
-alignment_file = sys.argv[2] # modified to contain the alignment path
+cmapfile = sys.argv[1]  # seg cmap file
+alignment_file = sys.argv[2]  # modified to contain the alignment path
 
-rdd = {'+':'-', '-':'+'}
+rdd = {'+': '-', '-': '+'}
 
 curr_end = 0
 idlens = {}
@@ -67,8 +67,6 @@ with open(alignment_file) as infile, open(oname, 'w') as ofile:
 
         if nl > 0:
             cumstart = finish
-
-    # print(l2seq)
 
     for line in infile:
         fields = line.rstrip().rsplit("\t")

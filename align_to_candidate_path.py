@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 """
 Jens Luebeck
@@ -82,14 +82,14 @@ def create_path_cmap(cycles_file, gfile, REF, pre, enzyme):
 
     print("\nCreating graph cmap")
     graph_pre = sp + "_graph"
-    cmd = "python2 {}/generate_cmap.py -r {} -e {} -o {} -g {}".format(os.environ['AR_SRC'], fa_path, enzyme, graph_pre,
+    cmd = "python {}/generate_cmap.py -r {} -e {} -o {} -g {}".format(os.environ['AR_SRC'], fa_path, enzyme, graph_pre,
                                                                        gfile)
     print(cmd)
     subprocess.call(cmd, shell=True)
 
     print("\nCreating cycles cmap")
     cycles_fa = sp + "_cycles.fasta"
-    cmd = "python2 {}/generate_cmap.py -r {} -e {} -o {} --makeRef".format(os.environ['AR_SRC'], cycles_fa, enzyme, pre)
+    cmd = "python {}/generate_cmap.py -r {} -e {} -o {} --makeRef".format(os.environ['AR_SRC'], cycles_fa, enzyme, pre)
     print(cmd)
     subprocess.call(cmd, shell=True)
 

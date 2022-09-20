@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 """
 Jens Luebeck
@@ -188,7 +188,7 @@ def rewrite_graph_and_CMAP(segs_fname, graphfile, bpg_list, enzyme, outdir):
     sbase = os.path.splitext(os.path.basename(segs_fname))[0]
     seg_outname = outdir + sbase + "_includes_detected"
     fa_path = get_ref_fname(os.environ['AA_DATA_REPO'], REF)
-    cmd = "python2 {}/generate_cmap.py -g {} -r {} -e {} -o {}".format(os.environ['AR_SRC'], new_graphfile, fa_path,
+    cmd = "python {}/generate_cmap.py -g {} -r {} -e {} -o {}".format(os.environ['AR_SRC'], new_graphfile, fa_path,
                                                                        enzyme, seg_outname)
 
     print(cmd)
@@ -298,7 +298,7 @@ def make_score_plots(scores_file, fpath):
     num_blue = int(round(0.15 * min(500, len(contig_cmaps))))
     for i in scoring_dict:
         fig = plt.figure()
-        left_ind = len(scoring_dict[i]) / 2 + 1
+        left_ind = len(scoring_dict[i]) // 2 + 1
         x_vals = sorted(scoring_dict[i], reverse=True)
         y_vals = np.log(range(1, len(x_vals) + 1))
         cols = ["grey"] * 25 + ["b"] * num_blue + ["grey"] * (len(x_vals) - (25 + num_blue))

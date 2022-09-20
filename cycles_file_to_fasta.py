@@ -17,7 +17,7 @@ def rev_complement(seq):
 	return ''.join([complementary_nucleotide[a] for a in seq[::-1]])
 
 
-def fasta_reader(fasta_file,chroms_to_get,getAll = False):
+def fasta_reader(fasta_file,chroms_to_get, getAll = False):
 	"""
 	Modified method from brentp on BioStars
 	given a fasta file. yield dictionary of header, sequence
@@ -31,7 +31,7 @@ def fasta_reader(fasta_file,chroms_to_get,getAll = False):
 			if (seq_name in chroms_to_get) or getAll:
 				print("Reading " + seq_name)
 				# join all sequence lines to one.
-				seq = "".join(s.strip() for s in faiter.next())
+				seq = "".join(s.strip() for s in next(faiter))
 				fasta_dict[seq_name] = seq
 
 	return fasta_dict

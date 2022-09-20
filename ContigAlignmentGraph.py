@@ -96,7 +96,13 @@ class contig_alignment_graph(object):
         self.node_id_lookup = {i.n_id:i for i in self.nodes}
 
 #make graph from alignments, does not consider overlapping contigs
-def make_contig_aln_graph(aln_obj_list,contig_id,long_gap_length,allowed_overlap=1,cmap_id_to_edge={},contig_cmap={}):
+def make_contig_aln_graph(aln_obj_list, contig_id, long_gap_length, allowed_overlap=1, cmap_id_to_edge=None,
+                          contig_cmap=None):
+    if contig_cmap is None:
+        contig_cmap = {}
+    if cmap_id_to_edge is None:
+        cmap_id_to_edge = {}
+
     G = contig_alignment_graph()
     match_AA = True if cmap_id_to_edge else False
     #sort align list by startpoint
@@ -181,7 +187,7 @@ def get_intercontig_edges(scaffold_paths,contig_graphs,contig_cmaps):
     suffix_r = defaultdict(list)
     scaffold_paths_named = defaultdict(list)
     prefix_suffix_list = []
-    for c_id,path_list in scaffold_paths.iteritems():
+    for c_id,path_list in scaffold_paths.items():
         G = contig_graphs[c_id]
         for path_ind,hp_ids in enumerate(path_list):
             curr_path = [(G.node_id_lookup[i].seg_id,G.node_id_lookup[i].direction) for i in hp_ids]

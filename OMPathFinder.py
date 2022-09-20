@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 """
 Jens Luebeck
@@ -13,7 +13,13 @@ import json
 import math
 import os
 from subprocess import call
-from Queue import Queue
+import sys
+
+if sys.version_info < (3, 0):
+    from Queue import Queue
+
+else:
+    from queue import Queue
 
 from ContigAlignmentGraph import *
 from bionanoUtil import *
@@ -280,7 +286,7 @@ def path_to_cmaps(path, s_id, s_end, t_id, t_start):
 
     if len(path) > 2:
         lst = path[1:-1]
-        segment_bounds = zip(*[lst[i::2] for i in xrange(2)])
+        segment_bounds = zip(*[lst[i::2] for i in range(2)])
         for i in segment_bounds:
             curr_id = aa_id_to_cmap_id(i)
             for ind, j in enumerate(vectorized_segs[curr_id][:-1]):
@@ -359,7 +365,7 @@ def add_path(G, path, seg_aln_obj, i, j, p_score, c_start_l, c_end_l, contig_id,
     ordered_nodes = [i]
     # Make the entry i into a new graph node
     lst = path[1:-1]
-    segment_bounds = zip(*[lst[x::2] for x in xrange(2)])
+    segment_bounds = zip(*[lst[x::2] for x in range(2)])
 
     # add the new path to the graph (nodes)
     for ind, x in enumerate(segment_bounds):
@@ -471,7 +477,7 @@ def check_path_cc(G, path, cc_dict):
         scale_val = i
         singletons = dict()
         for key, value in path_edge_counts.items():
-            if (value == scale_val):
+            if value == scale_val:
                 singletons[key] = cc_dict[key]
 
         if singletons:
@@ -647,7 +653,7 @@ def path_recursion(G, u, visited, curr_path, paths, edge_dir, p_intercontig):
 # check if one path is entirely a subsequence of another
 def check_LCS(path1, path2, downsample=False):
     x, y = len(path1), len(path2)
-    M = [[0] * (y + 1) for i in xrange(x + 1)]
+    M = [[0] * (y + 1) for i in range(x + 1)]
     for i in range(1, x + 1):
         for j in range(1, y + 1):
             if path1[i - 1] == path2[j - 1]:
@@ -736,7 +742,7 @@ def all_unique_non_extendible_paths(G, edge_cc, scaffold_alt_paths, disable_CC_c
     # construct all the intermediate nodes not to start at
     # (i.e. they are inside the heaviest path and not an endpoint)
     shp_interior_nodes = set()
-    for c_id, path_list in scaffold_alt_paths.iteritems():
+    for c_id, path_list in scaffold_alt_paths.items():
         for path in path_list:
             for i in path[1:-1]:
                 shp_interior_nodes.add(i)
@@ -990,7 +996,7 @@ def get_scaffold_heaviest_paths(contig_alignment_dict, impute, contig_cmaps):
 def add_alternate_paths(contig_graphs, scaffold_heaviest_paths):
     # the set of paths considered for intercontig connections
     connectable_paths = {}
-    for c_id, shp_tup in scaffold_heaviest_paths.iteritems():
+    for c_id, shp_tup in scaffold_heaviest_paths.items():
         if len(shp_tup[0]) == 1:
             connectable_paths[c_id] = [shp_tup[0], ]
 
@@ -1089,7 +1095,7 @@ if __name__ == '__main__':
 
     # make reverse cmaps and reverse key
     add_full_reverse_cmaps(segs_cmaps, seg_key)
-    seg_to_cmap_id = {v[0]: k for k, v in seg_key.iteritems()}
+    seg_to_cmap_id = {v[0]: k for k, v in seg_key.items()}
     vectorized_segs = vectorize_cmaps(segs_cmaps)
 
     # reconstitute AA graph
