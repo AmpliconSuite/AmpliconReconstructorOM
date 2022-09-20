@@ -55,7 +55,7 @@ To install AR, we add some variables to the .bashrc file (located in your home d
 
 4. Add AR python libs to `$PYTHONPATH` variable.
 
-    `echo "export PYTHONPATH=$PYTHONPATH:$AR_SRC >> ~/.bashrc"`
+    `echo "export PYTHONPATH=$PYTHONPATH:$AR_SRC" >> ~/.bashrc`
 
 5. *(Optional, but highly recommended)* Install [CycleViz](https://github.com/jluebeck/CycleViz).
    
@@ -159,7 +159,7 @@ You can test AR on using previously published data. The GBM39 cell line has been
 
 - [GBM39 WGS data](https://www.ncbi.nlm.nih.gov/sra/SRX2006441[accn])
 
-- [GBM39 OM data](https://submit.ncbi.nlm.nih.gov/subs/supfiles/SUB6698144/overview) (.cmap file)
+- [GBM39 OM data](https://submit.ncbi.nlm.nih.gov/ft/byid/7fbc56yn/gbm39_bspqi_exp_refinefinal1.cmap) (.cmap file)
 
 You may either generate an AA breakpoint graph from the WGS data yourself (see [AmpliconSuite-pipeline](https://github.com/jluebeck/PrepareAA) for details) or we also provide the pre-generated GBM39 AA breakpoint graph file in the AR data repo (`AmpliconReconstructor/test_files/`). 
 

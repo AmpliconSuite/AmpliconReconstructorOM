@@ -106,7 +106,7 @@ def run_visualization(CV_path, cycles_file, cycleNum, contigs, segs, graph, aln,
         optionalFlagStringCV += gspath
         optionalFlagStringLV += gspath
 
-    cmd = "python {}/CycleViz.py --noPDF --label_segs numbers --om_alignments {}--cycles_file {} --cycle {} -c {} --om_segs {} -g {} --AR_path_alignment {} --ref {} --outname {}".format(
+    cmd = "python {}/CycleViz.py --noPDF --om_alignments {}--cycles_file {} --tick_type ends --cycle {} -c {} --om_segs {} -g {} --AR_path_alignment {} --ref {} --outname {}".format(
         CV_path, optionalFlagStringCV, cycles_file, cycleNum, contigs, segs, graph, aln, ref, sname)
     subprocess.call(cmd, shell=True)
 
