@@ -41,9 +41,11 @@ To install AR, we add some variables to the .bashrc file (located in your home d
 
 2. Add AmpliconReconstructor and SegAligner to path.
 
-    `echo "export AR_SRC=$PWD" >> ~/.bashrc`
-    
-    `echo "export SA_SRC=$PWD/SegAligner" >> ~/.bashrc`
+    ```bash
+    echo "export AR_SRC=$PWD" >> ~/.bashrc
+    echo "export SA_SRC=$PWD/SegAligner" >> ~/.bashrc
+    source ~/.bashrc
+   ```
 
 3. A SegAligner binary compatible with a Linux x86 64-bit architecture is included. If you want to compile the SegAligner binary yourself, run the following.
 
@@ -62,7 +64,7 @@ To install AR, we add some variables to the .bashrc file (located in your home d
     ```bash
    # before running, make sure dependencies for CycleViz (listed in "Dependencies" section) are satisfied
    # now, install CycleViz
-   cd .. #or wherever you want to install CycleViz
+   cd ../../ #or wherever you want to install CycleViz
    git clone https://github.com/jluebeck/CycleViz
    echo "export CV_SRC=$PWD/CycleViz" >> ~/.bashrc
    ```

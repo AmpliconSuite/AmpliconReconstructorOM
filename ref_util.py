@@ -25,7 +25,7 @@ import sys
 from bisect import bisect_left
 from collections import defaultdict
 from time import time
-import pysam
+# import pysam
 import heapq
 import copy
 import os
