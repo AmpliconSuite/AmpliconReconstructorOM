@@ -15,7 +15,7 @@ Luebeck et al., ["AmpliconReconstructor integrates NGS and optical mapping to re
 5. [SegAligner documentation](#segaligner)
 
 ## Dependencies
-AR uses Python 2 (2.7+) or Python 3, and C++ (C++11 or higher with g++ as the compiler) and a Unix-based OS. AR has been tested on Ubuntu 16.04 and Ubuntu 18.04.
+AR uses Python 2 (2.7+) or Python 3, and C++ (C++11 or higher with g++ as the compiler) and a Unix-based OS. AR has been tested on Ubuntu 16.04, 18.04 and 20.04.
 
 AR has the following Python library dependencies:
  - Matplotlib 2.0.0 (or higher)
