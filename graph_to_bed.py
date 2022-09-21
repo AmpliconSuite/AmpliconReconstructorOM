@@ -34,7 +34,7 @@ with open(graph_file) as infile, open(basename + ".bed", 'w') as outfile:
 # Write a sorted, padded, merged version if padding is added
 if args.padding > 0:
     with open(basename + "_padded_sorted_merged.bed", 'w') as outfile:
-        for chrom in sorted(bed_dict.keys()):
+        for chrom in sorted(bed_dict):
             padded_pos_list = [(max(0, x[0] - padding), x[1] + padding) for x in bed_dict[chrom]]
             # sort intervals
             sorted_interval_list = sorted(padded_pos_list)

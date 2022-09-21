@@ -71,7 +71,7 @@ def read_bed(bedfile):
                 fields = line.rstrip().rsplit()
                 bed_dict[fields[0]].append((int(fields[1]), int(fields[2])))
 
-    chroms_to_get = bed_dict.keys()
+    chroms_to_get = set(bed_dict.keys())
     segSeqL = []
     for chrom, region_list in bed_dict.items():
         for p in region_list:
@@ -198,7 +198,7 @@ else:
     chroms_to_get = set()
     seqD = fasta_reader(args.ref, chroms_to_get, True)
     segSeqL = []
-    for i in sorted(seqD.keys(), key=lambda x: x.lstrip('chr')):
+    for i in sorted(seqD, key=lambda x: x.lstrip('chr')):
         seqLen = len(seqD[i])
         if seqLen > args.size:
             segSeqL.append((i, i, 0, len(seqD[i])))

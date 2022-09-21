@@ -910,7 +910,7 @@ def write_path_alignment(G, path, outname, weight):
 def write_path_cycles(G, paths, outname):
     with open(outname, 'w') as outfile:
         outfile.write("List of cycle segments\n")
-        orig_segs = [x for x in segs_cmaps.keys() if "_r" not in x]
+        orig_segs = [x for x in segs_cmaps if "_r" not in x]
         for i in sorted(orig_segs, key=lambda x: int(x)):
             key_pos_string = seg_key[i][0][:-1]
             start, end = key_pos_string.split("-|")

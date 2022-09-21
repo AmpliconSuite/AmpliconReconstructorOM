@@ -82,7 +82,7 @@ def get_unaligned_segs(aln_path, aln_flist):
 # write the unaligned regions, do some bookkeeping, mapping contig_id to some set of labels.
 # return a mapping of the new contig_id and labels involved
 def write_unaligned_cmaps(contig_unaligned_regions, output_prefix, enzyme):
-    max_contig_id = max([int(x) for x in contig_cmaps.keys()])
+    max_contig_id = max([int(x) for x in contig_cmaps])
     unaligned_region_contig_dict = {}
     unaligned_contig_id_dict = {}
     nmaps = sum([len(x) for x in contig_unaligned_regions.values()])

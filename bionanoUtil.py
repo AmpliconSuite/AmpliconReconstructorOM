@@ -152,7 +152,8 @@ def parse_generic_xmap(xmapf, qryLenD, refLenD, swap_Ref_Qry=False):
                 fD = dict(zip(head, fields))
 
                 # handle mis-capitalizations
-                for i in fD.keys():
+                fD_init_keys = list(fD.keys())
+                for i in fD_init_keys:
                     for dname in detailFields:
                         if i.lower() == dname.lower():
                             fD[dname] = fD[i]
@@ -194,7 +195,7 @@ def parse_generic_xmap(xmapf, qryLenD, refLenD, swap_Ref_Qry=False):
 def vectorize_cmaps(cmap_d):
     vectorized_dict = {}
     for y in cmap_d:
-        y_posns = [cmap_d[y][k] for k in sorted(cmap_d[y].keys())]
+        y_posns = [cmap_d[y][k] for k in sorted(cmap_d[y])]
         vectorized_dict[y] = y_posns
 
     return vectorized_dict
@@ -235,7 +236,7 @@ def translate_reversed_label(cmaps, rev_seg_id, r_lab):
 # cmaps input must include the segment artificial end label to work properly
 def add_full_reverse_cmaps(cmaps, key_dict):
     # make a reverse keyfile
-    iter_keys = cmaps.keys()
+    iter_keys = list(cmaps.keys())
     for i in iter_keys:
         tot_labs = len(cmaps[i]) - 1
         cmap_len = cmaps[i][tot_labs + 1]

@@ -171,7 +171,7 @@ if __name__ == '__main__':
         sample_data = yaml.safe_load(f)
 
     # read samples and figure out what to run (all if no subset specified)
-    samples_to_run = args.samples if args.samples else [str(x) for x in sample_data.keys()]
+    samples_to_run = args.samples if args.samples else [str(x) for x in sample_data]
 
     if not args.samples: print("running on all samples in " + args.yaml_file)
 
@@ -308,12 +308,12 @@ if __name__ == '__main__':
 
         with open(reconstruction_dir + i + "_scaffolds_cycles_lengths.txt", 'w') as outfile:
             outfile.write("#Path lengths\n")
-            for ki in sorted([int(x) for x in paths.keys()]):
+            for ki in sorted([int(x) for x in paths]):
                 k = str(ki)
                 outfile.write("\t".join([k, ",".join(paths[k]), str(path_lens[k])]) + "\n")
 
             outfile.write("#Scaffold lengths\n")
-            for ki in sorted([int(x) for x in scaffolds.keys()]):
+            for ki in sorted([int(x) for x in scaffolds]):
                 k = str(ki)
                 outfile.write("\t".join([k, ",".join(scaffolds[k]), str(scaffold_lens[k])]) + "\n")
 

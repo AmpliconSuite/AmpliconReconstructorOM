@@ -22,10 +22,11 @@ AR has the following Python library dependencies:
     * To ensure you meet the version dependency for Matplotlib, do
 `pip install --upgrade matplotlib`.
 - numpy
+- pysam
 - PyYAML
-    * `pip install PyYAML`
 - intervaltree
-    * `pip install intervaltree`     
+
+`pip install numpy matplotlib pysam PyYAML intervaltree`     
 
 AR requires that the [AmpliconArchitect (AA)](https://github.com/jluebeck/AmpliconArchitect) data repo be downloaded and the `$AA_DATA_REPO` bash variable must be set. If you already have AA installed, no action is required. Otherwise, instructions on setting the data repo are available [here](https://github.com/jluebeck/AmpliconArchitect#data-repositories).
 
