@@ -4,6 +4,7 @@ Reconstructs focal amplifications using Bionano optical mapping data and an NGS-
 Luebeck et al., ["AmpliconReconstructor integrates NGS and optical mapping to resolve the complex structures of focal amplifications"](https://www.nature.com/articles/s41467-020-18099-z), *Nature Communications*, 2020.
 
 **September 2022 Update:** Version 1.02: adds support for python3. 
+
 **September 2020 Update:** Version 1.01: adds support for GRCh38-based analysis.
 
 ## Contents:
