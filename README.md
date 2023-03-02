@@ -3,9 +3,8 @@ Reconstructs focal amplifications using Bionano optical mapping data and an NGS-
 
 Luebeck et al., ["AmpliconReconstructor integrates NGS and optical mapping to resolve the complex structures of focal amplifications"](https://www.nature.com/articles/s41467-020-18099-z), *Nature Communications*, 2020.
 
-**September 2020 Update:** Version 1.01: adds support for GRCh38-based analysis.
-
 **September 2022 Update:** Version 1.02: adds support for python3. 
+**September 2020 Update:** Version 1.01: adds support for GRCh38-based analysis.
 
 ## Contents:
 1. [Dependencies](#dependencies)
@@ -15,7 +14,7 @@ Luebeck et al., ["AmpliconReconstructor integrates NGS and optical mapping to re
 5. [SegAligner documentation](#segaligner)
 
 ## Dependencies
-AR uses Python 2 (2.7+) or Python 3, and C++ (C++11 or higher with g++ as the compiler) and a Unix-based OS. AR has been tested on Ubuntu 16.04, 18.04 and 20.04.
+AR uses Python 2 (2.7+) or Python 3, and C++ (C++11 or higher with g++ as the compiler) and a Unix-based OS. AR has been tested on Ubuntu 16.04 and later. AR may not work with CentOS 7 unless `glibc` is 3.4.20 or higher.
 
 AR has the following Python library dependencies:
  - Matplotlib 2.0.0 (or higher)
