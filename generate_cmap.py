@@ -105,10 +105,11 @@ def makeCMAP(outprefix, segSeqL, segSeqD, enzyme, regExpEnzTup, minLabel, minSiz
             i = i_tup[0]
             CMapId = str(CMapNum + 1)
             currSeq = segSeqD[i].upper()
-            mapLen = str(float(len(currSeq)))
+            mapLen = float(len(currSeq))
             if mapLen < minSize:
                 continue
 
+            mapLen = str(mapLen)
             print("Generating map for " + i)
             revRegExpEnz = rev_complement(regExpEnz)
             rev_offset = len(regExpEnz) - offset
