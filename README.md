@@ -157,6 +157,8 @@ An example invokation of AR is as follows
 
 A descripton of other command line arguments can produced by running AR with the `--help` flag.
 
+For highly-complex or large focal amplifications, setting `--noConnect` is recommended. After identifying relevant scaffolds, a condensed version of the reconstruction can be performed by using `OMPathFinder.py` and specifying `--contig_subset` on the relevant Bionano contig IDs.
+
 ### Running an AR test
 You can test AR on using previously published data. The GBM39 cell line has been previously characterized by AR in [Wu, et al., <em>Nature</em>](https://www.nature.com/articles/s41586-019-1763-5). We have made WGS data and OM data publicly available:
 

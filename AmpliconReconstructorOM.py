@@ -154,6 +154,7 @@ if __name__ == '__main__':
     run_path = args.outdir + args.run_name
     if not os.path.exists(run_path): os.mkdir(run_path)
     logging.basicConfig(filename=run_path + "run.log", level=logging.INFO, filemode='w')
+    logging.getLogger().addHandler(logging.StreamHandler())
     logging.info(str(datetime.datetime.now()))
     logging.info("Starting logging")
 
@@ -223,8 +224,7 @@ if __name__ == '__main__':
             if curr_dir == alignments_dir and args.noAlign:
                 print("Re-using alignments in " + curr_dir)
 
-            elif curr_dir != rpi:
-                # if not args.no_clear and not (curr_dir == alignments_dir and args.noAlign) and not curr_dir == rpi:
+            elif curr_dir != rpi and not (curr_dir == alignments_dir and args.noAlign):
                 logging.info("Clearing old results: " + curr_dir)
                 subprocess.call("rm " + curr_dir + "* 2>/dev/null", shell=True)
 
