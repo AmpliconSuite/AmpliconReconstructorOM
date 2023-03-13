@@ -90,7 +90,7 @@ Once AA has been run on your NGS data, please convert the resulting `*_graph.txt
 
 An example command is
 
-`$AR_SRC/generate_cmap.py -r [path_to_reference.fasta] -e [enzyme] -g [path/to/your_graph.txt]`
+`$AR_SRC/generate_cmap.py -r reference_genome.fasta -e DLE1 -g sample_amplicon1_graph.txt`
 
 ##### The YAML file
 
