@@ -1,4 +1,4 @@
-# AmpliconReconstructor (AR)
+# AmpliconReconstructorOM
 Reconstructs focal amplifications using Bionano optical mapping data and an NGS-derived breakpoint graph. The publication related to this work has been published in *Nature Communications*. If using this tool please cite the following: 
 
 Luebeck et al., ["AmpliconReconstructor integrates NGS and optical mapping to resolve the complex structures of focal amplifications"](https://www.nature.com/articles/s41467-020-18099-z), *Nature Communications*, 2020.
