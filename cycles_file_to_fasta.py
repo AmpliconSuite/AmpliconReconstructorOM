@@ -10,28 +10,24 @@ UC San Diego, Bioinformatics & Systems Biology
 jluebeck@ucsd.edu
 """
 
-complementary_nucleotide = {"A":"T","C":"G","G":"C","T":"A","N":"N"}
+lookup = str.maketrans("ACGTRYKM", "TGCAYRMK")
 
 
 def rev_complement(seq):
-	return ''.join([complementary_nucleotide[a] for a in seq[::-1]])
+	return seq.translate(lookup)[::-1]
 
 
-def fasta_reader(fasta_file,chroms_to_get, getAll = False):
-	"""
-	Modified method from brentp on BioStars
-	given a fasta file. yield dictionary of header, sequence
-	"""
+def fasta_reader(fasta_file, chroms_to_get, getAll = False):
 	fasta_dict = {}
-	with open(fasta_file) as infile:
+	print("Reading FASTA: {}".format(fasta_file))
+	with open(fasta_file, 'r') as infile:
 		faiter = (x[1] for x in groupby(infile, lambda line: line[0] == ">"))
 		for header in faiter:
 			# drop the ">"
-			seq_name = header.next()[1:].strip()
-			if (seq_name in chroms_to_get) or getAll:
-				print("Reading " + seq_name)
-				# join all sequence lines to one.
-				seq = "".join(s.strip() for s in next(faiter))
+			seq_name = next(header)[1:].rstrip().rsplit()[0]
+			# join all sequence lines to one.
+			seq = "".join(s.rstrip() for s in next(faiter))
+			if seq_name in chroms_to_get or getAll:
 				fasta_dict[seq_name] = seq
 
 	return fasta_dict
@@ -79,7 +75,7 @@ def segsToSeq(cyclef,outpre):
 				fields = line.rstrip().rsplit()
 				lowerBound = int(fields[3])
 				upperBound = int(fields[4])
-				relSeq = seqD[fields[2]][lowerBound:upperBound]
+				relSeq = seqD[fields[2]][lowerBound:upperBound+1]
 				segFasta.write(">" + "_".join(fields) + "\n")
 				segFasta.write(relSeq + "\n")
 				segNum = fields[1]
@@ -89,12 +85,12 @@ def segsToSeq(cyclef,outpre):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--cycles", help="AA-formatted cycles file",required=True)
-parser.add_argument("-r", "--ref", help="path to reference genome",required=True)
-parser.add_argument("-o", "--output", help="output prefix",required=True)
+parser.add_argument("-c", "--cycles", help="AA-formatted cycles file", required=True)
+parser.add_argument("-r", "--ref", help="path to reference genome", required=True)
+parser.add_argument("-o", "--output", help="output prefix", required=True)
 args = parser.parse_args()
 
 relChromSet = relChroms(args.cycles)
-seqD = fasta_reader(args.ref,relChromSet)
-segSeqD = segsToSeq(args.cycles,args.output)
-writeCycleFasta(args.cycles,args.output)
+seqD = fasta_reader(args.ref, relChromSet)
+segSeqD = segsToSeq(args.cycles, args.output)
+writeCycleFasta(args.cycles, args.output)
