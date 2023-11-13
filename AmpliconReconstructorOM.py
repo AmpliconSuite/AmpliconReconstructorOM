@@ -7,7 +7,7 @@ jluebeck@ucsd.edu
 """
 
 __author__ = "Jens Luebeck"
-__version__ = "1.02"
+__version__ = "1.02.1"
 
 import os
 import sys
@@ -162,6 +162,7 @@ if __name__ == '__main__':
     noConnect = args.noConnect
     nthreads = str(args.nthreads)
 
+    logging.info("AmpliconReconstructorOM version " + __version__)
     logging.info("CMD:")
     logging.info(" ".join(sys.argv))
     logging.info("noImpute is " + str(noImpute))

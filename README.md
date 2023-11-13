@@ -122,7 +122,7 @@ sample_name:
 
 ### Outputs:
 AR outputs a collection of possible reconstruction paths, ordered by total alignment score. 
-The output file format is the same as the [AA cycles file format](https://github.com/jluebeck/AmpliconArchitect/blob/master/README.md#file-formats).
+The output file format is the same as the [AA cycles file format](https://github.com/AmpliconSuite/AmpliconArchitect#3-cycles-files-out_ampliconid_cycletxt).
 
 The files created by AR are placed into three folders
 
@@ -160,7 +160,7 @@ A descripton of other command line arguments can produced by running AR with the
 For highly-complex or large focal amplifications, setting `--noConnect` is recommended. After identifying relevant scaffolds, a condensed version of the reconstruction can be performed by using `OMPathFinder.py` and specifying `--contig_subset` on the relevant Bionano contig IDs.
 
 ### Running an AR test
-You can test AR on using previously published data. The GBM39 cell line has been previously characterized by AR in [Wu, et al., <em>Nature</em>](https://www.nature.com/articles/s41586-019-1763-5). We have made WGS data and OM data publicly available:
+You can test AR on using previously published data. The GBM39 cell line has been previously characterized by AR in [Wu, et al., <em>Nature</em> 2019](https://www.nature.com/articles/s41586-019-1763-5). We have made WGS data and OM data publicly available:
 
 - [GBM39 WGS data](https://www.ncbi.nlm.nih.gov/sra/SRX2006441[accn])
 

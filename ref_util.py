@@ -35,7 +35,7 @@ import global_names
 
 REF = global_names.REF
 TSTART = global_names.TSTART
-print("Global ref name is " + REF)
+# print("Global ref name is " + REF)
 
 try:
     DATA_REPO = os.environ["AA_DATA_REPO"]

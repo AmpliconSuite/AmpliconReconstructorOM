@@ -3,3 +3,4 @@ SegAligner/cmake-build-debug/*
 *.pyc
 SegAligner/*.o
 .idea/
+test_files/GBM39_AR_output
